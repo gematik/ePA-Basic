@@ -22,14 +22,14 @@ The provided content comprises normative and supplementary resources for the **B
 ## Structure 
 <code><pre>
 epa-basic
-|- [images](images) (images of this page)
-|- [src](src) (normative resources)
+|- [images](/images) (images of this page)
+|- [src](/src) (normative resources)
 |     └-- [openapi](src/openapi) (interfaces)
-|- [Readme.md](./Readme.md) (this information)
-|- [ReleaseNotes.md](./ReleaseNotes.md) (release history)
-|- [Branchinformation](./Branchinformation.md) (information about branch status and links)
-|- [LICENSE](./LICENSE) (license file)
-└- [Security.md](./Security.md) (security policy)
+|- [Readme.md](/README.md) (this information)
+|- [ReleaseNotes.md](/ReleaseNotes.md) (release history)
+|- [Branchinformation](/Branchinformation.md) (information about branch status and links)
+|- [LICENSE](/LICENSE) (license file)
+└- [Security.md](/SECURITY.md) (security policy)
 </pre>
 </code>
 
