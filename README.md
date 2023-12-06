@@ -19,21 +19,6 @@ This repository offers technical information for the Electronic Personal Health 
 This branch relates to a particular release in context of **ePA Version 3** ('ePA für Alle') 
 The provided content comprises normative and supplementary resources for the **Basic Services** like Entitlement-, Constraints- and Consent Decision Management, Device Registration and the Audit Event Service.
 
-## Structure 
-<code><pre>
-epa-basic
-|- [images](/images) (images of this page)
-|- [src](/src) (normative resources)
-|     └-- [openapi](src/openapi) (interfaces)
-|- [Readme.md](/README.md) (this information)
-|- [ReleaseNotes.md](/ReleaseNotes.md) (release history)
-|- [Branchinformation](/Branchinformation.md) (information about branch status and links)
-|- [LICENSE](/LICENSE) (license file)
-└- [Security.md](/SECURITY.md) (security policy)
-</pre>
-</code>
-
-
 For resources related to ePA Data Management see further associated repositories:
 
 [**ePA-Medication**](https://github.com/gematik/epa-medication/tree/ePA-3.0)</br>
