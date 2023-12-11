@@ -1,0 +1,404 @@
+openapi: 3.0.1
+info: 
+  title: Health Record Relocation Service
+  description: |
+    This interface provides access to the **Health Record Relocation Service** of a personal health 
+    record for health care insurances.<br/>
+
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+
+    **Prereqisites**:</br>
+    The Health Record System shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (telematik-id or kvnr)
+    - indication of a valid entitlement 
+    
+    of the current user (requestor) for evaluation in operations.
+
+    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    and a valid ID-Token. If one of these conditions is not met, then the response
+    of the (aborted) operation shall always be '403': 'notEntitled'. 
+
+    **Retry interval**:</br>
+    The following retry intervals are suggested in case of an error response:<br>
+    - '409' Conflict (statusMismatch).
+      - approx. 24 hours
+    - '500' Internal Error
+      - approx. 10 minutes
+
+    **User Agent**:</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+    Open Issues:
+    - Format / Schema des Export Packages notwendig?
+    - Logging?
+    - Rohdaten?
+    - wo steht, wie genau das Paket verschlüsselt wird?
+    - startPackageCreation: Wenn das export package asynchron erzeigt wird, dann können Probleme nicht an den KTR signalisiert werden
+    - startPackageImport: Wenn die Migartion des Pakets asynchron erfolgt, dann können Probleme nicht an den KTR signalisiert werden
+    - startPackageImport: Hier wird in der VAU der private Key zum Enc-Zertifikat benötigt. Wie kommt der dahin? HSM? 
+    - Alternative zu _deleteExportPackage_ (success incident) verwenden?
+  
+  contact:
+    name: gematik GmbH
+    email: epa@gematik.de
+    url: 'http://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 0.0.1
+  
+  # version history:
+  # ----------------
+  # version 0.0.1
+  #   - initial version for review
+
+servers:
+  - url: 'https://example.com/api'
+
+tags:
+  - name: Relocation (exporting provider)
+    description: |
+      The _exporting provider_ stands for the insurance ('**old insurance**') actually hosting the health record 
+      of an insurant who moves to a different insurance ('new insurance').
+
+      The _exporting provider_ is associated to the operations in path _relocationservice/export_
+
+
+  - name: Relocation (importing provider)
+    description: |
+      The _importing provider_ stands for the insurance ('**new insurance**') an insurant moves to from
+      a different insurance ('old insurance')
+      
+      The _importing provider_ is associated to the operations in path _relocationservice/import_
+
+paths:
+  /relocationservice/export:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'      
+    post:
+      tags:
+        - Relocation (exporting provider)
+      operationId: startPackageCreation
+      summary: (startPackageCreation) Cause creation of export package of health record for download
+      description: |
+       This operation shall initiate the creation of an export package including all data of 
+       the health record for relocation to another health record provider.</br>
+       This operation is limited to entitled users of role oid_epa_ktr.
+       
+       **Client**:</br>
+       A client shall use this operation only if a relocation of a health record is requested
+       and an encryption certificate and a requestId is available. A client receives those required
+       items by **proprietary** means from the _Information Service Account_ as consequence of a _startRelocation_
+       request.
+
+       **Provider**:</br>
+       The export package shall contain all transferrable data of the health record services:
+       - XDS Document Service
+       - FHIR Data Service
+       - Audit Event Service
+       - Consent Decision Management 
+       - Constraint Management 
+       - Entitlement Management
+
+       and finally be encrypted by means of the provided _certificate_ and stored for later
+       retrieval by the requesting health record provider. An export package download url shall 
+       be returned in the response.  
+
+       The health record status shall be set to SUSPENDED to prevent from further usage.</br>
+       _requestId_ in response shall equal _requestId_ in request.
+       The response may be sent prior to export package finalization. 
+
+       The export package preparation may be aborted/ not started in case an incident (from _Information Service Account_) with
+       reference to _requestId_ was received prior to a call of this operation:
+       - relocationAbortedNoConsent: 
+         - The insurant has revoked his consent for ePA against the requesting provider. The 
+        health record data shall not be relocated and the health record shall be deleted.
+       - relocationAborted:
+         - The requesting provider has discovered issues preventing from relocation. The health record
+        shall stay in ACTIVATED state for furter usage. The requesting provider may repeat the
+        complete request in a later stage.
+      
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||       
+       | Requestor has no valid entitlement | 403 | notEntitled ||
+       | Requestor role is not _oid_epa_ktr_ | 403 | invalidOid ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED or SUPSENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
+       | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | Export package generation is started | if not aborted by requesting provider |
+       | The health record is in state SUPDENDED | if not aborted by requesting provider |
+       | A log-entry for the operation exists | for any operation result, shall be contained in export package |
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples: 
+              Package generation request:
+                value:
+                  requestId: '82d466e7-1125-4997-9de2-e4e8390c68a4'
+                  certificate: 'base64encodedCertificate'
+            schema:
+              type: object
+              properties:
+                requestId:
+                  $ref: '#/components/schemas/RequestIdType'
+                certificate:
+                  $ref: '#/components/schemas/CertificateType'
+              required:
+                - requestId
+                - certificate
+      responses:
+        '200':
+          description: Ok.
+          content:
+            application/json:
+              examples: 
+                Package generation response:
+                  value:
+                    requestId: '3cc8d858-c344-45e1-b877-9d4a84632a4b'
+                    downloadurl: 'http://example.com'
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestIdType'
+                  downloadurl:
+                    $ref: '#/components/schemas/UrlType'
+                required:
+                  - requestId
+                  - downloadurl
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+    
+  /relocationservice/import:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'      
+    post:
+      tags:
+        - Relocation (importing provider)
+      operationId: startPackageImport
+      summary: (startPackageImport) Start import of an prepared export package of a health record
+      description: |
+       Start the import of an encrypted export package for data migration from another health record provider.</br>
+       This operation is limited to entitled users of role oid_epa_ktr. 
+              
+       **Client**:</br>
+       A client shall use this operation only after reception of a downloadUrl associated to an open
+       request for relocation. A client receives those required items by **proprietary** means
+       from the _Information Service Account_ as consequence of a _putDownloadUrlForExportPackage_ operation.
+
+       **Provider**:</br>
+       Download the complete export package from the download point. Decrypt and migrate the content
+       to the health record.
+       
+       The response may be sent prior to export package migration finalization. 
+
+       The export package provider shall be notified about problems by sending an incident
+       to the providers _Information Service Account_ _postExportPackageIncident_ operation: 
+       - importFailed
+         - The download from _downloadUrl_ is not possible, incomplete or package has incorrect encryption
+       - packageCorrupt
+         - The download and decryption was successful but content is not understood or malformed.
+       - relocationAborted: 
+         - The migration and the export package is no longer required for any requesting provider's reason. The 
+        request shall be deleted and the health record shall be set to state ACTIVATED again. A requesting
+        provider will issue a complete new request on demand in the future.
+
+       The migration shall be aborted and all imported (partial) data shall be deleted in case of any error.
+
+       The health record shall be set to ACTIVATED after successful data migration. 
+       The export package provider shall be notified about successful migration via 
+       _Information_Service Account_ _deleteExportPackage_ operations.
+       The request (_requestId_) shall be deleted among importing providers _Information Service Account_.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||       
+       | Requestor has no valid entitlement | 403 | notEntitled ||
+       | Requestor role is not _oid_epa_ktr_ | 403 | invalidOid ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state INITIALIZED | 409 | statusMismatch |  (see 'Retry interval') |
+       | _requestId_ does not match health record identifier | 409 | requestMismatch ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | Export package import and data migration is started ||
+       | The health record is in state ACTIVATED | after successful data migration |
+       | A log-entry for the operation exists | for any operation result |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples: 
+              Package import request:
+                value:
+                  requestId: '82d466e7-1125-4997-9de2-e4e8390c68a4'
+                  downloadurl: 'http://example.com'
+            schema:
+              type: object
+              properties:
+                requestId:
+                  $ref: '#/components/schemas/RequestIdType'
+                downloadurl:
+                  $ref: '#/components/schemas/UrlType'
+              required:
+                - requestId
+                - downloadurl
+      responses:
+        '200':
+          description: Ok.
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+components:
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error403Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          example:
+            errorCode: notEntitled
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+            requestMismatch:
+              value:
+                errorCode: requestMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+  
+  schemas:
+    RequestIdType:
+      description: A unique relocation request id
+      type: string
+      format: uuid
+      example: '3dc69bad-6711-4983-b42c-5834f569c6ec'
+    CertificateType:
+      description: A certificate in base64 encoding for export package encryption 
+      type: string
+      format: byte
+    UrlType:
+      description: An url for the download of a prepared and encrypted export package
+      type: string
+      format: url
+      example: https://example.com
+    UserAgentType:
+      description: Information about client software.
+      type: object
+      properties:
+        clientId:
+          type: string
+          pattern: '^[a-zA-Z0-9]{20}$'
+        version:
+          type: string
+          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
+      required:
+        - clientId
+        - version
+      additionalProperties: false
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    ErrorType:
+      description: "Error object with additional information about the occurred error"
+      type: object
+      properties:
+        errorCode:
+          description: "Error condition specifier"
+          type: string
+        errorDetail:
+          description: "Additional details regarding the error condition"
+          type: string
+      required:
+        - errorCode

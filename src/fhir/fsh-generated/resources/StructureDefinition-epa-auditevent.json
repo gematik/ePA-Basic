@@ -1,0 +1,313 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "epa-auditevent",
+  "url": "https://gematik.de/fhir/epa/StructureDefinition/audit-event",
+  "version": "1.0",
+  "name": "EPAAuditEvent",
+  "title": "AuditEvent for the ePA (Elektronische Patientenakte)",
+  "status": "draft",
+  "publisher": "gematik GmbH",
+  "description": "Defines the data structure for audit events in the ePA system.",
+  "fhirVersion": "4.0.1",
+  "mapping": [
+    {
+      "identity": "workflow",
+      "uri": "http://hl7.org/fhir/workflow",
+      "name": "Workflow Pattern"
+    },
+    {
+      "identity": "rim",
+      "uri": "http://hl7.org/v3",
+      "name": "RIM Mapping"
+    },
+    {
+      "identity": "dicom",
+      "uri": "http://nema.org/dicom",
+      "name": "DICOM Tag Mapping"
+    },
+    {
+      "identity": "w5",
+      "uri": "http://hl7.org/fhir/fivews",
+      "name": "FiveWs Pattern Mapping"
+    },
+    {
+      "identity": "w3c.prov",
+      "uri": "http://www.w3.org/ns/prov",
+      "name": "W3C PROV"
+    },
+    {
+      "identity": "fhirprovenance",
+      "uri": "http://hl7.org/fhir/provenance",
+      "name": "FHIR Provenance Mapping"
+    }
+  ],
+  "kind": "resource",
+  "abstract": false,
+  "type": "AuditEvent",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/AuditEvent",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "AuditEvent.meta",
+        "path": "AuditEvent.meta",
+        "min": 1
+      },
+      {
+        "id": "AuditEvent.meta.profile",
+        "path": "AuditEvent.meta.profile",
+        "min": 1,
+        "fixedCanonical": "https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.type",
+        "path": "AuditEvent.type",
+        "binding": {
+          "strength": "required",
+          "valueSet": "https://gematik.de/fhir/epa/ValueSet/epa-auditevent-type-vs"
+        }
+      },
+      {
+        "id": "AuditEvent.subtype",
+        "path": "AuditEvent.subtype",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.action",
+        "path": "AuditEvent.action",
+        "short": "Type of action performed during the event. CREATE: C | READ: R | UPDATE: U | DELETE: D | EXECUTE: E",
+        "definition": "Type of action performed during the event. CREATE: C | READ: R | UPDATE: U | DELETE: D | EXECUTE: E",
+        "min": 1,
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.period",
+        "path": "AuditEvent.period",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.recorded",
+        "path": "AuditEvent.recorded",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.outcome",
+        "path": "AuditEvent.outcome",
+        "short": "success: 0; failure: 4",
+        "definition": "success: 0; failure: 4",
+        "min": 1,
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.outcomeDesc",
+        "path": "AuditEvent.outcomeDesc",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.purposeOfEvent",
+        "path": "AuditEvent.purposeOfEvent",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent",
+        "path": "AuditEvent.agent",
+        "max": "1",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.agent.type",
+        "path": "AuditEvent.agent.type",
+        "min": 1,
+        "mustSupport": true,
+        "binding": {
+          "strength": "required",
+          "valueSet": "https://gematik.de/fhir/epa/ValueSet/epa-participlationrole-type-vs"
+        }
+      },
+      {
+        "id": "AuditEvent.agent.role",
+        "path": "AuditEvent.agent.role",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent.who",
+        "path": "AuditEvent.agent.who",
+        "short": "The subject Id of the IDToken",
+        "definition": "The subject Id of the IDToken",
+        "min": 1
+      },
+      {
+        "id": "AuditEvent.agent.who.identifier",
+        "path": "AuditEvent.agent.who.identifier",
+        "min": 1,
+        "type": [
+          {
+            "code": "Identifier",
+            "profile": [
+              "http://fhir.de/StructureDefinition/identifier-telematik-id",
+              "http://fhir.de/StructureDefinition/identifier-kvid-10",
+              "https://gematik.de/fhir/epa/StructureDefinition/telematik-service-identifier"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "AuditEvent.agent.altId",
+        "path": "AuditEvent.agent.altId",
+        "short": "Alternative User identity (e.g. Telematik-ID or the KVNR)",
+        "definition": "Alternative User identity (e.g. Telematik-ID or the KVNR)",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.agent.name",
+        "path": "AuditEvent.agent.name",
+        "short": "Name of HCP or Insurant or a Service (e.g. E-Rezept-Fachdienst)",
+        "definition": "Name of HCP or Insurant or a Service (e.g. E-Rezept-Fachdienst)",
+        "min": 1
+      },
+      {
+        "id": "AuditEvent.agent.requestor",
+        "path": "AuditEvent.agent.requestor",
+        "fixedBoolean": false
+      },
+      {
+        "id": "AuditEvent.agent.location",
+        "path": "AuditEvent.agent.location",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent.policy",
+        "path": "AuditEvent.agent.policy",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent.media",
+        "path": "AuditEvent.agent.media",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent.network",
+        "path": "AuditEvent.agent.network",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.agent.purposeOfUse",
+        "path": "AuditEvent.agent.purposeOfUse",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.source",
+        "path": "AuditEvent.source",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.source.observer.display",
+        "path": "AuditEvent.source.observer.display",
+        "fixedString": "Elektronische Patientenakte Fachdienst"
+      },
+      {
+        "id": "AuditEvent.source.type",
+        "path": "AuditEvent.source.type",
+        "min": 1,
+        "max": "1",
+        "mustSupport": true,
+        "binding": {
+          "strength": "required",
+          "valueSet": "https://gematik.de/fhir/epa/ValueSet/epa-auditevent-sourcetype-vs"
+        }
+      },
+      {
+        "id": "AuditEvent.entity",
+        "path": "AuditEvent.entity",
+        "min": 1,
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.entity.what",
+        "path": "AuditEvent.entity.what",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.type",
+        "path": "AuditEvent.entity.type",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.role",
+        "path": "AuditEvent.entity.role",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.lifecycle",
+        "path": "AuditEvent.entity.lifecycle",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.securityLabel",
+        "path": "AuditEvent.entity.securityLabel",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.name",
+        "path": "AuditEvent.entity.name",
+        "short": "The title of the XDS document, FHIR resource or object name of a service (e.g. Entitlement Service, Device Management, ...).",
+        "definition": "The title of the XDS document, FHIR resource or object name of a service (e.g. Entitlement Service, Device Management, ...).",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.entity.description",
+        "path": "AuditEvent.entity.description",
+        "short": "The OperationId",
+        "definition": "The OperationId",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.entity.query",
+        "path": "AuditEvent.entity.query",
+        "max": "0"
+      },
+      {
+        "id": "AuditEvent.entity.detail",
+        "path": "AuditEvent.entity.detail",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.entity.detail.type",
+        "path": "AuditEvent.entity.detail.type",
+        "short": "The Name of the property (e.g. Document Format, DocumentID, ...).",
+        "definition": "The Name of the property (e.g. Document Format, DocumentID, ...).",
+        "mustSupport": true
+      },
+      {
+        "id": "AuditEvent.entity.detail.value[x]",
+        "path": "AuditEvent.entity.detail.value[x]",
+        "slicing": {
+          "discriminator": [
+            {
+              "type": "type",
+              "path": "$this"
+            }
+          ],
+          "ordered": false,
+          "rules": "open"
+        }
+      },
+      {
+        "id": "AuditEvent.entity.detail.value[x]:valueString",
+        "path": "AuditEvent.entity.detail.value[x]",
+        "sliceName": "valueString",
+        "short": "Property value (e.g. urn:gematik:ig:Zahnbonusheft:v1.1.0)",
+        "definition": "Property value (e.g. urn:gematik:ig:Zahnbonusheft:v1.1.0)",
+        "min": 1,
+        "max": "1",
+        "type": [
+          {
+            "code": "string"
+          }
+        ],
+        "mustSupport": true
+      }
+    ]
+  }
+}

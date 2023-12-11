@@ -1,0 +1,975 @@
+openapi: 3.0.3
+info:
+  title: AuditEvent Service (FHIR R4 AuditEvent)
+  description: |
+    The AuditEvent adheres to the FHIR profile  [AuditEvent for the ePA (Elektronische Patientenakte)](https://gematik.de/fhir/epa/StructureDefinition/audit-event), and it MUST ensure compliance with the requirements and guidelines 
+    of this profile.
+
+    ## **Prereqisites**:
+    
+    The Health Record System shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (telematik-id or kvnr)
+    - indication of a valid entitlement 
+    of the current user (requestor) for evaluation in operations.
+
+    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    and a valid ID-Token. If one of these conditions is not met, then the response
+    of the (aborted) operation shall always be '403': 'notEntitled'. 
+
+    ## **Retry interval**:
+    
+    The following retry intervals are suggested in case of an error response:<br>
+    - '409' Conflict (statusMismatch).
+      - approx. 24 hours
+    - '500' Internal Error
+      - approx. 10 minutes
+
+    ## **User Agent**:
+  
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+  contact:
+    name: gematik GmbH
+    url: 'https://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 0.0.1
+
+servers:
+- url: https://www.example.com/api
+
+tags:
+- name: AuditEvent
+  description: The AuditEvent FHIR resource type
+
+paths:
+  /audit/v1/fhir/AuditEvent:
+    get:
+      tags:
+      - AuditEvent
+      operationId: listAuditEvents
+      summary: "search-type: Search for AuditEvent instances"
+      description: |
+        
+        ## **Allowed user groups [professionOID]**
+        - oid_versicherter
+        - oid_ombudsstelle
+
+        ## **Pagination**
+
+        The AuditEvent Service supplies the client with page navigation information in its response.
+        
+        #### **URL parameter**:
+        To implement the pagination function, the URL parameters ***_count*** and ***_offset*** are used. ***_count*** determines the number of entries per page, while ***_offset*** indicates the starting element of the page. Additionally, ***_total*** is a parameter that decides if the total number of entries should be included in the response.
+
+        | URL parameter | Description | Default |
+        |---------------|-------------|---------|
+        | _count | The client can specify the maximum number of elements to be included on one "page" of the response. This means the AuditEvent Service limits the result set to this maximum specified number. | 25 |
+        | _offset | This parameter indicates the (zero-based) offset of the first returned element in the collection. | 0 |
+        | _total | This parameter controls whether and how the AuditEvent Service returns the total number of search results. The following values can be set: none, estimate, accurate | |
+
+        Values for ***_total***:
+        - **none** (default): The total number of search hits is not displayed.
+        - **estimate**: The approximate total number of search hits is displayed.
+        - **accurate**: The exact total number of search hits is displayed.
+
+        ##### **Example**: Request for 10 elements, starting with element 20 of the list:
+        ```
+        GET [BASE]/audit/v1/fhir/AuditEvent?_count=10&_offset=20
+        ```
+        ##### **Example**: Request for the first 5 elements:
+        ```
+        GET [BASE]/audit/v1/fhir/AuditEvent?_count=5
+        ```
+        ##### **Example**: Requesting only the total count of entries:
+        ```
+        GET [BASE]/audit/v1/fhir/AuditEvent?_count=0&_total=accurate
+        ```
+        ### **Links for page navigation**
+        In a FHIR searchset bundle, the links attribute contains an array of link elements, each serving a specific navigational purpose within the bundle. The following relations are provided according to [Link Relation Types](https://www.iana.org/assignments/link-relations/link-relations.xhtml#link-relations-1). 
+        
+        These include:
+        - **self**: A link to the current page of results, representing the query that generated these results.
+        - **first**: Directs to the first page of search results, allowing quick navigation to the start of a result set.
+        - **last**: Takes the user to the last page of results, useful for moving to the end of a large dataset.
+        - **next**: Used for moving forward to the next page of results, following the set pagination.
+        - **previous**: Allows going back to the previous set of results, facilitating backward navigation through pages.
+
+        Each link comes with a URL to fetch the corresponding set of results, dynamically generated based on the search query and pagination parameters like **_count** and **_offset**. These links simplify client navigation through large data sets by eliminating the need for manual adjustment of query parameters.
+
+        #### **Example**:
+        ```json
+        {
+          "resourceType": "Bundle",
+          "id": "86604fc1-b356-57e3-8738-8ef36c8d608c",
+          "type": "searchset",
+          "total": 100,
+          "link": [
+            {
+              "relation": "self",
+              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=20"
+            },
+            {
+              "relation": "first",
+              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=0"
+            },
+            {
+              "relation": "previous",
+              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=10"
+            },
+            {
+              "relation": "next",
+              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=30"
+            },
+            {
+              "relation": "last",
+              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=90"
+            }
+          ],
+          "entry": [
+            {
+              "fullUrl": "http://example.com/audit/v1/fhir/AuditEvent/5abff610-a1ad-450d-aa63-a60622b1052e",
+              "resource": {
+                "resourceType": "AuditEvent",
+                "id": "5abff610-a1ad-450d-aa63-a60622b1052e",
+                // Details of the AuditEvent resource
+              }
+            },
+            // More AuditEvent entries
+          ]
+        }
+        ```
+        ## **Search**
+        
+        The FHIR interface of the Medication Service supports standard FHIR search operations in line with the guidelines 
+        set out in the FHIR R4 documentation ([FHIR R4 Search](https://hl7.org/fhir/R4/search.html)). When a search is conducted, it returns a Searchset Bundle, specifically 
+        configured for resources such as Medication, MedicationRequest, MedicationDispense, Organization, and Practitioner.
+        This allows for structured and efficient access to relevant health data and ensures compliance with FHIR standards, 
+        ensuring optimal compatibility and interoperability across various health systems.
+
+        ### Comparators and Precision for Numbers, Dates, and Quantities
+        
+        In a search involving numerical or date parameters, the values used depend on the precision of the provided parameter. 
+        For example, for the date 2023-11-11, the range extends from 2023-11-11, at 00:00:00 (inclusive) to 2023-11-12, at 00:00:00 
+        (exclusive).
+
+        #### Prefix 
+
+        In FHIR, all clinically relevant floating point numbers are represented by types such as [decimal](https://hl7.org/fhir/R4/datatypes.html#decimal) 
+        and [quantity](https://hl7.org/fhir/R4/datatypes.html#Quantity), which capture the precision of the stored value. However, 
+        this excludes some fields that use simple integers. Search operations in these fields result in exact numerical matches.
+        In numerical ([number](https://hl7.org/fhir/R4/search.html#number), [quantity](https://hl7.org/fhir/R4/search.html#quantity)) 
+        comparisons with a singular value, specific prefixes are applicable. When a prefix is not provided, ``eq`` is used 
+        as the default. [FHIR R4 Search Prefix](https://hl7.org/fhir/R4/search.html#prefix)
+
+        | Prefixes | Description |
+        |----------|-------------|
+        | ``eq`` | The value of the parameter in the resource is equal to the value that has been provided. |
+        | ``ne`` | The value of the parameter in the resource is not equal to the value that has been provided. |
+        | ``gt`` | The value for the parameter in the resource is greater than the value provided |
+        | ``lt`` | The value for the parameter in the resource is less than the value that has been provided |
+        | ``ge`` | The value for the parameter in the resource is greater or equal than the value provided |
+        | ``le`` | The value for the parameter in the resource is greater or less than the value provided |
+
+        Date values have a range based on their precision (year, month, day). For types like [Range](https://hl7.org/fhir/R4/datatypes.html#Range) or 
+        [Period](https://hl7.org/fhir/R4/datatypes.html#Period), clear upper and lower limits are defined. There are specific prefixes for comparisons in these cases. 
+        If no prefix is specified, ``eq`` is the default choice.
+      
+        | Prefixes | Description |
+        |----------|-------------|
+        | ``eq`` | The range of the search value fully contains the range of the target value |
+        | ``ne`` | The range of the search value does not fully contain the range of the target value |
+        | ``gt`` | The range above the search value overlaps with the target value's range |
+        | ``lt`` | The range below the search value overlaps with the target value's range |
+        | ``ge`` | The range above the search value either overlaps over or completely includes the range of the target value |
+        | ``le`` | The range below the search value either overlaps over or completely includes the range of the target value |
+        | ``sa`` | The parameter value range starts after the target range |
+        | ``eb`` | The parameter value range ends before the target range |
+
+        #### Examples:
+        ##### *All AuditEvents updated before January 15, 2025.*
+        ```
+        GET [base]/audit/v1/fhir/AuditEvent?_lastUpdated=lt2025-15-01 
+        ```
+        ##### *All AuditEvents after January 15, 2025.*
+        ```
+        GET [base]/audit/v1/fhir/AuditEvent?date=gt2025-15-01 
+        ```
+
+        ### **AuditEvent Search Parameters**
+        #### Standard Search parameters for all resources 
+
+        ***_id***: Refers to the logical id of the resource (AuditEvent.id).
+        ##### Example
+        ``GET [base]/audit/v1/fhir/AuditEvent?_id=eeb3b455-4fba-44c9-b522-7192fd3d40b8``
+
+        ***_lastUpdated***: Can be used to select audit events on the last time they were changed.
+        ##### Example
+        ``GET [base]/audit/v1/fhir/AuditEvent?_lastUpdated=2025-15-01``
+
+        | Name | Type | Description | Expression |
+        |------|------|-------------|------------|
+        | _id | [token](https://hl7.org/fhir/R4/search.html#token) | The logical id of the resource | AuditEvent.id |
+        | _lastUpdated | | Can be used to select resources based on the</br>last time they were changed | |
+        | action | [token](https://hl7.org/fhir/R4/search.html#token) | Type of action performed during the event | AuditEvent.action |
+        | altid | [string](https://hl7.org/fhir/R4/search.html#string) | Alternative User identity (e.g. Telematik-ID or the KVNR) | AuditEvent.agent.altId |
+        | date | [date](https://hl7.org/fhir/R4/search.html#date) | Time when the event was recorded | AuditEvent.recorded	 |
+        | outcome | [token](https://hl7.org/fhir/R4/search.html#token) | Whether the event succeeded (0) or failed (4) | AuditEvent.outcome |
+        | type | [token](https://hl7.org/fhir/R4/search.html#token) | Type/identifier of event | AuditEvent.type |
+        | entity-name | [string](https://hl7.org/fhir/R4/search.html#string) | Descriptor for entity | AuditEvent.entity.name |
+
+        #### **Example**:
+        ##### *All AuditEvents since January 15, 2025 and from the general medical practice "Praxis Dr. John Doe"*
+        ```
+        GET [base]/audit/v1/fhir/AuditEvent?date=ge2025-15-01&altid=1-883110000092404
+        ```
+        ##### *All AuditEvents from January 15, 2025 and all AuditEvents that have been created*
+        ```
+        GET [base]/audit/v1/fhir/AuditEvent?date=2025-15-01&action=C
+        ```
+
+        ## **Error Handling**
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Unknown search parameter | 400 | | OperationOutcome | 
+        | Invalid date/time format | 400 | | OperationOutcome | 
+        | Invalid prefix | 400 | | OperationOutcome |
+        | Invalid query parameter(s) | 400 | | OperationOutcome | 
+        | Invalid request | 400 | | OperationOutcome | 
+        | Unknown resource type | 404 | | OperationOutcome |
+        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - name: _count
+          in: query
+          description: | 
+            With "_count", the client can specify the maximum number of elements to be included on 
+            one "page" of the response. This means the AuditEvent Service limits the result set to 
+            this maximum specified number. If no value for "_count" is provided, the default value set is "25".
+          schema:
+            type: integer
+        - name: _offset
+          in: query
+          description: | 
+            This URL parameter indicates the (zero-based) offset of the first returned element in the collection. 
+            If no value for "_offset" is provided, the default value set is "0".
+          schema:
+            type: integer
+        - name: _total
+          in: query
+          description: This parameter controls whether and how the AuditEvent Service returns the total number of search results.
+          schema:
+            type: string
+        - name: _id
+          in: query
+          required: false
+          description: The logical id of the resource
+          schema:
+            type: string
+        - name: _lastUpdated
+          in: query
+          description: Can be used to select resources based on the last time they were changed
+          schema:
+            type: string
+            format: date
+        - name: date
+          in: query
+          description: Time when the event was recorded
+          schema:
+            type: string
+            format: date
+        - name: altid
+          in: query
+          description: Alternative User identity (e.g. Telematik-ID or the KVNR)
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Type/identifier of event
+          schema:
+            type: string
+        - name: action
+          in: query
+          description: Type of action performed during the event
+          schema:
+            type: string
+        - name: entity-name
+          in: query
+          description: Descriptor for entity
+          schema:
+            type: string
+        - name: outcome
+          in: query
+          description: Whether the event succeeded (0) or failed (4)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent_SearchSet_Bundle'
+        '400':
+          $ref: '#/components/responses/OperationOutcome400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/OperationOutcome404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /audit/v1/fhir/AuditEvent/{id}:
+    get:
+      tags:
+      - AuditEvent
+      operationId: getAuditEventById
+      summary: "read-instance: Read AuditEvent instance"
+      description: |
+        ## **Allowed user groups [professionOID]**
+        - oid_versicherter
+        - oid_ombudsstelle
+
+        ## **Error Handling**
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Unknown search parameter | 400 | | OperationOutcome | 
+        | Invalid date/time format | 400 | | OperationOutcome | 
+        | Invalid prefix | 400 | | OperationOutcome |
+        | Invalid query parameter(s) | 400 | | OperationOutcome | 
+        | Invalid request | 400 | | OperationOutcome | 
+        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+        | Resource is not known | 404 | | OperationOutcome |
+        | Unknown resource type | 404 | | OperationOutcome |
+        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - name: id
+          in: path
+          description: The resource ID
+          required: true
+          style: simple
+          schema:
+            type: string
+            format: uuid
+          example: 86604fc1-b356-57e3-8738-8ef36c8d608c
+
+      responses:
+        "200":
+          description: Success
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent'
+              examples:
+                XDSDocumentService:
+                  $ref: '#/components/examples/AuditEvent_XDS_Document_Service'
+                AuditEvent_Medication_Service:
+                  $ref: '#/components/examples/AuditEvent_Medication_Service'
+                AuditEvent_Medication_Service_Search:
+                  $ref: '#/components/examples/AuditEvent_Medication_Service_Search'
+        '400':
+          $ref: '#/components/responses/OperationOutcome400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/OperationOutcome404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  
+components:
+  responses:
+    Error403Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          examples:
+            notEntitled:
+              summary: Requestor has no valid entitlement
+              value:
+                errorCode: notEntitled
+            invalidOid:
+              summary: Requestor role is not in the list of allowed usergroups
+              value:
+                errorCode: invalidOid
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          example:
+            errorCode: statusMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    OperationOutcome400BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          examples:
+            unknown_search_parameter:
+              summary: Unknown search parameter
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Unknown search parameter"
+            invalid_date_format:
+              summary: Invalid date format
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Invalid date/time format"
+            invalid_prefix:
+              summary: Invalid prefix
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Invalid prefix"
+            invalid_query_parameter:
+              summary: Invalid query parameter(s)
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Invalid query parameter(s)"
+            invalid_request:
+              summary: Invalid request
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: not-supported
+                    diagnostic: "Invalid request"
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+
+    OperationOutcome404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          examples:
+            resource_not_known:
+              summary: Resource is not known
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Resource is not known"
+            unknown_resource_type:
+              summary: Unknown resource type
+              value:
+                resourceType: OperationOutcome
+                issue:
+                  - severity: error
+                    code: processing
+                    diagnostic: "Unknown resource type"
+          schema:
+            $ref: '#/components/schemas/OperationOutcome'
+
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+
+  schemas:
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+
+    UserAgentType:
+      type: string
+      pattern: '[a-zA-Z0-9_\-\+\.: \(\)]{1,20}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,23}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,20}'
+      description: Information about client software.
+      example: "Softwareprodukt XYZ/2.4.6/Hersteller ABC"
+
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
+
+    OperationOutcome:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          example: OperationOutcome
+        issue:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+              code:
+                type: string
+              diagnostic:
+                type: string
+
+    Meta:
+      type: object
+      description: The metadata about a resource. This is content in the resource
+        that is maintained by the infrastructure. Changes to the content may not always
+        be associated with version changes to the resource.
+      properties:
+        versionId:
+          description: The version specific identifier, as it appears in the version
+            portion of the URL. This values changes when the resource is created,
+            updated, or deleted.
+          type: string
+          pattern: "[A-Za-z0-9\\-\\.]{1,64}"
+          example: "1"
+
+        lastUpdated:
+          description: When the resource last changed - e.g. when the version changed.
+          type: string
+          format: date-time
+        profile:
+          description: A list of profiles (references to [[[StructureDefinition]]]
+            resources) that this resource claims to conform to. The URL is a reference
+            to [[[StructureDefinition.url]]].
+          type: array
+          items:
+            type: string
+            example: https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
+
+    Resource:
+      description: This is the base resource type for everything.
+      type: object
+      properties:
+        id:
+          description: The logical id of the resource, as used in the URL for the
+            resource. Once assigned, this value never changes.
+          type: string
+          pattern: "[A-Za-z0-9\\-\\.]{1,64}"
+          example: "86604fc1-b356-57e3-8738-8ef36c8d608c"
+
+    AuditEvent_SearchSet_Bundle:
+      description: "Contains a collection of resources + Rule: entry.search only when a search"
+      allOf:
+      - $ref: "#/components/schemas/Resource"
+      - type: object
+        properties:
+          resourceType:
+            type: string
+            enum:
+            - Bundle
+          meta:
+            type: object
+            properties:
+              lastUpdated:
+                description: When the resource last changed - e.g. when the version changed.
+                type: string
+                format: date-time
+          type:
+            description: "222"
+            type: string
+            enum:
+            - searchset
+          total:
+            type: integer
+            minimum: 0
+            example: 1
+          link:
+            type: array
+            items:
+              type: object
+              properties:
+                relation:
+                  type: string
+                  enum:
+                  - self
+                  - next
+                  - previous
+                  - first
+                  - last
+                url:
+                  type: string
+                  description: Reference details for the link, A Uniform Resource Locator (RFC 1738 ). 
+                    Note URLs are accessed directly using the specified protocol. Common URL protocols are http{s}.
+            example:
+              - relation: self
+                url: url
+          entry:
+            type: array
+            items:
+              type: object
+              properties:
+                fullUrl:
+                  type: string
+                  description: "URI for resource (Absolute URL server address or URI for UUID/OID)"
+                resource:
+                  $ref: '#/components/schemas/AuditEvent'
+                search:
+                  type: object
+                  description: Search related information
+                  properties:
+                    mode:
+                      type: string
+                      description: match | include | outcome - why this is in the result set
+                      enum:
+                      - match
+                      - include
+                      - outcome
+                      example: match
+
+    Coding:
+      type: object
+      description: A reference to a code defined by a terminology system.
+      properties:
+        system:
+          description: The identification of the code system that defines the meaning
+            of the symbol in the code.
+          type: string
+        code:
+          description: A symbol in syntax defined by the system. The symbol may be
+            a predefined code or an expression in a syntax defined by the coding system
+            (e.g. post-coordination).
+          type: string
+
+    CodeableConcept:
+      type: object
+      description: A concept that may be defined by a formal reference to a terminology
+        or ontology or may be provided by text.
+      properties:
+        coding:
+          description: A reference to a code defined by a terminology system.
+          type: array
+          items:
+            $ref: '#/components/schemas/Coding'
+
+    AuditEvent:
+      description: |
+        A record of an event made for purposes of maintaining a security
+        log. Typical uses include detection of intrusion attempts and monitoring for
+        inappropriate usage.
+      allOf:
+      - $ref: "#/components/schemas/Resource"
+      - type: object
+        properties:
+          resourceType:
+            description: This is a AuditEvent resource
+            type: string
+            enum:
+            - AuditEvent
+          meta:
+            $ref: "#/components/schemas/Meta"
+          type:
+            description: Identifier for a family of the event.  For example, a menu
+              item, program, rule, policy, function code, application name or URL. It
+              identifies the performed function.
+            $ref: '#/components/schemas/Coding'
+          action:
+            description: Indicator for type of action performed during the event that
+              generated the audit.
+            enum:
+            - C
+            - R
+            - U
+            - D
+            - E
+            type: string
+          recorded:
+            description: The time when the event occurred on the source.
+            type: string
+            format: date-time
+          outcome:
+            description: Indicates whether the event succeeded or failed.
+            enum:
+            - '0'
+            - '4'
+            - '8'
+            - '12'
+            type: string
+          agent:
+            description: An actor taking an active role in the event or activity that
+              is logged.
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditEvent_Agent'
+          source:
+            description: The system that is reporting the event.
+            $ref: '#/components/schemas/AuditEvent_Source'
+          entity:
+            description: Specific instances of data or objects that have been accessed.
+            type: array
+            items:
+              $ref: '#/components/schemas/AuditEvent_Entity'
+
+    AuditEvent_Agent:
+      type: object
+      description: A record of an event made for purposes of maintaining a security
+        log. Typical uses include detection of intrusion attempts and monitoring for
+        inappropriate usage.
+      properties:
+        type:
+          description: Specification of the participation type the user plays when performing the event.
+          $ref: '#/components/schemas/CodeableConcept'
+            
+        who:
+          description: Identifies the agent. Identifier of who
+          type: object
+          properties:
+            identifier:
+              type: object
+              properties:
+                system:
+                  type: string
+                  enum:
+                    - https://gematik.de/fhir/sid/telematik-id
+                    - http://fhir.de/sid/gkv/kvid-10
+                    - https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
+                value:
+                  type: string
+        altId:
+          description: Alternative User identity (e.g. Telematik-ID or the KVNR)
+          type: string
+        name:
+          description: Human-meaningful name for the agent.
+          type: string
+        requestor:
+          description: Indicator that the user is or is not the requestor, or initiator,
+            for the event being audited.
+          type: boolean
+          example: false
+
+    AuditEvent_Source:
+      type: object
+      description: A record of an event made for purposes of maintaining a security
+        log. Typical uses include detection of intrusion attempts and monitoring for
+        inappropriate usage.
+      properties:
+        observer:
+          description: Identifier of the source where the event was detected.
+          type: object
+          properties: 
+            display:
+              type: string
+              example: Elektronische Patientenakte Fachdienst
+        type:
+          description: "Code specifying the type of source where event originated. CDMGMT | ENTITMGMT | DEVICEMGMT | HRRSVC | XDSSVC | MEDICATIONSVC | CONMGMT"
+          type: object
+          properties:
+            code:
+              type: string
+            display:
+              type: string
+
+    AuditEvent_Entity:
+      type: object
+      description: Data or objects used
+      properties:
+        name:
+          description: The title of the XDS document, FHIR resource or object name of a service (e.g. Entitlement Service, Device Management, ...)
+          type: string
+        description:
+          description: The OperationId
+          type: string
+        detail:
+          description: Tagged value pairs for conveying additional information about
+            the entity.
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent_Detail'
+
+    AuditEvent_Detail:
+      type: object
+      description: A record of an event made for purposes of maintaining a security
+        log. Typical uses include detection of intrusion attempts and monitoring for
+        inappropriate usage.
+      properties:
+        type:
+          description: The Name of the property (e.g. Document Format, DocumentID, ...).
+          type: string
+        valueString:
+          description: Property value (e.g. urn:gematik:ig:Zahnbonusheft:v1.1.0)
+          type: string
+                                
+
+  examples:
+    AuditEvent_XDS_Document_Service:
+      summary: "Example AuditEvent from the XDS Document Service"
+      value:
+        id: 86604fc1-b356-57e3-8738-8ef36c8d608c
+        meta:
+          versionId: 1
+          lastUpdated: '2025-01-15T14:43:33.244Z'
+          profile: 
+            - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
+        resourceType: AuditEvent
+        type:
+          system: http://terminology.hl7.org/CodeSystem/audit-event-type
+          code: document
+        action: U
+        recorded: "2025-01-15T14:52:04.928Z"
+        outcome: 0
+        agent:
+          type:
+            coding:
+              - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
+                code: PROV
+                display: healthcare provider
+          who:
+            identifier:
+              system: https://gematik.de/fhir/sid/telematik-id
+              value: 1-883110000092404
+          altId: 1-883110000092404
+          name: Praxis Dr. John Doe
+        source:
+          observer:
+            display: Elektronische Patientenakte Fachdienst
+          type:
+            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            code: XDSSVC
+            display: XDS Document Service
+        entity:
+          - name: Zahnbonusheft
+            description: operation:provide-and-register-document-set-b
+            detail:
+              - type: Document Format
+                valueString: urn:gematik:ig:Zahnbonusheft:v1.1.0
+
+    AuditEvent_Medication_Service:
+      summary: "Example AuditEvent from the Medication Service"
+      value:
+        id: 669699b2-f131-4097-b13d-71413a58aa92
+        meta:
+          versionId: 1
+          lastUpdated: '2025-01-15T14:43:33.244Z'
+          profile: 
+            - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
+        resourceType: AuditEvent
+        type:
+          system: http://terminology.hl7.org/CodeSystem/audit-event-type
+          code: rest
+        action: U
+        recorded: "2025-01-15T14:52:04.928Z"
+        outcome: 0
+        agent:
+          type:
+            coding:
+              - system: http://dicom.nema.org/resources/ontology/DCM
+                code: 110150
+                display: Application
+          who:
+            identifier:
+              system: https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
+              value: ERP
+          altId: ERP
+          name: E-Rezept-Fachdienst
+        source:
+          observer:
+            display: Elektronische Patientenakte Fachdienst
+          type:
+            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            code: MEDICATIONSVC
+            display: Medication Service
+        entity:
+          - name: MedicationDispense
+            description: operation:cancel-dispensation
+
+    AuditEvent_Medication_Service_Search:
+      summary: "Example AuditEvent from the Medication Service for search"
+      value:
+        id: 669699b2-f131-4097-b13d-71413a58aa92
+        meta:
+          versionId: 1
+          lastUpdated: '2025-01-15T14:43:33.244Z'
+          profile: 
+            - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
+        resourceType: AuditEvent
+        type:
+          system: http://terminology.hl7.org/CodeSystem/audit-event-type
+          code: rest
+        action: R
+        recorded: "2025-01-15T14:52:04.928Z"
+        outcome: 0
+        agent:
+          type:
+            coding:
+              - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
+                code: PROV
+                display: healthcare provider
+          who:
+            identifier:
+              system: https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
+              value: ERP
+          altId: ERP
+          name: E-Rezept-Fachdienst
+        source:
+          observer:
+            display: Elektronische Patientenakte Fachdienst
+          type:
+            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            code: MEDICATIONSVC
+            display: Medication Service
+        entity:
+          - name: MedicationRequest
+            description: Bundle:searchset
+            detail:
+              - type: date
+                valueString: 2025-01-15
+              - type: _revinclude
+                valueString: MedicationDispense:authorizingPrescription

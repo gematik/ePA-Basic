@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Authorization Service
+  description: |
+
+    This interface provides access to Authorization Service.</br>
+    Through this interface, client systems can carry out user authentication. There are different ways
+    - Authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance
+    - Authentication of other client systems through the central IDP
+    - 
+
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prereqisites**:</br>
+    For insured and representatives
+    - The sektorale IDP of Health insurance is registered with the TI-Federation
+    - The authorization service of a Health Record System is registered with the TI-Federation
+    - The authenticator modul of the sektorale IDP ist part of the frontend application on insured's device 
+    For other client systems
+    - The authorization service of a Health Record System is registered with the central IDP
+    
+
+    **Audit Logging**</br>
+    TODO
+  contact:
+    name: gematik GmbH
+    url: 'https://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 0.0.1
+
+servers:
+- url: https://www.example.com/api
+
+tags:
+- name: Authorization FdV
+  description: This interface method enables the authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance 
+- name: Authorization SMC-B
+  description: This interface method enables the authentication of other client systems through the central IDP
+- name: Authorization BearerToken
+  description: This interface method enables the authorization of applications through a BearerToken  
+
+
+paths:
+  /authorizationservice/v1/card/getNonce:
+    get:
+      tags:
+        - Authorization SMC-B
+      operationId: nonce
+      summary: Generation of random value
+      description: |
+        Nonce is a generated random value. The authorization service saves the generated nonce to the client_id.
+        The applicant must sign the nonce. The signed nonce is a parameter of the requester's authorization request.
+      parameters:
+        - $ref: '#/components/parameters/clientid'
+      responses:
+        '200':
+          $ref: '#/components/responses/Nonce200'
+          description: "OK"
+          content:
+            parameters:
+              schema:
+                type: string
+                format: uuid
+                example: edfrcdhzbnrzhvstztz
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  /authorizationservice/v1/card/sendAuthorizationRequestSc:
+    post:
+      tags:
+        - Authorization SMC-B
+      operationId: authorizationRequestSC
+      summary: authorization of client systems using SMC-B
+      description: |
+        TODO
+      parameters:
+        - $ref: '#/components/parameters/clientid'
+        - $ref: '#/components/parameters/state'
+      responses:
+        '201':
+          $ref: '#/components/responses/AuthorizationRequestSC200'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+              examples:
+                notEntitled:
+                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
+                invalidOid:
+                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /authorizationservice/v1/card/sendAuthCodeSc:
+    post:
+      tags:
+        - Authorization SMC-B
+      operationId: authcode
+      summary: TODO
+      description: |
+        send AUTH_CODE
+
+      parameters:
+        - $ref: '#/components/parameters/authcode'
+        - $ref: '#/components/parameters/clientAttest'
+        - $ref: '#/components/parameters/state'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthCodeRequestSC200'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+              examples:
+                notEntitled:
+                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
+                invalidOid:
+                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+                notRegisteredOrVerified:
+                  $ref: '#/components/examples/Error403ForbiddenNotRegisteredOrVerified'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  
+  /authorizationservice/v1/fdv/sendAuthorizationRequestFdv:
+    post:
+      tags:
+        - Authorization FdV
+      operationId: authorizationRequestFdv
+      summary: authentication of the insured or representative with the insured's device
+      description: |
+        TODO
+      parameters:
+        - $ref: '#/components/parameters/clientid'
+        - $ref: '#/components/parameters/idpiss'
+        - $ref: '#/components/parameters/deviceIdentifier'
+        - $ref: '#/components/parameters/state'
+      responses:
+        '201':
+          $ref: '#/components/responses/AuthorizationRequestFdv200'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+              examples:
+                notEntitled:
+                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
+                invalidOid:
+                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /authorizationservice/v1/fdv/sendAuthCodeFdv:
+    post:
+      tags:
+        - Authorization FdV
+      operationId: authcodeFdV
+      summary: TODO
+      description: |
+        send AUTH_CODE
+      parameters:
+        - $ref: '#/components/parameters/authcode'
+        - $ref: '#/components/parameters/deviceIdentifier'
+        - $ref: '#/components/parameters/state'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthCodeRequestFdv200'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+              examples:
+                notEntitled:
+                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
+                invalidOid:
+                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+                notRegisteredOrVerified:
+                  $ref: '#/components/examples/Error403ForbiddenNotRegisteredOrVerified'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  /authorizationservice/v1/fdv/logout:
+    get:
+      tags:
+        - Authorization FdV
+      operationId: logoutFdV
+      summary: active logout
+      description: |
+        logout
+      responses:
+        '200':
+          $ref: '#/components/responses/Logout200'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  
+  /authorizationservice/v1/token/sendAuthorizationRequestBearerToken:
+    post:
+      tags:
+        - Authorization BearerToken
+      operationId: authorizationRequestBearerToken
+      summary: authorization of application using BearerToken
+      description: |
+        TODO
+      parameters:
+        - $ref: '#/components/parameters/idtoken'
+      responses:
+        '201':
+          $ref: '#/components/responses/AuthorizationRequestIdToken200'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+              examples:
+                notEntitled:
+                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
+                invalidOid:
+                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'  
+
+components:
+  parameters:
+    clientid:
+      name: clientid
+      in: header
+      description: ID of the registered client.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: epaAktensystem007
+    idpiss:
+      name: idpIdentifier
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/IdpIssType'
+    deviceIdentifier:
+      name: deviceIdentifier
+      in: header
+      description: The Device Identifier should be set in the header. When this is combined with the 'x-device token' header, it results in a unique authorization for the device
+      required: true
+      schema:
+        type: string
+        example: 4ab42e19-7d33-40fa-949f-3499135b910b
+    clientAttest:
+      name: client-attestation 
+      in: header
+      description: signed nonce
+      required: true
+      schema:
+        $ref: '#/components/schemas/clientAttestType'
+    state:
+      name: state
+      in: header
+      description: state
+      required: false
+      schema:
+        type: string
+        format: uuid
+        example: af0ifjsldkj
+    authcode:
+      name: code
+      in: header
+      description: Authorization Code generated through IDP
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: dfkldfsnflarnflerjfarlelagl
+    idtoken:
+      name: ID-Token 
+      in: header
+      description: signed ID-Token
+      required: true
+      schema:
+        $ref: '#/components/schemas/IdTokenType'
+    
+  responses:
+    Nonce200:
+      description: "OK"
+      content:
+        application/json:
+          example: 
+            nonce: edfrcdhzbnrzhvstztz
+          schema:
+            description: generated nonce
+            type: string            
+    
+    AuthorizationRequestSC200:
+      description: "OK"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthorizationResponseScType'
+    
+    AuthCodeRequestSC200:
+      description: "OK"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthCodeResponseScType'
+    
+    
+    AuthorizationRequestFdv200:
+      description: "OK"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthorizationResponseFdvType'
+    
+    AuthCodeRequestFdv200:
+      description: "OK"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthCodeResponseFdvType'
+    
+    Logout200:
+      description: "OK"
+
+    AuthorizationRequestIdToken200:
+      description: "OK"
+      
+    
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+
+  schemas:
+    ClientType:
+      type: string
+      description: TODO
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    
+    IdpIssType:
+      type: string
+      description: TODO
+      example: https://idp_kk.de
+    
+    clientAttestType:
+      type: string
+    
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
+
+    
+    IdTokenType:
+      type: string
+    
+    AuthorizationResponseFdvType:
+      description: AuthorizationResponseFdv
+      type: object
+      properties:
+        clientid:
+          readOnly: true
+          type: string
+          format: uuid
+        requestUri:
+          readOnly: true
+          type: string
+        
+    AuthCodeResponseFdvType:
+      type: object
+      properties:
+        state:
+          readOnly: true
+          type: string
+          format: uuid
+
+    AuthorizationResponseScType:
+      description: AuthorizationResponseSc
+      type: object
+      properties:
+        clientid:
+          readOnly: true
+          type: string
+          format: uuid
+        state:
+          readOnly: true
+          type: string
+          format: uuid
+        redirectUri:
+          type: string
+          example: https://idpdienst.de/auth
+        codeChallenge:
+          readOnly: true
+          type: string
+          format: uuid
+        codeChallengeMethod:
+          readOnly: true
+          type: string
+          example: S256
+        responseType:
+          readOnly: true
+          type: string
+          format: code  
+        nonce:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          example: openid+ePA
+
+    AuthCodeResponseScType:
+      type: object
+      properties:
+        state:
+          readOnly: true
+          type: string
+          format: uuid      
+        
+
+  examples:
+    Error403ForbiddenNotEntitled:
+      summary: Requestor has no valid entitlement
+      value:
+        errorCode: notEntitled
+
+    Error403ForbiddenInvalidOid:
+      summary: Requestor role is not in the list of allowed usergroups
+      value:
+        errorCode: invalidOid
+
+    Error403ForbiddenNotRegisteredOrVerified:
+      summary: Device is either not registered or not verified
+      value:
+        errorCode: notRegisteredOrVerified

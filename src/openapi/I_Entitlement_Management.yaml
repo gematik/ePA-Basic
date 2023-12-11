@@ -1,0 +1,383 @@
+openapi: 3.0.1
+info: 
+  title: Entitlement Management
+  description: |
+    This interface provides access to the **Entitlement Management** of a personal health 
+    record for health care institutions.<br/>
+    
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prereqisites**:</br>
+    The Health Record System shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (telematik-id or kvnr)
+    - indication of a valid entitlement 
+    
+    of the current user (requestor) for evaluation in operations.
+
+    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    and a valid ID-Token. If one of these conditions is not met, then the response
+    of the (aborted) operation shall always be '403': 'notEntitled'. 
+
+    **User Agent**:</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+    **Log-Entries**
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24928*.
+
+    **Open Issues**: (to be deleted for release)
+    - Beispiel für JWT fehlt noch (nur dummy bisher)
+
+  contact:
+    name: gematik GmbH
+    email: epa@gematik.de
+    url: 'http://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 0.0.1
+  
+  # version history:
+  # ----------------
+  # version 0.0.1
+  #   - initial version for review
+
+servers:
+  - url: 'https://example.com/api'
+
+tags:
+  - name: EntitlementManagement
+    description: |
+     An Entitlement addresses one particular user of a health record. A granted entitlement is required for
+     any user and enables general access to health care related data and services for a period of time.</br>
+     Entitlements are set by an insurant or representative via an ePA-FdV (see: I_Entitlement_Manageent_Insurant.yaml) 
+     or in a health care treatment situation with patient presense by means of this interface.
+
+     Entitlements are set by provision of a proof of audit as prepared by the VSDM Service of the TI in a patient
+     presense situation. This proof of audit substitutes the (not yet) existing entitlement granting access to 
+     the health care operation.
+     A valid proof of audit shall be signed by an smc-b associated to the health care institution demanding an 
+     entitlement. 
+
+     **Allowed usergroups for entitlements with proof of audit:**
+     Entitlements can only be set for particular users of defined roles. The following list of allowed roles (professionOid)
+     is for information only and may be incomplete, the normative requirement is defined in A_23941-*.
+     Each role has an associated default validity timeframe which shall apply for new entitlements:
+
+     | Allowed role</br>[professionOID] | default validity period</br>for _validTo_ in [days] |
+     |----------------------------------|------------------------------------|
+     | oid_praxis_arzt | 90 |
+     | oid_krankenhaus | 90 |
+     | oid_institution-vorsorge-reha | 90 |
+     | oid_zahnarztpraxis | 90 |
+     | oid_öffentliche_apotheke | 3 |
+     | oid_praxis_psychotherapeut | 90 |
+     | oid_institution-pflege | 90 |
+     | oid_institution-geburtshilfe | 90 |
+     | oid_praxis-physiotherapeut | 90 |
+     | oid_institution-oegd | 3 |
+     | oid_institution-arbeitsmedizin | 3 |
+
+     Calculating the _validTo_ attribute:</br>
+     _validTo_ = currentDate + default validity -1</br>
+     example: _validTo_ for oid_öffentliche_apotheke of an entitlement issued at 2025-01-01 is 2025-01-03.
+
+  - name: Selfdisclosure
+    description: Information about this API
+     
+paths:
+  /entitlementmanagement:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'      
+    post:
+      tags:
+        - EntitlementManagement
+      operationId: setEntitlementPs
+      summary: (setEntitlementPs) Set a single entitlement with proof of audit evidence
+      description: |
+       Set an entitlement with predefined validity period for the requesting user in a 
+       treatment situation.</br>
+       This operation is limited to users of the "Allowed usergroups for entitlements with proof of audit".
+       
+       **Client**:</br>
+       A client shall use this operation in a patient presense situation only, i.e. in case
+       the vsdm update service provides a proof of audit as result of a validation procedure
+       of a physical health insurance card (eGK) of the health record owner.
+
+
+       **Provider**:</br>
+       This operation does not require an existing entitlement for the requesting user. Instead,
+       an entitlement for this user shall be the result of this operation.
+
+       The lack of an existing entitlement for this operation is substituted by verifiable
+       evidence (JWT) associated to the health record owner acting as health record owner's explicite
+       permission for the requesting user to establish a new entitlement.
+       
+       The received JWT shall be passed to the HSM for entitlement verification, using rule _rr3_.
+
+       The HSM rule verifies JWT signature, _actorID_, _kvnr_ (associated health record) and claims
+       in a CMAC secured result _actorId_, _kvnr_ and _validTo_ (_validTo_ is applied by HSM according to 
+       user role). HSM verifies also consistence of requestor properties vs claims in JWT signature
+       and audit evidence.
+
+       The CMAC secured result shall be completed with the following data:
+       - _oid_ of the entitled user (from JWT or request context)
+       - _displayName_ of the entitled user (from JWT or request context)
+       - _issued-at_ current system time
+       - _issued-actorId_ of requestor (from request context)
+       - _issued-displayName_ of requestor (from request context)
+       
+       The completed entitlement shall NOT be stored and cause operation abortion in cases:
+       - _oid_ is not in the list of allowed usergroups (role)
+       - _actorId_ is referenced by a Blocked User Policy assignment
+
+       If an existing and stored entitlement addressing the same user exists and if this stored
+       entitlement indicates a _valildTo_ which is in the future of the new entitlement's _validTo_, 
+       then the existing entitlement shall be kept, else the completed new entitlement shall be stored, 
+       encrypted by SecureAdminStorageKey of the health record.</br>
+       If the new entitlement is stored, a possibly existing entitlement is deleted automatically.</br>
+       All above are success cases for this operation.
+       
+       The addressed user of the request shall be entitled after successful operation.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 201 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor has no valid entitlement | 403 | notEntitled ||
+       | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+       | HSM verification failed | 403 | invalidToken ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignmentr | 409 | requestMismatch ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement with earlier _validTo_ is replaced |
+       | The user addressed by the new entitlement is entitled | successful operation only |
+       | A log-entry for the operation exists | all operation results |
+       | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.1 |
+    
+      requestBody: 
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntitlementRequestType'
+            examples:
+              Request:
+                $ref: '#/components/examples/Set_SingleEntitlment'  
+
+      responses:
+        '201':
+          description: Ok. User is entitled
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /:
+    get:
+      tags:
+        - Selfdisclosure
+      operationId: getInfo
+      summary: Get API information
+      description: (getInfo) Returns the meta data of this interface.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoObject"
+        '500':
+          description: Internal Server Error
+
+components:
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error403Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          example:
+            errorCode: notEntitled
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+            requestMismatch:
+              value:
+                errorCode: requestMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+    actorId:
+      name: actorId
+      in: path
+      description: TelematikID
+      required: true
+      schema:
+        $ref: '#/components/schemas/TelematikIdType'
+
+  schemas:
+    TelematikIdType:
+      type: string
+      pattern: '[0-9]{1}[-]{1}\d{1,126}$'
+      example: 2-883110000118994
+    OidType:
+      description: A professionOID
+      type: string
+      pattern: '([0-2])((\.0)|(\.[1-9][0-9]*))*$'
+      example: '1.2.276.0.76.4.50'
+    DisplayNameType:
+      description: A readable name
+      type: string
+      example: 'Praxis Dr. Annamaria Heckhausén'
+    EntitlementRequestType:
+      description: |
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256"
+          - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+        - payload claims:
+          - "iat": issued at timestamp
+          - "exp": expiry timestamp (always iat + 20min)
+          - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+        - signature contains token signature
+      type: object
+      properties:
+        jwt:
+          type: string
+          format: application/jwt
+          pattern: ^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-\+\/=]+)$
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImF1ZGl0RXZpZGVuY2UiOiJ0byBiZSBkZWZpbmVkIn0=.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=="
+    UserAgentType:
+      description: Information about client software.
+      type: object
+      properties:
+        clientId:
+          type: string
+          pattern: '^[a-zA-Z0-9]{20}$'
+        version:
+          type: string
+          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
+      required:
+        - clientId
+        - version
+      additionalProperties: false
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
+    InfoObject:
+      description: "Self-disclosure of this interface"
+      required:
+        - title
+        - version
+      readOnly: true
+      type: object
+      properties:
+        title:
+          type: string
+          description: "Title of the application"
+          example: "Entitlement Management for health care institutions"
+        description:
+          type: string
+          description: "Short description of the application"
+          example: "This interface provides operations for clients of entitled health care institutions to set entitlements."
+        contact:
+          type: string
+          description: "Contact information"
+          example: "kontakt@<Betreibername>"
+        version:
+          type: string
+          description: "Interface version"
+          example: "1.0.0"
+
+  examples:
+    Set_SingleEntitlment:
+      summary: An entitlement request (dummy data).
+      value:
+        jwt: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImF1ZGl0RXZpZGVuY2UiOiJ0byBiZSBkZWZpbmVkIn0=.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=="
+ 

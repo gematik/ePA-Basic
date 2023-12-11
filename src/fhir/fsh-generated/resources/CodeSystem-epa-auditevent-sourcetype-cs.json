@@ -1,0 +1,43 @@
+{
+  "resourceType": "CodeSystem",
+  "status": "draft",
+  "content": "complete",
+  "name": "EPAAuditEventSourceTypeCS",
+  "id": "epa-auditevent-sourcetype-cs",
+  "description": "EPAAuditEventSourceTypeCS",
+  "url": "https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs",
+  "concept": [
+    {
+      "code": "CDMGMT",
+      "display": "Consent Decision Management"
+    },
+    {
+      "code": "ENTITMGMT",
+      "display": "Entitlement Management"
+    },
+    {
+      "code": "DEVICEMGMT",
+      "display": "Device Management"
+    },
+    {
+      "code": "HRRSVC",
+      "display": "Health Record Relocation Service"
+    },
+    {
+      "code": "XDSSVC",
+      "display": "XDS Document Service"
+    },
+    {
+      "code": "MEDICATIONSVC",
+      "display": "Medication Service"
+    },
+    {
+      "code": "CONMGMT",
+      "display": "Constraint Management"
+    }
+  ],
+  "publisher": "gematik GmbH",
+  "version": "1.0.0",
+  "caseSensitive": true,
+  "count": 7
+}
