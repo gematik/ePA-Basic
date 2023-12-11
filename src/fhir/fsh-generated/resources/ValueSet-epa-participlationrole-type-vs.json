@@ -1,0 +1,40 @@
+{
+  "resourceType": "ValueSet",
+  "status": "draft",
+  "name": "EPAParticipationRoleTypeVS",
+  "id": "epa-participlationrole-type-vs",
+  "title": "EPAParticipationRoleTypeVS",
+  "url": "https://gematik.de/fhir/epa/ValueSet/epa-participlationrole-type-vs",
+  "publisher": "gematik GmbH",
+  "compose": {
+    "include": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-RoleClass",
+        "version": "3.1.0",
+        "concept": [
+          {
+            "code": "PROV",
+            "display": "healthcare provider"
+          },
+          {
+            "code": "CST",
+            "display": "custodian"
+          },
+          {
+            "code": "PAT",
+            "display": "patient"
+          }
+        ]
+      },
+      {
+        "system": "http://dicom.nema.org/resources/ontology/DCM",
+        "concept": [
+          {
+            "code": "110150",
+            "display": "Application"
+          }
+        ]
+      }
+    ]
+  }
+}

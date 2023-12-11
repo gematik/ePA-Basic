@@ -1,0 +1,529 @@
+openapi: 3.0.3
+info:
+  title: Device Management
+  description: |
+    This interface provides access to the **Device Management** of a health 
+    record system for insurants and representatives.<br/>
+    
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prereqisites**:</br>
+    The Health Record System shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (kvnr)
+
+    of the current user (requestor) for evaluation in operations.
+
+    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    and a valid ID-Token. If one of these conditions is not met, then the response
+    of the (aborted) operation shall always be '403': 'notEntitled'. 
+
+    **Retry interval**:</br>
+    The following retry intervals are suggested in case of an error response:<br>
+    - '409' Conflict (statusMismatch).
+      - approx. 24 hours
+    - '500' Internal Error
+      - approx. 10 minutes
+
+    **User Agent**:</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+    **Open Issues**: (to be deleted for release)
+    - Protokollierung muss noch auf den neuen Audit Service angepasst werden.
+
+  contact:
+    name: gematik GmbH
+    email: epa@gematik.de
+    url: 'http://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 0.0.1
+  
+  # version history:
+  # ----------------
+  # version 0.0.1
+  #   - initial version for review
+
+servers:
+  - url: 'https://example.com/api'
+
+tags:
+- name: DeviceManagement
+  description: |
+    Device Management allows a user to view a list of all devices registered to the user's kvnr, to 
+    change the registered displayName for easy recognition and to delete obsolete registrations
+
+- name: Selfdisclosure
+  description: Information about this API
+     
+paths:
+  /devicemanagement/devices:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/devicestatus'
+      tags:
+        - DeviceManagement
+      operationId: getDevices
+      summary: (getDevices) Get a list of all devices
+      description: |
+        Get a list of all devices registered for a user (associated to kvnr of requestor).</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        A client shall consider the schema for 'Paging' (see below).
+
+        **Provider**:</br>
+        The returned list shall contain only device registrations matching the query parameters.
+
+        Paging:</br>
+        _offset_ and _limit_ parameters shall be related to the amount of assignments matching the query and only occure 
+        once in a request. Default shall be for _offset_ = 0 and for _limit_ = 50 (this shall also be the maximum _limit_).
+        The applied _offset_ and _limit_ and the total amount of matching assignments shall be part of the response.</br>
+        _offset_ shall be a "page-offset" and is related to _limit_ which is the "page-size", e.g. if total amount of 
+        matching assignments is 75, than _offset_ = 0 with _limit_ = 40 return result 1 to 40 and _offset_ = 1 with _limit_ 
+        = 40 return result 41 to 75 and _offset_ = 2 with _limit_ = 40 return an 'empty' result.  
+        
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: object
+                    properties:
+                      offset:
+                        description: applied offset to matching results
+                        type: integer
+                        example: 0
+                      limit: 
+                        description: applied limit to matching results
+                        type: integer
+                        example: 25
+                      totalMatching:
+                        description: total amount of matching results in policies
+                        type: integer
+                        example: 1
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/DeviceType'
+              examples:
+                GetAllDevices:
+                  value:
+                    offset: 0
+                    limit: 25
+                    totalMatching: 4
+                    data:
+                      - deviceIdentifier: '549230be-9bfa-4e49-81bb-1e928c37274c'
+                        status: verified
+                        displayName: "my personal tablet"
+                        createdAt: 2025-07-01T12:00:00Z
+                        lastLogin: 2025-07-02T18:00:00Z
+                      - deviceIdentifier: 'aaec1b6e-7cb5-41a5-a761-da2d6d967f5e'
+                        status: verified
+                        displayName: "my new android phone"
+                        createdAt: 2025-08-01T12:00:00Z
+                      - deviceIdentifier: '8c405fcc-ca5d-4459-9809-43705a0a297d'
+                        status: verified
+                        displayName: "my old android phone"
+                        createdAt: 2025-02-01T12:00:00Z
+                        lastLogin: 2025-07-31T12:00:00Z
+                      - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
+                        status: pending
+                        displayName: "empty string or servcer defined entry, e.g. newDevice001"
+                        createdAt: 2025-12-24T20:00:00Z
+                GetPendingDevices:
+                  value:
+                    offset: 0
+                    limit: 25
+                    totalMatching: 1
+                    data:
+                      - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
+                        status: pending
+                        displayName: "empty string or servcer defined entry, e.g. newDevice001"
+                        createdAt: 2025-12-24T20:00:00Z
+                  
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /devicemanagement/v1/devices/{deviceidentifier}:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/deviceidentifier'
+    get:
+      tags:
+        - DeviceManagement
+      operationId: getDevice
+      summary: (getDevice) Get a device by deviceIdentifier
+      description: |
+        Retrieves information about a specific registered device.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        no recommendations.
+
+        **Provider**</br>
+        The device registration shall be associated to kvnr of requestor.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceType'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    put:
+      tags:
+        - DeviceManagement
+      operationId: updateDevice
+      summary: (updateDevice) Update device registration parameter displayName
+      description: |
+        Change the user defined _displayName_ of a specific device.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        A user may choose a readable name for a specific device registration 
+
+        **Provider**</br>
+        The device registration shall be associated to kvnr of requestor.
+
+        The changed device registration shall be returned. Timestamps of the registration
+        shall not be altered.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200|||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The _displayName_ of the addressed device registration is updated ||
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  $ref: '#/components/schemas/DisplayNameType'
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceType'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    delete:
+      tags:
+        - DeviceManagement
+      operationId: deleteDevice
+      summary: (deleteDevice) Delete a device registration
+      description: |
+        Deletes a device registration.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        A client shall double check _deviceidentifier_ and may abstain from deletion of
+        the device registration of the actual used device.
+
+        **Provider**</br>
+        The device registration shall be associated to kvnr of requestor.
+        The device registration shall be finally deleted.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200|||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The _displayName_ of the addressed device registration is updated ||
+        | A log-entry for the operation exists | all operation results |
+
+      responses:
+        '204':      
+          description: 'OK. Device registration deleted.'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /:
+    get:
+      tags:
+        - Selfdisclosure
+      operationId: getInfo
+      summary: Get API information
+      description: (getInfo) Returns the meta data of this interface.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoObject"
+        '500':
+          description: Internal Server Error
+
+components:
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+    deviceidentifier:
+      name: deviceidentifier
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/DeviceIdentifierType'
+    limit:
+      name: limit
+      in: query
+      description: Limits the number of matching items in a response ('pagesize', default and max = 50).
+      schema:
+        type: integer
+        maximum: 50
+        minimum: 1
+    offset:
+      name: offset
+      in: query
+      description: Specifies skipped matching pages ('pagesize' == limit), (default = 0).
+      schema:
+        type: integer
+    devicestatus:
+      name: devicestatus
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/DeviceStatusType'
+
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error403Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          example:
+            errorCode: invalidOid
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  schemas:
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    DeviceTokenType:
+      type: string
+      description: "Device tokens are strings with 64 hexadecimal symbols."
+      example: "fe6b98ac23a3df214612fd089494eb2946589012a94e91ba6ed57f9213ba520a"
+    DeviceIdentifierType:
+      type: string
+      format: uuid
+      description: "Unique identifier of a device registration"
+      example: "74f09dbc-9268-411f-81e7-f1e4f3fb1b4f"
+    DeviceStatusType:
+      description: current status of device registration
+      type: string
+      enum:
+      - pending
+      - verified
+      example: verified
+    DisplayNameType:
+      description: A readable name for user's saken
+      type: string
+      example: "this is my preferred device for ePA"
+    UserAgentType:
+      description: Information about client software.
+      type: object
+      properties:
+        clientId:
+          type: string
+          pattern: '^[a-zA-Z0-9]{20}$'
+        version:
+          type: string
+          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
+      required:
+        - clientId
+        - version
+      additionalProperties: false
+    BaseDeviceType:
+      type: object
+      properties:
+        deviceIdentifier:
+          $ref: '#/components/schemas/DeviceIdentifierType'
+        status:
+          $ref: '#/components/schemas/DeviceStatusType'
+          example: verified
+        displayName:
+          $ref: '#/components/schemas/DisplayNameType'
+        createdAt:
+          description: timestamp of regitration
+          type: string
+          format: date-time
+    DeviceType:
+      allOf:
+        - $ref: '#/components/schemas/BaseDeviceType'
+        - type: object
+          properties:
+            lastLogin:
+              description: timestamp of last login associated to the registered device
+              type: string
+              format: date-time
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
+    InfoObject:
+      description: "Self-disclosure of this interface"
+      required:
+        - title
+        - version
+      readOnly: true
+      type: object
+      properties:
+        title:
+          type: string
+          description: "Title of the application"
+          example: "Device Management for insurants and representatives"
+        description:
+          type: string
+          description: "Short description of the application"
+          example: "This interface provides operations for clients of the insurant and  
+           representatives to view and modify their associated device registrations."
+        contact:
+          type: string
+          description: "Contact information"
+          example: "kontakt@<Betreibername>"
+        version:
+          type: string
+          description: "Interface version"
+          example: "1.0.0"

@@ -1,0 +1,386 @@
+openapi: 3.0.1
+info:
+  title: Health record information service.
+  description: |-
+    This interface provides information about a specific health record for health care institutions and backends 
+    (ePrescription)<br/>
+    This interface collects information about client use case performance.<br/>
+
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+
+    **Prereqisites**:</br>
+    This interface does not require an VAU-channel/User Session or entitlements.
+
+    **Retry interval**:</br>
+    The following retry intervals are suggested in case of an error response:<br>
+    - '409' Conflict.
+      - approx. 24 hours
+    - '500' Internal Error
+      - approx. 10 minutes
+
+    **User Agent**.</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+    **Open Issues**: (to be deleted for release)
+    - Pfad prüfen, hcid notwendig?
+
+  version: 0.0.1
+  
+  # version history:
+  # ----------------
+  # version 0.0.1
+  #   - initial version for review
+
+  contact:
+    name: gematik GmbH
+    email: epa@gematik.de
+    url: 'http://www.gematik.de'
+  license:
+    name: Apache 2.0
+    url: "https://www.apache.org/licenses/LICENSE-2.0"
+
+servers:
+  - url: 'http://localhost:3000'
+
+tags:
+  - name: ConsentDecisions
+    description: |
+     Consent decision information for health care institutions and backends (ePrescription).
+
+  - name: AccountInformation
+    description: |
+     Check if a specific health record exists and is in a usable state.
+
+  - name: UserExperience
+    description: |
+     User experience data collection for health care instiutions.</br>
+     (May also be implicitely used for ePA-FdV data collection)
+
+  - name: Selfdisclosure
+    description: Information about this API
+
+paths:
+  /information/{insurantid}/consentdecisions:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'      
+    get:
+      tags:
+        - ConsentDecisions
+      operationId: getConsentDecisionInformation
+      summary: (getConsentDecisionInformation) Get current health care process relevant consent decisions
+      description: |
+       Get current decisions about all consent related functions with association to health care processes.</br>
+        
+       **Client**</br>
+       This operation may be invoked prior to a login to the addressed health record. </br>
+       The current decisions may be evaluated for operational use by a client.</br>
+       The parameter _useragent_ is mandatory for clients of health care institutions. The ePrescription
+       backend shall not provide this information.
+        
+       **Provider**</br>
+       The response shall cover decisions with consent class "healthCareProcess" only as prepared by Consent 
+       Decision Management for information.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A3.9 |
+
+      responses:
+        '200':
+          description: Ok.
+          content:
+            application/json:
+              example:
+                  functionid: "medication"
+                  decision: "deny"
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConsentDecisionsResponseType"
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+
+  /information/{insurantid}:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'      
+    get:
+      tags:
+        - AccountInformation
+      operationId: getRecordStatus
+      summary: (getRecordStatus) Get status of a personal health record
+      description: |
+       Check the health record system for an existing health record matching _insurantid_.
+        
+       **Client**</br>
+       This operation may be used to locate the health record provider associated 
+       to a particular health record.
+        
+       **Provider**</br>
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Health record exists and is in state ACTIVATED | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | none ||
+
+      responses:
+        '200':
+          description: Ok. Record exists and is in state ACTIVATED
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+
+  /information/userexperience:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
+    post:
+      tags:
+        - UserExperience
+      operationId: setUserExperienceResult
+      summary: (setUserExperienceResult) provide measurement for ux use cases
+      description: |
+       Provide measurements for ux use cases.</br>
+        
+       **Client**</br>
+       This operation may be invoked without login to any health record. </br>
+       Clients of health care intitutions shall use the use case identifiers:
+       - UX_Login_PS
+       - UX_Doc_Upload_PS
+       - UX_Doc_Download_PS
+       only.
+       The provision of parameter _useragent_ is mandatory.
+        
+       **Provider**</br>
+       The use case meaurements shall be associated to _usaeragent_ and collected, 
+       processed and distributed according requirements defined in specification gemSpec_Perf
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | _useragent_ not available | 409 | requestMismatch | parameter _useragent_ is mandatory |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | data collected ||
+
+      requestBody:
+        content:
+          application/json:
+            example: 
+              useCase: "UX_Doc_Upload_PS"
+              measurement: 1299
+            schema:
+              $ref: "#/components/schemas/UxRequestType"
+      responses:
+        '200':
+          description: Ok. Data collected
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+  /:
+    get:
+      tags:
+        - Selfdisclosure
+      operationId: getInfo
+      summary: Get API information
+      description: (getInfo) Returns the meta data of this interface.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfoObject"
+        '500':
+          description: Internal Server Error
+
+components:
+  parameters:
+    insurantid:
+      name: insurantid
+      in: path
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: false
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noHealthRecord
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  schemas:
+    InfoObject:
+      description: "Self-disclosure of this interface"
+      required:
+        - title
+        - version
+      readOnly: true
+      type: object
+      properties:
+        title:
+          type: string
+          description: "Title of the application"
+          example: "Information service"
+        description:
+          type: string
+          description: "Short description of the application"
+          example: "This interface provides operations for clients of health care institutions and backends to view and provide informations about the health record"
+        contact:
+          type: string
+          description: "Contact information"
+          example: "kontakt@<Betreibername>"
+        version:
+          type: string
+          description: "Interface version"
+          example: "1.0.0"
+    ConsentDecisionsResponseType:
+      description: "Consent Decisions Response"
+      type: object
+      properties:
+        functionid:
+          $ref: '#/components/schemas/FunctionIdType'
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+          description: "Decision"
+      required:
+        - functionid
+        - decision
+      example:
+        functionId: "medication"
+        decision: "deny"
+    FunctionIdType:
+      type: string
+      description: function id of consent related functions of a health record.
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    UserAgentType:
+      description: Information about client software.
+      type: object
+      properties:
+        clientId:
+          type: string
+          pattern: '^[a-zA-Z0-9]{20}$'
+        version:
+          type: string
+          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
+      required:
+        - clientId
+        - version
+      additionalProperties: false
+    UxRequestType:
+      type: object
+      properties:
+        useCase: 
+          description: Use case identifier 
+          type: string
+          enum:
+            - UX_Login_PS
+            - UX_Doc_Upload_PS
+            - UX_Doc_Download_PS
+            - UX_Login_V
+            - UX_Doc_Upload_V
+            - UX_Doc_Download_V
+            - UX_LEI_search
+        measurement:
+          description: Use case execution time in milliseconds
+          type: integer
+      required:
+        - useCase
+        - measurement
+        - userAgent
+    ErrorType:
+      description: "Error object with additional information about the occurred error"
+      type: object
+      properties:
+        errorCode:
+          description: "Error condition specifier"
+          type: string
+        errorDetail:
+          description: "Additional details regarding the error condition"
+          type: string
+      required:
+        - errorCode
