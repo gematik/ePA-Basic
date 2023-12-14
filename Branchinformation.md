@@ -15,7 +15,7 @@
 | Associated repositories:||
 | Medication Service | [**ePA-Medication**](https://github.com/gematik/epa-medication/tree/ePA-3.0) |
 | XDS Document Service | [**ePA-XDS-Document**](https://github.com/gematik/epa-xds-document/tree/ePA-3.0) |
-| Fhir Resources | [**Simplifier**](https://simplifier.net/) |
+| Fhir Resources | [**Simplifier**](https://simplifier.net/epa) |
 
 </br>
 </br>

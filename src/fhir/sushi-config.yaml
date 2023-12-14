@@ -1,12 +1,5 @@
-id: de.gematik.fhir.epa
 canonical: https://gematik.de/fhir/epa
-name: ePA
-status: draft
-version: 3.0.0
 fhirVersion: 4.0.1
-publisher:
-  name: gematik GmbH
-  url: https://www.gematik.de
 dependencies:
   de.basisprofil.r4: 1.3.2
   hl7.fhir.r4.core: 4.0.1

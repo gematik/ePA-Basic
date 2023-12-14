@@ -1,8 +1,8 @@
 openapi: 3.0.1
 info:
-  title: Constraint Management
+  title: I_Constraint_Management_Insurant
   description: |
-    This interface provides access to the **Constraint Management** of a personal health 
+    This interface provides access to the service **Constraint Management** of a personal health 
     record for insurants and representatives.<br/>
     
     **General conditions**:</br> 
@@ -40,12 +40,6 @@ info:
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24887*.
 
-    **Open Issues**: (to be deleted for release)
-    - Responsebeispiele sind gem. Stoplight nicht schemakonform. (Problem mit nested oneOf in Stoplight? )
-    - Soll ein Assignment ein Timestamp des Erstellungzeitpunkts erhalten?
-    - enum der Kategorien noch korrigieren ! oder ganz entfernen
-    
-
   contact:
     name: gematik GmbH
     email: epa@gematik.de
@@ -63,7 +57,7 @@ info:
   #   - initial version for review
 
 servers:
-  - url: 'https://example.com/api'
+  - url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
   - name: ConstraintManagement
@@ -121,11 +115,8 @@ tags:
       - Assignments of the policies are deleted internally in case a referenced _document_
       or folder is deleted from the document management.
 
-  - name: Selfdisclosure
-    description: Information about this API
-
 paths:
-  /constraintmanagement:
+  /constraintmanagement/v1:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
@@ -337,7 +328,7 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
   
-  /constraintmanagement/{assignmentId}:
+  /constraintmanagement/v1/{assignmentId}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/assignmentId'
@@ -385,23 +376,6 @@ paths:
           $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-
-  /:
-    get:
-      tags:
-        - Selfdisclosure
-      operationId: getInfo
-      summary: Get API information
-      description: (getInfo) Returns the meta data of this interface.
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InfoObject"
-        '500':
-          description: Internal Server Error
 
 components:
   responses:
@@ -790,19 +764,10 @@ components:
           additionalProperties: false
       additionalProperties: false
     UserAgentType:
-      description: Information about client software.
-      type: object
-      properties:
-        clientId:
-          type: string
-          pattern: '^[a-zA-Z0-9]{20}$'
-        version:
-          type: string
-          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
-      required:
-        - clientId
-        - version
-      additionalProperties: false
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     InsurantIdType:
       type: string
       description: |-
@@ -822,31 +787,6 @@ components:
           type: string
       required:
         - errorCode
-    InfoObject:
-      description: "Self-disclosure of this interface"
-      required:
-        - title
-        - version
-      readOnly: true
-      type: object
-      properties:
-        title:
-          type: string
-          description: "Title of the application"
-          example: "Constraint Management for insurants and representatives"
-        description:
-          type: string
-          description: "Short description of the application"
-          example: "This interface provides operations for clients of the insurant (record owner) and entitled 
-           representatives to view and modify deny policy assignments (constraints)."
-        contact:
-          type: string
-          description: "Contact information"
-          example: "kontakt@<Betreibername>"
-        version:
-          type: string
-          description: "Interface version"
-          example: "1.0.0"
 
   examples:
     Add_category_to_general_deny_policy:

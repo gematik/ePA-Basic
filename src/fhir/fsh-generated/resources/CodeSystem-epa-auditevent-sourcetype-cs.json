@@ -34,10 +34,14 @@
     {
       "code": "CONMGMT",
       "display": "Constraint Management"
+    },
+    {
+      "code": "AUDITSVC",
+      "display": "AuditEvent Service"
     }
   ],
   "publisher": "gematik GmbH",
   "version": "1.0.0",
   "caseSensitive": true,
-  "count": 7
+  "count": 8
 }

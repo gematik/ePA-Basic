@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: AuditEvent Service (FHIR R4 AuditEvent)
+  title: I_Audit_Event
   description: |
     The AuditEvent adheres to the FHIR profile  [AuditEvent for the ePA (Elektronische Patientenakte)](https://gematik.de/fhir/epa/StructureDefinition/audit-event), and it MUST ensure compliance with the requirements and guidelines 
     of this profile.
@@ -32,6 +32,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    ## **Log-Entries**
+    
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24991*.
+
+
   contact:
     name: gematik GmbH
     url: 'https://www.gematik.de'
@@ -43,7 +49,7 @@ info:
   version: 0.0.1
 
 servers:
-- url: https://www.example.com/api
+- url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
 - name: AuditEvent
@@ -234,20 +240,27 @@ paths:
         ```
         GET [base]/audit/v1/fhir/AuditEvent?date=2025-15-01&action=C
         ```
+        ##### *All AuditEvents for the XDS Document Arztbrief4711*
+        ```
+        GET [base]/audit/v1/fhir/AuditEvent?entity-name=Arztbrief4711
+        ```
 
         ## **Error Handling**
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Unknown search parameter | 400 | | OperationOutcome | 
-        | Invalid date/time format | 400 | | OperationOutcome | 
-        | Invalid prefix | 400 | | OperationOutcome |
         | Invalid query parameter(s) | 400 | | OperationOutcome | 
         | Invalid request | 400 | | OperationOutcome | 
         | Unknown resource type | 404 | | OperationOutcome |
         | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | A log-entry for the operation exists | representative and ombuds office only, all operation results |
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -348,16 +361,17 @@ paths:
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
-        | Unknown search parameter | 400 | | OperationOutcome | 
-        | Invalid date/time format | 400 | | OperationOutcome | 
-        | Invalid prefix | 400 | | OperationOutcome |
-        | Invalid query parameter(s) | 400 | | OperationOutcome | 
         | Invalid request | 400 | | OperationOutcome | 
         | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
         | Resource is not known | 404 | | OperationOutcome |
         | Unknown resource type | 404 | | OperationOutcome |
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | A log-entry for the operation exists | representative and ombuds office only, all operation results |
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -446,23 +460,10 @@ components:
                 issue:
                   - severity: error
                     code: processing
+                    details:
+                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                        code: MSG_PARAM_UNKNOWN
                     diagnostic: "Unknown search parameter"
-            invalid_date_format:
-              summary: Invalid date format
-              value:
-                resourceType: OperationOutcome
-                issue:
-                  - severity: error
-                    code: processing
-                    diagnostic: "Invalid date/time format"
-            invalid_prefix:
-              summary: Invalid prefix
-              value:
-                resourceType: OperationOutcome
-                issue:
-                  - severity: error
-                    code: processing
-                    diagnostic: "Invalid prefix"
             invalid_query_parameter:
               summary: Invalid query parameter(s)
               value:
@@ -470,6 +471,9 @@ components:
                 issue:
                   - severity: error
                     code: processing
+                    details:
+                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                        code: MSG_BAD_SYNTAX
                     diagnostic: "Invalid query parameter(s)"
             invalid_request:
               summary: Invalid request
@@ -478,6 +482,9 @@ components:
                 issue:
                   - severity: error
                     code: not-supported
+                    details:
+                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                        code: MSG_BAD_FORMAT
                     diagnostic: "Invalid request"
           schema:
             $ref: '#/components/schemas/OperationOutcome'
@@ -494,6 +501,9 @@ components:
                 issue:
                   - severity: error
                     code: processing
+                    details:
+                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                        code: MSG_RESOURCE_ID_FAIL
                     diagnostic: "Resource is not known"
             unknown_resource_type:
               summary: Unknown resource type
@@ -502,9 +512,10 @@ components:
                 issue:
                   - severity: error
                     code: processing
+                    details:
+                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                        code: MSG_UNKNOWN_TYPE
                     diagnostic: "Unknown resource type"
-          schema:
-            $ref: '#/components/schemas/OperationOutcome'
 
   parameters:
     insurantid:
@@ -530,13 +541,11 @@ components:
         For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
-
     UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
-      pattern: '[a-zA-Z0-9_\-\+\.: \(\)]{1,20}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,23}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,20}'
-      description: Information about client software.
-      example: "Softwareprodukt XYZ/2.4.6/Hersteller ABC"
-
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object
@@ -565,6 +574,8 @@ components:
                 type: string
               code:
                 type: string
+              details:
+                $ref: '#/components/schemas/CodeableConcept'
               diagnostic:
                 type: string
 
@@ -775,6 +786,8 @@ components:
             identifier:
               type: object
               properties:
+                code:
+                  $ref: '#/components/schemas/CodeableConcept'
                 system:
                   type: string
                   enum:
@@ -885,11 +898,11 @@ components:
             code: XDSSVC
             display: XDS Document Service
         entity:
-          - name: Zahnbonusheft
+          - name: Arztbrief4711
             description: operation:provide-and-register-document-set-b
             detail:
-              - type: Document Format
-                valueString: urn:gematik:ig:Zahnbonusheft:v1.1.0
+              - type: DocumentFormatCode
+                valueString: urn:gematik:ig:Arztbrief:r3.1
 
     AuditEvent_Medication_Service:
       summary: "Example AuditEvent from the Medication Service"
@@ -954,10 +967,10 @@ components:
                 display: healthcare provider
           who:
             identifier:
-              system: https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
-              value: ERP
-          altId: ERP
-          name: E-Rezept-Fachdienst
+              system: https://gematik.de/fhir/sid/telematik-id
+              value: 1-883110000092404
+          altId: 1-883110000092404
+          name: Praxis Dr. John Doe
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst

@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info: 
-  title: Health Record Relocation Service
+  title: I_Health_Record_Relocation_Service
   description: |
     This interface provides access to the **Health Record Relocation Service** of a personal health 
     record for health care insurances.<br/>
@@ -35,16 +35,10 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-    Open Issues:
-    - Format / Schema des Export Packages notwendig?
-    - Logging?
-    - Rohdaten?
-    - wo steht, wie genau das Paket verschlüsselt wird?
-    - startPackageCreation: Wenn das export package asynchron erzeigt wird, dann können Probleme nicht an den KTR signalisiert werden
-    - startPackageImport: Wenn die Migartion des Pakets asynchron erfolgt, dann können Probleme nicht an den KTR signalisiert werden
-    - startPackageImport: Hier wird in der VAU der private Key zum Enc-Zertifikat benötigt. Wie kommt der dahin? HSM? 
-    - Alternative zu _deleteExportPackage_ (success incident) verwenden?
-  
+    **Log-Entries**
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24982* and A_24980*.
+
   contact:
     name: gematik GmbH
     email: epa@gematik.de
@@ -62,7 +56,7 @@ info:
   #   - initial version for review
 
 servers:
-  - url: 'https://example.com/api'
+  - url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
   - name: Relocation (exporting provider)
@@ -81,7 +75,7 @@ tags:
       The _importing provider_ is associated to the operations in path _relocationservice/import_
 
 paths:
-  /relocationservice/export:
+  /relocationservice/v1/export:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
@@ -93,7 +87,7 @@ paths:
       description: |
        This operation shall initiate the creation of an export package including all data of 
        the health record for relocation to another health record provider.</br>
-       This operation is limited to entitled users of role oid_epa_ktr.
+       This operation is limited to entitled users of role oid_kostentraeger.
        
        **Client**:</br>
        A client shall use this operation only if a relocation of a health record is requested
@@ -134,7 +128,7 @@ paths:
        | Successful operation | 200 |||
        | Request does not match schema | 400 | malformedRequest ||       
        | Requestor has no valid entitlement | 403 | notEntitled ||
-       | Requestor role is not _oid_epa_ktr_ | 403 | invalidOid ||
+       | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED or SUPSENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
        | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
@@ -197,7 +191,7 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
     
-  /relocationservice/import:
+  /relocationservice/v1/import:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
@@ -208,7 +202,7 @@ paths:
       summary: (startPackageImport) Start import of an prepared export package of a health record
       description: |
        Start the import of an encrypted export package for data migration from another health record provider.</br>
-       This operation is limited to entitled users of role oid_epa_ktr. 
+       This operation is limited to entitled users of role oid_kostentraeger. 
               
        **Client**:</br>
        A client shall use this operation only after reception of a downloadUrl associated to an open
@@ -244,7 +238,7 @@ paths:
        | Successful operation | 200 |||
        | Request does not match schema | 400 | malformedRequest ||       
        | Requestor has no valid entitlement | 403 | notEntitled ||
-       | Requestor role is not _oid_epa_ktr_ | 403 | invalidOid ||
+       | Requestor role is not _oid_kostentraeger_ | 403 | invalidOid ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state INITIALIZED | 409 | statusMismatch |  (see 'Retry interval') |
        | _requestId_ does not match health record identifier | 409 | requestMismatch ||
@@ -255,7 +249,8 @@ paths:
        |---------------------------------------|---------|
        | Export package import and data migration is started ||
        | The health record is in state ACTIVATED | after successful data migration |
-       | A log-entry for the operation exists | for any operation result |
+       | A log-entry for the data migration operation exists | for any operation result |
+       | A log-entry for the health record state change exists ||
 
       requestBody:
         required: true
@@ -370,19 +365,10 @@ components:
       format: url
       example: https://example.com
     UserAgentType:
-      description: Information about client software.
-      type: object
-      properties:
-        clientId:
-          type: string
-          pattern: '^[a-zA-Z0-9]{20}$'
-        version:
-          type: string
-          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
-      required:
-        - clientId
-        - version
-      additionalProperties: false
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     InsurantIdType:
       type: string
       description: |-

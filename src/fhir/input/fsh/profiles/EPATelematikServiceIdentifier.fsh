@@ -10,11 +10,11 @@ Description: "Identifier profile for telematik services (e.g. E-Rezept-Fachdiens
 * ^version = "1.0"
 * ^status = #draft
 
-* type from EPATelematikServiceVS
 * system 1..1 MS
 * system = "https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier" (exactly)
-* value 0..1
-  * ^short = "The name of the telematik service."
-  * ^definition = "The name of the telematik service."
+* value obeys epa-id-telematik-svc-1
+* value 1..1
+  * ^short = "The name of the telematik service. (ERP | EPA)"
+  * ^definition = "The name of the telematik service. (ERP | EPA)"
 
 

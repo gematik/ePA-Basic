@@ -1,9 +1,9 @@
 openapi: 3.0.1
 info:
-  title: Consent Decision Management
+  title: I_Consent_Decision_Management
   description: |-
-    This interface provides access to the **Consent Decision Management** of a personal health 
-    record for the ombuds office.<br/>
+    This interface provides access to the service **Consent Decision Management** of a personal health 
+    record for insurants, representatives and ombuds offices.<br/>
     
     **General conditions**:</br> 
     For all operations if applicable:
@@ -16,7 +16,7 @@ info:
     - name
     - role ((profession-)oid)
     - identifier (telematik-id or kvnr)
-    - indication of a valid entitlement 
+    - indication of a valid entitlement
     
     of the current user (requestor) for evaluation in operations.
 
@@ -36,8 +36,9 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-    **Open Issues**: (to be deleted for release)
-    - kvnr im Pfad oder als Parameter in allen Operationen
+    **Log-Entries**
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24055*.
 
   version: 0.0.1
   
@@ -55,32 +56,29 @@ info:
     url: "https://www.apache.org/licenses/LICENSE-2.0"
 
 servers:
-  - url: 'http://localhost:3000'
+  - url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
-  - name: ConsentDecisionManangement
+  - name: ConsentDecisions
     description: |
      Consent decision management operations allow to view current decisions made and to change those 
      decisions regarding consent related functions of the health record.
   
-  - name: Selfdisclosure
-    description: Information about this API
-
 paths:
-  /consentdecisionmanagement/{functionid}:
+  /consentdecisionmanagement/v1/{functionid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: "#/components/parameters/functionid"
       - $ref: '#/components/parameters/useragent'      
     put:
       tags:
-        - ConsentDecisionManangement
-      operationId: updateConsentDecisionOmbud
-      summary: (updateConsentDecisionOmbud) Update one consent decisions
+        - ConsentDecisions
+      operationId: updateConsentDecision
+      summary: (updateConsentDecision) Update one consent decisions
       description: |
         Update the user decision regarding a particular consent related function of a 
         personal health record.</br>
-        This operation is limited to entitled users of role oid_ombudsstelle.
+        This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
 
         **Client**:</br>
         no recommendations.
@@ -107,19 +105,19 @@ paths:
 
         If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
 
-        An email shall be send to the insurant using the registered mail address after a successful change of 
-        a decision for notification. The mail shall contain understandable information about the changed consent
-        decision and timestamp of change (according to A_24844*) 
-
         An unknown parameter _functionid_ shall lead to rejection of the request. This operation operates on existing
         resources only and does not create new ones.
+
+        An email shall be sent to the insurant using the registered mail address after a successful change of 
+        a decision for notification. The mail shall contain understandable information about the changed consent
+        decision and timestamp of change (according to A_24844*) 
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor has no valid entitlement | 403 | notEntitled ||
-        | Requestor role is not _oid_ombudsstelle_ | 403 | invalidOid ||
+        | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
         | Resource for _functionid_ does not exist | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
@@ -133,6 +131,7 @@ paths:
         | Associated data categories are empty (all content deleted) | conditional, see (***) |
         | Associated data categories are write enabled for clients | conditional, see (**) |
         | The Information Service has updated consent decisions | conditional, if functions of class "healthCareProcess" are changed |
+        | An email is sent to the insurant | success case with change of consent only |
         | A log-entry for the operation exists | all operation results |
 
       requestBody:
@@ -179,18 +178,68 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /consentdecisionmanagement:
+    get:
+      tags:
+        - ConsentDecisions
+      operationId: getConsentDecision
+      summary: (getConsentDecision) Read one current consent decisions
+      description: |
+        Get current decision for a particular consent related functions of the health record.<br/>
+        This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
+
+        **Client**:</br>
+        no recommendations.
+
+        **Provider**:
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor has no valid entitlement | 403 | notEntitled ||
+        | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
+        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Resource for _functionid_ does not exist | 404 | noResource ||
+        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: Ok.
+          content:
+            application/json:
+              example:
+                functionId: "medication"
+                decision: "deny"
+              schema:
+                $ref: "#/components/schemas/ConsentDecisionsResponseType"
+        '400':
+          $ref: "#/components/responses/Error400BadRequest"
+        '403':
+          $ref: "#/components/responses/Error403Forbidden"
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+
+  /consentdecisionmanagement/v1:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
     get:
       tags:
-        - ConsentDecisionManangement
-      operationId: getConsentDecisionsOmbud
-      summary: (getConsentDecisionsOmbud) Read all current consent decisions
+        - ConsentDecisions
+      operationId: getConsentDecisions
+      summary: (getConsentDecisions) Read all current consent decisions
       description: |
         Get current decisions for all consent related functions of the health record.<br/>
-        This operation is limited to entitled users of role oid_ombudsstelle.
+        This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
 
         **Client**:</br>
         no recommendations.
@@ -201,7 +250,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor has no valid entitlement | 403 | notEntitled ||
-        | Requestor role is not _oid_ombudsstelle_ | 403 | invalidOid ||
+        | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -233,23 +282,6 @@ paths:
           $ref: "#/components/responses/Error409Conflict"
         '500':
           $ref: "#/components/responses/Error500InternalError"
-
-  /:
-    get:
-      tags:
-        - Selfdisclosure
-      operationId: getInfo
-      summary: Get API information
-      description: (getInfo) Returns the meta data of this interface.
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InfoObject"
-        '500':
-          description: Internal Server Error
 
 components:
   parameters:
@@ -319,37 +351,6 @@ components:
             $ref: '#/components/schemas/ErrorType'
     
   schemas:
-    InsurantIdType:
-      type: string
-      description: |-
-        The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr).
-      pattern: '^[A-Z]{1}\d{9}$'
-      example: Z123456789
-    InfoObject:
-      description: "Self-disclosure of this interface"
-      required:
-        - title
-        - version
-      readOnly: true
-      type: object
-      properties:
-        title:
-          type: string
-          description: "Title of the application"
-          example: "Consent Decision Management for ombuds offices"
-        description:
-          type: string
-          description: "Short description of the application"
-          example: "This interface provides operations for clients of an ombuds office to view and change consent decisions."
-        contact:
-          type: string
-          description: "Contact information"
-          example: "kontakt@<Betreibername>"
-        version:
-          type: string
-          description: "Interface version"
-          example: "1.0.0"
     ConsentDecisionType:
       description: "Consent Decision"
       type: object
@@ -381,22 +382,20 @@ components:
           functionId: "medication"
           decision: "deny"
     UserAgentType:
-      description: Information about client software.
-      type: object
-      properties:
-        clientId:
-          type: string
-          pattern: '^[a-zA-Z0-9]{20}$'
-        version:
-          type: string
-          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
-      required:
-        - clientId
-        - version
-      additionalProperties: false
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     FunctionIdType:
       type: string
       description: function id of consent related functions of a health record.
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
     ErrorType:
       description: "Error object with additional information about the occurred error"
       type: object
