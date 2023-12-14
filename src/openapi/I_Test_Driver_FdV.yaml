@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Testtreiber ePA-Frontend des Versicherten
+  title: I_Test_Driver_FdV
   description: REST Schnittstelle einer Test-App fuer das ePA-Modul FdV
   version: 2.7.1
   contact:

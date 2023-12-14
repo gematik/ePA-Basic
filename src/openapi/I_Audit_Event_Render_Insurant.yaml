@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: AuditEvent Service (Render)
+  title: I_Audit_Event_Render_Insurant
   description: |
     **Prereqisites**:</br>
     -
@@ -29,6 +29,10 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Log-Entries**
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24991*.
+
   contact:
     name: gematik GmbH
     url: 'https://www.gematik.de'
@@ -40,7 +44,7 @@ info:
   version: 0.0.1
 
 servers:
-- url: https://www.example.com/api
+- url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
 - name: PDF/A
@@ -51,6 +55,7 @@ tags:
 paths:
   /audit/v1/render/pdf:
     parameters:
+      - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent' 
     get:
       tags:
@@ -75,6 +80,11 @@ paths:
         | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | A log-entry for the operation exists | representative only, all operation results |
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -156,10 +166,10 @@ components:
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
-      pattern: '[a-zA-Z0-9_\-\+\.: \(\)]{1,20}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,23}\/[a-zA-Z0-9_\-\+\.: \(\)]{1,20}'
-      description: Information about client software.
-      example: "Softwareprodukt XYZ/2.4.6/Hersteller ABC"
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object

@@ -34,14 +34,6 @@
   "differential": {
     "element": [
       {
-        "id": "Identifier.type",
-        "path": "Identifier.type",
-        "binding": {
-          "strength": "required",
-          "valueSet": "https://gematik.de/fhir/epa/ValueSet/epa-telematikservicevs"
-        }
-      },
-      {
         "id": "Identifier.system",
         "path": "Identifier.system",
         "min": 1,
@@ -51,8 +43,18 @@
       {
         "id": "Identifier.value",
         "path": "Identifier.value",
-        "short": "The name of the telematik service.",
-        "definition": "The name of the telematik service."
+        "short": "The name of the telematik service. (ERP | EPA)",
+        "definition": "The name of the telematik service. (ERP | EPA)",
+        "min": 1,
+        "constraint": [
+          {
+            "key": "epa-id-telematik-svc-1",
+            "severity": "error",
+            "human": "The valid telematik services for ePA",
+            "expression": "matches('EPA|ERP')",
+            "source": "https://gematik.de/fhir/epa/StructureDefinition/telematik-service-identifier"
+          }
+        ]
       }
     ]
   }

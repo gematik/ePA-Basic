@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Health record information service.
+  title: I_Information_Service
   description: |-
     This interface provides information about a specific health record for health care institutions and backends 
     (ePrescription)<br/>
@@ -26,9 +26,6 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-    **Open Issues**: (to be deleted for release)
-    - Pfad prüfen, hcid notwendig?
-
   version: 0.0.1
   
   # version history:
@@ -45,7 +42,7 @@ info:
     url: "https://www.apache.org/licenses/LICENSE-2.0"
 
 servers:
-  - url: 'http://localhost:3000'
+  - url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
   - name: ConsentDecisions
@@ -61,11 +58,8 @@ tags:
      User experience data collection for health care instiutions.</br>
      (May also be implicitely used for ePA-FdV data collection)
 
-  - name: Selfdisclosure
-    description: Information about this API
-
 paths:
-  /information/{insurantid}/consentdecisions:
+  /information/v1/{insurantid}/consentdecisions:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
@@ -121,7 +115,7 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /information/{insurantid}:
+  /information/v1/{insurantid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'      
@@ -163,7 +157,7 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /information/userexperience:
+  /information/v1/userexperience:
     parameters:
       - $ref: '#/components/parameters/useragent'      
     post:
@@ -216,23 +210,6 @@ paths:
           $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: "#/components/responses/Error500InternalError"
-  /:
-    get:
-      tags:
-        - Selfdisclosure
-      operationId: getInfo
-      summary: Get API information
-      description: (getInfo) Returns the meta data of this interface.
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InfoObject"
-        '500':
-          description: Internal Server Error
-
 components:
   parameters:
     insurantid:
@@ -246,7 +223,7 @@ components:
       name: x-useragent
       in: header
       description: user agent information
-      required: false
+      required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
 
@@ -287,30 +264,6 @@ components:
             $ref: '#/components/schemas/ErrorType'
 
   schemas:
-    InfoObject:
-      description: "Self-disclosure of this interface"
-      required:
-        - title
-        - version
-      readOnly: true
-      type: object
-      properties:
-        title:
-          type: string
-          description: "Title of the application"
-          example: "Information service"
-        description:
-          type: string
-          description: "Short description of the application"
-          example: "This interface provides operations for clients of health care institutions and backends to view and provide informations about the health record"
-        contact:
-          type: string
-          description: "Contact information"
-          example: "kontakt@<Betreibername>"
-        version:
-          type: string
-          description: "Interface version"
-          example: "1.0.0"
     ConsentDecisionsResponseType:
       description: "Consent Decisions Response"
       type: object
@@ -338,19 +291,10 @@ components:
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     UserAgentType:
-      description: Information about client software.
-      type: object
-      properties:
-        clientId:
-          type: string
-          pattern: '^[a-zA-Z0-9]{20}$'
-        version:
-          type: string
-          pattern: '^[a-zA-Z0-9\-\.]{1,15}$'
-      required:
-        - clientId
-        - version
-      additionalProperties: false
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     UxRequestType:
       type: object
       properties:

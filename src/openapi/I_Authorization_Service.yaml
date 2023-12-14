@@ -2,28 +2,24 @@ openapi: 3.0.3
 info:
   title: Authorization Service
   description: |
-
     This interface provides access to Authorization Service.</br>
-    Through this interface, client systems can carry out user authentication. There are different ways
-    - Authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance
+    Through this interface, client systems can carry out user authentication. There are two differnt ways
+    - Authentication of the insurant or representative using the insurant's device through sectoral IDP of the health insurance company
     - Authentication of other client systems through the central IDP
-    - 
 
     **General conditions**:</br> 
     For all operations if applicable:
     - error responses may be extended by helpful information about the error condition in _errorDetail_
 
     **Prereqisites**:</br>
-    For insured and representatives
+    For insurant and representatives
     - The sektorale IDP of Health insurance is registered with the TI-Federation
     - The authorization service of a Health Record System is registered with the TI-Federation
-    - The authenticator modul of the sektorale IDP ist part of the frontend application on insured's device 
+    - The authenticator modul of the sektorale IDP is part of the frontend application on insurant's device 
+    
     For other client systems
     - The authorization service of a Health Record System is registered with the central IDP
     
-
-    **Audit Logging**</br>
-    TODO
   contact:
     name: gematik GmbH
     url: 'https://www.gematik.de'
@@ -32,10 +28,10 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
+  version: 0.0.3
 
 servers:
-- url: https://www.example.com/api
+- url: https://epa-hst1.prod.epa4all.de/api
 
 tags:
 - name: Authorization FdV
@@ -43,21 +39,21 @@ tags:
 - name: Authorization SMC-B
   description: This interface method enables the authentication of other client systems through the central IDP
 - name: Authorization BearerToken
-  description: This interface method enables the authorization of applications through a BearerToken  
-
+  description: This interface method enables the authorization of applications through a BearerToken 
 
 paths:
-  /authorizationservice/v1/card/getNonce:
+  /getNonce/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
     get:
       tags:
         - Authorization SMC-B
-      operationId: nonce
+      operationId: getNonce
       summary: Generation of random value
-      description: |
-        Nonce is a generated random value. The authorization service saves the generated nonce to the client_id.
-        The applicant must sign the nonce. The signed nonce is a parameter of the requester's authorization request.
+      description: Nonce is a generated random cases-sensitive string value of max 512 bit length. The authorization service stores the generated nonce to the client_id.
+        The applicant must sign the nonce. The signed nonce is then used as a parameter of the requester's authorization request.
       parameters:
-        - $ref: '#/components/parameters/clientid'
+        - $ref: '#/components/parameters/client_id'
       responses:
         '200':
           $ref: '#/components/responses/Nonce200'
@@ -66,215 +62,206 @@ paths:
             parameters:
               schema:
                 type: string
-                format: uuid
-                example: edfrcdhzbnrzhvstztz
+                example: aff157
+        '400':        
+          $ref: '#/components/responses/NonceError400BadRequest'              
         '500':
-          $ref: '#/components/responses/Error500InternalError'
-  /authorizationservice/v1/card/sendAuthorizationRequestSc:
-    post:
+          $ref: '#/components/responses/NonceError500InternalError'
+  
+  /send_authorization_request_sc/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
+    get:
       tags:
         - Authorization SMC-B
-      operationId: authorizationRequestSC
-      summary: authorization of client systems using SMC-B
-      description: |
-        TODO
+      operationId: sendAuthorizationRequestSC
+      summary: user authorization
+      description: sends an authorization request from the primary system client (medical facility) to the IDP-Dienst, that triggers the authenticator, which returns an authorization code grant for a user within this medical facility. The authorization code can then be exchanged for an ID token.
       parameters:
-        - $ref: '#/components/parameters/clientid'
+        - $ref: '#/components/parameters/client_id'
         - $ref: '#/components/parameters/state'
       responses:
-        '201':
-          $ref: '#/components/responses/AuthorizationRequestSC200'
+        '302':
+          $ref: '#/components/responses/AuthorizationResponseSC302'
         '400':
-          $ref: '#/components/responses/Error400BadRequest'
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorType'
-              examples:
-                notEntitled:
-                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
-                invalidOid:
-                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
+          $ref: '#/components/responses/ARSCError400BadRequest'        
         '500':
           $ref: '#/components/responses/Error500InternalError'
+        #todo: include the deferred authenticator response with the auth_code
 
-  /authorizationservice/v1/card/sendAuthCodeSc:
+  /send_authcode_sc/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
     post:
       tags:
         - Authorization SMC-B
-      operationId: authcode
-      summary: TODO
-      description: |
-        send AUTH_CODE
+      operationId: sendAuthCodeSC
+      summary: send AUTH_CODE
+      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation. 
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                client_id:          
+                  type: string
+                  example: ePAfa
+                  maxLength: 32
+                state:    
+                  type: string
+                  example: af0ifjsldkj
+                  maxLength: 255
 
-      parameters:
-        - $ref: '#/components/parameters/authcode'
-        - $ref: '#/components/parameters/clientAttest'
-        - $ref: '#/components/parameters/state'
       responses:
         '200':
-          $ref: '#/components/responses/AuthCodeRequestSC200'
+          $ref: '#/components/responses/AuthCodeRequest200'
         '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorType'
-              examples:
-                notEntitled:
-                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
-                invalidOid:
-                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
-                notRegisteredOrVerified:
-                  $ref: '#/components/examples/Error403ForbiddenNotRegisteredOrVerified'
-        '404':
-          $ref: '#/components/responses/Error404NotFound'
+          $ref: '#/components/responses/AuthCodeRequest403'
+          example:
+            errorCode: unknownDevice
+            errorDetail: 
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+
+  /send_authorization_request_fdv/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
+    get:
+      tags:
+        - Authorization FdV
+      operationId: sendAuthorizationRequestFdV
+      summary: user authorization
+      description: sends an authorization request from the FdV client to the authorization service, which in turn requests a user authentication from the Identity Provider determined by the input parameter idpiss. After successful user authentication a reference to the Pushed Authorization Request (URI-PAR) is returned to the ePA-FdV, which processes it as specified in chapter 6.2.3.1 in gemSpec_ePA_FdV. In order to construct the response, the authorization service forms a request URL and return it in a redirect response to the caller. The request URL consists of the authorization endpoint if the involved IDP and a query string with the two parameters client_id and request_uri and their respective values.
+      parameters:
+        - $ref: '#/components/parameters/client_id'
+        - $ref: '#/components/parameters/idp_iss'
+        - $ref: '#/components/parameters/deviceId'
+        - $ref: '#/components/parameters/state'
+      responses:
+        '302':
+          $ref: '#/components/responses/AuthorizationResponseFdV302'
+        '400':
+          $ref: '#/components/responses/ARFdVError400BadRequest'        
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /send_authcode_fdv/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
+    post:
+      tags:
+        - Authorization FdV
+      operationId: sendAuthCodeFdV
+      summary: send AUTH_CODE
+      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation. 
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                code:          
+                  type: string
+                  example: 2435623452hkjlk34t
+                  maxLength: 2000
+                state:    
+                  type: string
+                  example: af0ifjsldkj
+                  maxLength: 512
+                deviceId:
+                  type: string
+                  example: t.b.d.
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthCodeRequest200'
+        '403':
+          $ref: '#/components/responses/AuthCodeRequest403'
+          example:
+            errorCode: unknownDevice
+            errorDetail: 
         '500':
           $ref: '#/components/responses/Error500InternalError'
   
-  /authorizationservice/v1/fdv/sendAuthorizationRequestFdv:
-    post:
+  /send_authorization_request_bearertoken/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
+    get:
       tags:
-        - Authorization FdV
-      operationId: authorizationRequestFdv
-      summary: authentication of the insured or representative with the insured's device
-      description: |
-        TODO
-      parameters:
-        - $ref: '#/components/parameters/clientid'
-        - $ref: '#/components/parameters/idpiss'
-        - $ref: '#/components/parameters/deviceIdentifier'
-        - $ref: '#/components/parameters/state'
+        - Authorization BearerToken
+      operationId: sendAuthorizationRequestBearerToken
+      summary: client authorization based on client credentials grant
+      description: sends an authorization request from the FdV client to the authorization service, which in turn verifies the client credentials grant and returns appropriate access token / refresh token for the authenticated client.
+     #t.b.d
       responses:
-        '201':
-          $ref: '#/components/responses/AuthorizationRequestFdv200'
-        '400':
-          $ref: '#/components/responses/Error400BadRequest'
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorType'
-              examples:
-                notEntitled:
-                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
-                invalidOid:
-                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
-        '500':
-          $ref: '#/components/responses/Error500InternalError'
+        '200':         
+          description: "OK"
 
-  /authorizationservice/v1/fdv/sendAuthCodeFdv:
-    post:
-      tags:
-        - Authorization FdV
-      operationId: authcodeFdV
-      summary: TODO
-      description: |
-        send AUTH_CODE
-      parameters:
-        - $ref: '#/components/parameters/authcode'
-        - $ref: '#/components/parameters/deviceIdentifier'
-        - $ref: '#/components/parameters/state'
-      responses:
-        '200':
-          $ref: '#/components/responses/AuthCodeRequestFdv200'
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorType'
-              examples:
-                notEntitled:
-                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
-                invalidOid:
-                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
-                notRegisteredOrVerified:
-                  $ref: '#/components/examples/Error403ForbiddenNotRegisteredOrVerified'
-        '404':
-          $ref: '#/components/responses/Error404NotFound'
-        '500':
-          $ref: '#/components/responses/Error500InternalError'
-  /authorizationservice/v1/fdv/logout:
+          
+  /logoutFdV/v1:
+    parameters:
+      - $ref: '#/components/parameters/useragent'      
     get:
       tags:
         - Authorization FdV
       operationId: logoutFdV
-      summary: active logout
-      description: |
-        logout
+      summary: active logout.
+      description: an active logout triggered by the FdV user revokes the ACCESS token and REFRESH token at the authorization service. After that the user has to authenticate again for any service usage.
+      parameters:
+        - $ref: '#/components/parameters/tokenid'
       responses:
         '200':
-          $ref: '#/components/responses/Logout200'
+          description: "OK"
+        '404':
+          $ref: '#/components/responses/Error404NotFound' 
         '500':
           $ref: '#/components/responses/Error500InternalError'
-  
-  /authorizationservice/v1/token/sendAuthorizationRequestBearerToken:
-    post:
-      tags:
-        - Authorization BearerToken
-      operationId: authorizationRequestBearerToken
-      summary: authorization of application using BearerToken
-      description: |
-        TODO
-      parameters:
-        - $ref: '#/components/parameters/idtoken'
-      responses:
-        '201':
-          $ref: '#/components/responses/AuthorizationRequestIdToken200'
-        '400':
-          $ref: '#/components/responses/Error400BadRequest'
-        '403':
-          description: Forbidden.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorType'
-              examples:
-                notEntitled:
-                  $ref: '#/components/examples/Error403ForbiddenNotEntitled'
-                invalidOid:
-                  $ref: '#/components/examples/Error403ForbiddenInvalidOid'
-        '500':
-          $ref: '#/components/responses/Error500InternalError'  
+    
 
 components:
   parameters:
-    clientid:
-      name: clientid
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+    client_id:
+      name: x-clientid
       in: header
       description: ID of the registered client.
       required: true
       schema:
         type: string
         format: uuid
-        example: epaAktensystem007
-    idpiss:
-      name: idpIdentifier
+        example: 11466127-7149-4808-926b-34cf37b2d568
+    idp_iss:
+      name: x-idp_iss
       in: header
       required: true
       schema:
         $ref: '#/components/schemas/IdpIssType'
-    deviceIdentifier:
-      name: deviceIdentifier
+    deviceId:
+      name: x-device-id
       in: header
-      description: The Device Identifier should be set in the header. When this is combined with the 'x-device token' header, it results in a unique authorization for the device
-      required: true
+      description: The device Identifier should be set in the header. When this is combined with the 'x-device token' header, it results in a unique authorization for the device
+      required: false
       schema:
         type: string
         example: 4ab42e19-7d33-40fa-949f-3499135b910b
     clientAttest:
-      name: client-attestation 
+      name: x-client-attestation 
       in: header
       description: signed nonce
-      required: true
+      required: false
       schema:
         $ref: '#/components/schemas/clientAttestType'
     state:
-      name: state
+      name: x-state
       in: header
       description: state
       required: false
@@ -283,87 +270,89 @@ components:
         format: uuid
         example: af0ifjsldkj
     authcode:
-      name: code
+      name: x-authcode
       in: header
-      description: Authorization Code generated through IDP
+      description: authcode
       required: true
       schema:
         type: string
         format: uuid
         example: dfkldfsnflarnflerjfarlelagl
-    idtoken:
-      name: ID-Token 
-      in: header
-      description: signed ID-Token
+    tokenid:
+      name: tokenid
+      in: path
+      description: JWT identifier jti of the access_token to revoke
       required: true
       schema:
-        $ref: '#/components/schemas/IdTokenType'
-    
+        type: string
+        maxLength: 256
+        example: dfkldfsnAAarnflerjfarlelagl
+        
   responses:
     Nonce200:
       description: "OK"
       content:
         application/json:
           example: 
-            nonce: edfrcdhzbnrzhvstztz
+            nonce: aff157
           schema:
             description: generated nonce
-            type: string            
-    
-    AuthorizationRequestSC200:
-      description: "OK"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthorizationResponseScType'
-    
-    AuthCodeRequestSC200:
-      description: "OK"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthCodeResponseScType'
-    
-    
-    AuthorizationRequestFdv200:
-      description: "OK"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthorizationResponseFdvType'
-    
-    AuthCodeRequestFdv200:
-      description: "OK"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthCodeResponseFdvType'
-    
-    Logout200:
-      description: "OK"
+            type: string  
 
-    AuthorizationRequestIdToken200:
+    AuthorizationResponseFdV302:
+      description: "Found"
+      headers:
+        Location:
+          description: Authz EndpointURL of the IDP chosen and query parameters client_id, request_uri; e.g. "https://idp-sek.de/authz?client_id=https://epa_fachdienst.de&request_uri=urn:ePAAktensystem007:bwc4JK-ESC0w8acc191e-Y1LTC2"
+          schema:
+            type: "string"
+          example: "https://idp-sek.de/authz?client_id=https://epa_fachdienst.de&request_uri=urn:ePAAktensystem007:bwc4JK-ESC0w8acc191e-Y1LTC2"
+
+    AuthorizationResponseSC302:
+      description: "Found"
+      headers:
+        Location:
+          description: Authz EndpointURL of the Smartcard IDP and query parameters of the authorization request (client_id, response_type, request_uri, state, code_challenge, code_challenge_method, scope and nonce); e.g. "https://idp-dienst.de/authz?client_id=ePA-Aktensystem007&response_type=code&redirect_uri=http%3A%2F%2Ftest-ps.gematik.de%2Ferezept&state=ABCVDFGHT564&code_challenge=asdrtgasdfdf...5ssdfgaydfg&code_challenge_method=S256&scope=openid+ePA&nonce=BUJ0lOI_YBXxI0wa4YIs8mTlY67lgktQ"
+          schema:
+            type: "string"
+          example: "https://idp-dienst.de/authz?client_id=ePA-Aktensystem007&response_type=code&redirect_uri=http%3A%2F%2Ftest-ps.gematik.de%2Ferezept&state=ABCVDFGHT564&code_challenge=asdrtgasdfdf...5ssdfgaydfg&code_challenge_method=S256&scope=openid+ePA&nonce=BUJ0lOI_YBXxI0wa4YIs8mTlY67lgktQ"
+
+    AuthCodeRequest200:
       description: "OK"
-      
-    
-    Error400BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthCodeResponse'
+
+    AuthCodeRequest403:
+      description: "Forbidden"
+      content:
+        application/json:
+          example:
+            errorCode: unknownDevice | pendingDevice
+            errorDetail: deviceIdentifier=XYZ; deviceToken=ABC
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    NonceError400BadRequest:
       description: Bad Request.
       content:
         application/json:
           example:
-            errorCode: malformedRequest
+            errorCode: 'invalid x-clientid'
+            errorDetail: 'The client id sent in the request header is unknown. Please register your client at first.'
           schema:
             $ref: '#/components/schemas/ErrorType'
-    
-    Error404NotFound:
-      description: Not found.
+            
+    NonceError500InternalError:
+      description: Internal Server Error
       content:
         application/json:
           example:
-            errorCode: noResource
+            errorCode: internalError
           schema:
             $ref: '#/components/schemas/ErrorType'
-    
+
     Error500InternalError:
       description: Internal Server Error
       content:
@@ -373,22 +362,52 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorType'
 
+    ARFdVError400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: 'input parameters invalid'
+            errorDetail: 'check the registered client_id or the Issuer URL of the IDP to use.'
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    ARSCError400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: 'input parameters invalid'
+            errorDetail: 'check the registered client_id and redirect_uri at the IDP.'
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
 
   schemas:
+    UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     ClientType:
       type: string
       description: TODO
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
-    
     IdpIssType:
       type: string
       description: TODO
       example: https://idp_kk.de
-    
     clientAttestType:
       type: string
-    
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object
@@ -402,38 +421,30 @@ components:
       required:
         - errorCode
 
-    
-    IdTokenType:
-      type: string
-    
-    AuthorizationResponseFdvType:
-      description: AuthorizationResponseFdv
+    AuthorizationResponseFdV:
+      description: AuthorizationResponse
       type: object
       properties:
-        clientid:
+        request_uri:
           readOnly: true
           type: string
-          format: uuid
-        requestUri:
+          example: urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY22c
+        expires_in:
           readOnly: true
-          type: string
-        
-    AuthCodeResponseFdvType:
-      type: object
-      properties:
-        state:
-          readOnly: true
-          type: string
-          format: uuid
+          type: number
+          example: 300
 
-    AuthorizationResponseScType:
-      description: AuthorizationResponseSc
+    AuthorizationResponse:
+      description: AuthorizationResponse
       type: object
       properties:
         clientid:
           readOnly: true
           type: string
           format: uuid
+        request_uri:
+          readOnly: true
+          type: string
         state:
           readOnly: true
           type: string
@@ -459,28 +470,25 @@ components:
         scope:
           type: string
           example: openid+ePA
-
-    AuthCodeResponseScType:
+    
+    AuthCodeResponse:
       type: object
       properties:
         state:
           readOnly: true
           type: string
-          format: uuid      
-        
+          format: uuid
 
-  examples:
-    Error403ForbiddenNotEntitled:
-      summary: Requestor has no valid entitlement
-      value:
-        errorCode: notEntitled
+    AuthCodeResponse403:
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
 
-    Error403ForbiddenInvalidOid:
-      summary: Requestor role is not in the list of allowed usergroups
-      value:
-        errorCode: invalidOid
-
-    Error403ForbiddenNotRegisteredOrVerified:
-      summary: Device is either not registered or not verified
-      value:
-        errorCode: notRegisteredOrVerified
+  
