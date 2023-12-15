@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: I_Test_Driver_FdV
   description: REST Schnittstelle einer Test-App fuer das ePA-Modul FdV
-  version: 2.7.1
+  version: 3.0.0
   contact:
     name: gematik GmbH
     email: software-development@gematik.de
@@ -11,31 +11,46 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0'
 servers:
-  - url: 'https://localhost:9107/'
+  - url: '{protocol}://{host}:{port}/{api}'
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: https
+      host:
+        default: 'localhost'
+      port:
+        default: '443'
+      api:
+        default: 'fdv-testdriver'
+tags:
+  - name: login/logout
+    description: login / logout von einem Nutzer auf ein Aktenkonto
 paths:
   /login:
     post:
       tags:
-        - user
+        - login/logout
       summary: Login Aktensession
-      description: 'Diese Operation führt ein explizites Login für ein Aktenkonto mit dem RecordIdenfier für insurantId aus. Für die Verwendung einer eGK können die zu verwendende PIN sowie die CAN (für NFC) übergeben werden. Für die Verwendung einer alvi-Identität kann der zu verwendende Authentisierungstoken übergeben werden. Falls die insurantID übergeben wird, dann referenziert die insurantID die AUT-identität des Nutzers, welche über eine eGK oder einen Signaturdienst (Konfigurationsparameter UseEGK) verfügbar ist. Falls keine insurantID übergeben wird, dann wird eine PKCS12-Datei übergeben. Das C.CH.AUT Zertifikat und der private Schlüssel aus der PKCS12-Datei werden im Testtreiber genutzt (bspw. Signatur bei der Authentisierung und der Schlüsselerzeugung mit SGD).'
+      description: 'Diese Operation führt ein explizites Login auf ein Aktenkonto mit einem Nutzer aus. Sind keine Account Informationen enthalten, soll der per Default hinterlegte Nutzer sich auf sein eigenes Aktenkonto einloggen.'
       operationId: login_1
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RequestDTO'
+              $ref: "#/components/schemas/LoginRequestDTO"
       responses:
         default:
-          description: default response
+          description: "Gibt im Erfolgsfall den Nutzer und das Aktenkonto zurück auf der Nutzer erfolgreich einloggt werden konnte."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProtocolResponseDTO'
+                $ref: "#/components/schemas/LoginResponseDTO"
   /logout:
     post:
       tags:
-        - user
+        - login/logout
       summary: Logout Aktensession
       description: Diese Operation führt ein Logout für eine mit insurantId identifizierte Aktensession aus.
       operationId: logout_1
@@ -309,263 +324,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FindDirectoryResponseDTO'
-  /permissions:
-    get:
-      tags:
-        - permissions
-      summary: Alle Berechtigungen lesen
-      description: Diese Operation führt den Anwendungsfall "Vergebene Berechtigungen auflisten" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: getPermissions_1
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionsResponseDTO'
-  /permissionsForDocument:
-    post:
-      tags:
-        - permissions
-      summary: Anzeige der auf ein Dokument berechtigten LEI
-      description: 'Diese Operation führt den Anwendungsfall "Vergebene Berechtigungen eines Dokuments auflisten" in einer mit insurantId identifizierten Aktensession aus. Der Nutzer erhält Informationen darüber, welche Leistungserbringerinstitutionen auf das Dokument Zugriff haben.'
-      operationId: getDocAuthorized_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionsRequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionsResponseDTO'
-  /permissionHcpo/add:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für LEI erteilen
-      description: Diese Operation führt den Anwendungsfall "Berechtigung für LEI vergeben" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionHcpo_add
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionHcpoDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-    parameters: []
-  /permissionHcpo/update:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für eine LEI ändern
-      description: |-
-        Diese Operation führt den Anwendungsfall "Berechtigung für LEI ändern" in einer mit insurantId identifizierten Aktensession aus.  Die Policy für eine, bereits berechtigte Identität wird wie folgt geändert: 
-        1. nur Abschnitte (bezogen auf eine RuleId, z.b. blacklist), die auch im Request angegeben werden , werden in der vorhandenen Policy überschrieben.
-        2. andere eventuell vorhandene Abschnitte (z.b. lei-permission bzw Kategorie basierte Berechtigung) bleiben unverändert
-        3. die Angabe eines Abschnitts als leere Liste bedeutet das Entfernen dieses Abschnittes aus der Policy bzw der Einträge dieses Abschnittes
-      operationId: permissionHcpo_update
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionHcpoDTO'
-            examples:
-              'permissionAccessCategory wird übergeschrieben, die LEI bekommt auf keine Kategorie ein Leserecht, evtl bereits erteilte feingranulare Berechtigungen bleiben erhalten. Entsprechend ist das Policy Dokument zu erstellen.':
-                value:
-                  account:
-                    account: K123456789
-                    insurantId: K123456789
-                    pkcs12: ''
-                    passwordPrivateKey: PASSWORD
-                    passwordKeyStore: PASSWORD
-                  hcpoTelematikId: 1-SMC-B-Testkarte-883110000092397
-                  permissionLeiProperties:
-                    validThrough: '2022-07-21'
-                    permissionAccessCategory: []
-              'permissionAccessCategory wird übergeschrieben, die LEI bekommt ausschließlich auf Kategorie "eab" level "N" ein Leserecht, evtl bereits erteilte feingranulare Berechtigungen bleiben erhalten. Entsprechend ist das Policy Dokument zu erstellen.':
-                value:
-                  account:
-                    account: K123456789
-                    insurantId: K123456789
-                    pkcs12: ''
-                    passwordPrivateKey: PASSWORD
-                    passwordKeyStore: PASSWORD
-                  hcpoTelematikId: 1-SMC-B-Testkarte-883110000092397
-                  permissionLeiProperties:
-                    validThrough: '2022-07-21'
-                    permissionAccessCategory:
-                      - level: 'N'
-                        category: eab
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-    parameters: []
-  /permissionHcpo/remove:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für eine LEI löschen
-      description: Diese Operation führt den Anwendungsfall "Berechtigung für LEI löschen" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionHcpo_remove
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeletePermissionDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-    parameters: []
-  /permissionRepresentative/add:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für einen Vertreter erteilen
-      description: Diese Operation führt den Anwendungsfall "Vertretung einrichten" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionRepresentative_add
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionRepresentativeDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /permissionRepresentative/remove:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für einen Vertreter löschen
-      description: Diese Operation führt den Anwendungsfall "Berechtigung für Vertreter löschen" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionRepresentative_remove
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeletePermissionDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /permissionInsurance/add:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für einen Kostenträger erteilen
-      description: Diese Operation führt den Anwendungsfall "Berechtigung für Kostenträger vergeben" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionInsurance_add
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PermissionInsuranceDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /permissionInsurance/remove:
-    post:
-      tags:
-        - permissions
-      summary: Berechtigung für einen Kostenträger löschen
-      description: Diese Operation führt den Anwendungsfall "Berechtigung für Kostenträger löschen" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: permissionInsurance_remove
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeletePermissionDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /notificationInformation:
-    post:
-      tags:
-        - administration
-      summary: Benachrichtigungsadresse für Geräteautorisierung aktualisieren
-      description: Diese Operation führt den Anwendungsfall "Benachrichtigungsadresse für Geräteautorisierung aktualisieren" in einer mit insurantId identifizierte Aktensession aus. Hinterlegt eine Benachrichtigungsadresse für das Aktenkonto.
-      operationId: putNotificationInformation_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NotificationInformationRequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /getNotificationInfoList:
-    post:
-      tags:
-        - administration
-      summary: Hinterlegte Benachrichtigungsadressen abfragen
-      description: Diese Operation führt den Anwendungsfall "Benachrichtigungsadresse für Geräteautorisierung abfragen" in einer mit insurantId identifizierte Aktensession aus.
-      operationId: getNotificationInformation_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetNotificationInformationRequestDTO'
-      responses:
-        default:
-          description: response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetNotificationInformationResponseDTO'
-  /changeProvider:
-    post:
-      tags:
-        - administration
-      summary: Anbieter wechseln
-      description: Diese Operation führt den Anwendungsfall "Anbieter wechseln" in einer mit insurantId identifizierten Aktensession aus.
-      operationId: changeProvider_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangeProviderRequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
   /protocol:
     post:
       tags:
@@ -585,69 +343,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProtocolResponseDTO'
-  /signedProtocol:
-    post:
-      tags:
-        - protocol
-      summary: Zugriffsprotokolle mit PAdES-Signatur lesen
-      description: Diese Operation führt den Anwendungsfall "signiertes Zugriffsprotokoll einsehen" in einer mit insurantId identifizierten Aktensession aus. Die vom Aktensystem gelieferten Protokolleinträge werden aufgearbeitet und zurückgegeben. Liefert alle Einträge aus getSignedAuditEvents für das Aktenkonto.
-      operationId: getSignedProtocol_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SignedProtocolResponseDTO'
-  /configuration:
-    get:
-      tags:
-        - configuration
-      summary: Gesamte Konfiguration lesen
-      description: 'Die Operation liefert eine Liste aller Konfigurationsparameter des FdV mit den eingestellten Werten. Liefert alle Konfigurationseinträge, die dem Filter entsprechen. Als Filter ist configurationEntryId möglich. Wird kein Filter angegeben, dann werden alle Einträge aus der Konfiguration zurückgegeben.'
-      operationId: getConfigurationEntries_1
-      parameters:
-        - name: uid
-          in: query
-          description: Bezeichner eines Konfigurationseintrages (configurationEntryId)
-          schema:
-            type: string
-      responses:
-        '200':
-          description: 'successful operation; Es werden alle Konfigurationseinträge zurückgegeben.; Wenn nach einer uid gesucht wurde, wird genau dieser Eintrag zurückgegeben.; Falls der Konfigurationseintrag vorab nicht gesetzt wurde, wird ein Leerstring zurückgegeben.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConfigurationEntries'
-        '400':
-          description: Invalid ID supplied
-          content: {}
-        '404':
-          description: Entry not found
-          content: {}
-    put:
-      tags:
-        - configuration
-      summary: Konfigurationseintrag ändern
-      description: Diese Operation setzt ein oder mehrere Werte für eine Liste von Konfigurationsparametern sowie für herstellerspezifische Konfigurationsparameter. Die Liste der herstellerspezifischen Konfigurationsparameter sind in der Betriebsdokumentation zu beschreiben.
-      operationId: updateConfigurationEntries_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConfigurationEntry'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
   /productinformation:
     post:
       summary: Gibt die Informationen zur Produktinformation zurück
@@ -660,18 +355,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseProductInformationDTO'
-  /ping:
-    post:
-      summary: Prüft die Erreichbarkeit der Schnittstelle auf Anwendungsebene
-      description: 'Ping prüft die Erreichbarkeit der Schnittstelle auf Anwendungsebene. In der Response wird die Schnittstellenversion zurückgegeben, was der Prüfung der Interoberabilität dient.'
-      operationId: ping_1
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponsePingDTO'
   /updateMetadata:
     post:
       tags:
@@ -691,23 +374,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
-  /updateKeys:
-    post:
-      summary: Umschlüsselung durchführen
-      description: 'Diese Operation führt den Anwendungsfall "Umschlüsselung" in einer mit insurantId identifizierten Aktensession aus. Es werden neue Aktenschlüssel, Kontextschlüssel bzw. Dokumentenschlüssel für den Versicherten, die Berechtigten und die Dokumentenverwaltung erzeugt.'
-      operationId: updateKeys_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateKeysResponseDTO'
   /replaceDocument:
     post:
       tags:
@@ -727,38 +393,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
-  /pseudomiseMio:
-    post:
-      summary: PseudoAnonymise MIO
-      operationId: pseudomise-mio
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PseudomiseResponseDTO'
-              examples:
-                Beispiel Antwort:
-                  value:
-                    success: true
-                    statusMessage: Operation Completed
-                    documents:
-                      - content: PEJ1bmRsZSB4bWxucz0iaHR0cDovL2hsNy5vcmcvZmhpciI+CiAgICA8aWQgdmFsdWU9IjAwMTU3OGY4LTBiNzYtNDE5Ny1hZmQ5LWQ4MzIyNzUxNmU0NiIgLz4KICAgIDxtZXRhPgogICAgICAgIDxsYXN0VXBkYXRlZCB2YWx1ZT0iMjAxOS0xMi0yNFQxMjozMDowMloiIC8+CiAgICAgICAgPHByb2ZpbGUgdmFsdWU9Imh0dHBzOi8vZmhpci5rYnYuZGUvU3RydWN0dXJlRGVmaW5pdGlvbi9LQlZfUFJfTUlPX1ZhY2NpbmF0aW9uX0J1bmRsZV9FbnRyeXwxLjEuMCIgLz4KICAgIDwvbWV0YT4KPC9CdW5kbGU+
-                        formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-      description: Operation für die Prüfung der pseudonymisierung der Dokumente
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PseudomiseRequestDTO'
-            examples:
-              Beispiel Request:
-                value:
-                  documents:
-                    - content: PEJ1bmRsZSB4bWxucz0iaHR0cDovL2hsNy5vcmcvZmhpciI+CiAgICA8aWQgdmFsdWU9IjAwMTU3OGY4LTBiNzYtNDE5Ny1hZmQ5LWQ4MzIyNzUxNmU0NiIgLz4KICAgIDxtZXRhPgogICAgICAgIDxsYXN0VXBkYXRlZCB2YWx1ZT0iMjAxOS0xMi0yNFQxMjozMDowMloiIC8+CiAgICAgICAgPHByb2ZpbGUgdmFsdWU9Imh0dHBzOi8vZmhpci5rYnYuZGUvU3RydWN0dXJlRGVmaW5pdGlvbi9LQlZfUFJfTUlPX1ZhY2NpbmF0aW9uX0J1bmRsZV9FbnRyeXwxLjEuMCIgLz4KICAgIDwvbWV0YT4KPC9CdW5kbGU+
-                      formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-        description: ''
 components:
   schemas:
     ResponseDTO:
@@ -770,45 +404,27 @@ components:
           type: string
       required:
         - success
-    Login:
+    LoginRequestDTO:
       type: object
-      description: Eingangsdaten für den Anwendungsfall Login sowie für das implizite Login vor weiteren Anwendungsfällen
+      description: "Enthält optional Account Informationen mit denen der Login eines Nutzers auf ein Aktenkonto durchgeführt werden soll. "
       properties:
         account:
+          $ref: "#/components/schemas/Account"
+    LoginResponseDTO:
+      type: object
+      description: "Enthält im Erfolgsfall Informationen über den eingeloggten Nutzer und das verwendete Aktenkonto."
+      properties:
+        success:
+          type: boolean
+        statusMessage:
           type: string
-          minLength: 10
-          maxLength: 10
-          description: 'referenziert eine Aktensession, in der die Operation ausgeführt werden soll; Wenn keine Aktensession besteht, dann muss für dieses Aktenkonto (entspricht OwnerInsurantId oder RepresentationXInsurantId in der Konfiguration) eine Aktensession eröffnet werden (implizites Login).'
-        insurantId:
-          type: string
-          minLength: 10
-          maxLength: 10
-          description: 'Versicherten-ID des Nutzers (Aktenkontoinhaber oder Vertreter) des FdV; Wenn dieser Parameter gesetzt ist, dann wird für die Authentisierung entsprechend dem Konfigurationsparameter useEGK eine angebundene eGK oder der Signaturdienst genutzt.; Wenn  dieser Parameter gesetzt ist, dann werden die Parameter pkcs12, passwordPrivateKey und passwordKeyStore ignoriert.'
-        pkcs12:
-          type: string
-          format: byte
-          description: C.CH.AUT-Zertifikat des Nutzers mit private Key im pkcs12 Format; Aus dem C.CH.AUT-Zertifikat wird die Versicherten-ID des Nutzers (Aktenkontoinhaber oder Vertreter) bestimmt.; Mit dem private Key werden die Signaturen bei der Authentisierung und der Schlüsselerzeugung (SGD) erstellt
-        passwordPrivateKey:
-          type: string
-          description: Passwort für private Key in pkcs12
-        passwordKeyStore:
-          type: string
-        pin:
-          type: integer
-          description: Für die Verwendung einer eGK kann die zu verwendende PIN übergeben werden.
-        can:
-          type: string
-          description: Für die Verwendung einer eGK kann die zu verwendende CAN für NFC übergeben werden.
-        token:
-          type: string
-          description: Für die Verwendung einer alvi-Identität kann der zu verwendende Authentisierungstoken übergeben werden.
+        account:
+          $ref: "#/components/schemas/Account"
       required:
-        - account
+        - success
     RequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         pageSize:
           type: integer
           minimum: 1
@@ -819,20 +435,15 @@ components:
           type: string
           format: date
           example: '2021-07-01'
-      required:
-        - account
     DocumentsRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         documentUniqueIds:
           type: array
           description: Liste von UniqueIDs von DocumentEntries
           items:
             type: string
       required:
-        - account
         - documentUniqueIds
       x-examples: {}
     ObjectDTO:
@@ -845,14 +456,11 @@ components:
     ObjectRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         objects:
           type: array
           items:
             $ref: '#/components/schemas/ObjectDTO'
       required:
-        - account
         - objects
     AuthorInstitution:
       type: object
@@ -1467,14 +1075,11 @@ components:
     StoreDocumentRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         documentSets:
           type: array
           items:
             $ref: '#/components/schemas/DocumentWithMetadata'
       required:
-        - account
         - documentSets
     RetrieveDocumentsResponseDTO:
       type: object
@@ -1493,8 +1098,6 @@ components:
       type: object
       description: 'Die Parameter returnType (Werte sind "LeafClass" oder "ObjectRef"), startIndex und maxResults werden zum Gruppieren der Ergebnisse für das Blättern verwendet.'
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         queryMetadata:
           $ref: '#/components/schemas/QueryMetadata'
         query:
@@ -1518,8 +1121,6 @@ components:
             - LeafClass
             - ObjectRef
           default: LeafClass
-      required:
-        - account
     FindObjectsResponseDTO:
       type: object
       title: ''
@@ -1674,12 +1275,9 @@ components:
     FindDirectoryRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         directoryEntry:
           $ref: '#/components/schemas/DirectoryEntry'
       required:
-        - account
         - directoryEntry
     FindDirectoryResponseDTO:
       type: object
@@ -1694,227 +1292,6 @@ components:
             $ref: '#/components/schemas/DirectoryEntryWithCertificates'
       required:
         - success
-    PermissionProp:
-      type: object
-      description: 'Enthält alle Informationen, was genau berechtigt wurde, d.h. alle Details zur vergebenen grob-, mittel- und feingranularen Berechtigung.'
-      properties:
-        permissionAccessCategory:
-          type: array
-          description: Liste von Kategorien mit Access Level Zuordnung
-          items:
-            $ref: '#/components/schemas/PermissionAccessCategory'
-        permissionAccessWhitelist:
-          type: array
-          description: Liste von EntryUUIDs von Objekten in Whitelist
-          items:
-            type: string
-            description: Option zur Vergabe von feingranularem Zugriff. Werte müssen jeweils uniqueIds der freizuschaltenden Dokumente beinhalten.
-        permissionAccessBlacklist:
-          type: array
-          description: Liste von EntryUUIDs von Objekten in Blacklist
-          items:
-            type: string
-            description: Option zur Vergabe von feingranularem Zugriff. Werte müssen jeweils uniqueIds der zu sperrenden Dokumente beinhalten.
-        validThrough:
-          type: string
-          format: date
-          description: 'Zugriff gültig bis einschließlich; full-date notation as defined by RFC 3339, section 5.6. Wenn keine Datum definiert wird, wird die Policy zeitlich umbegrenzt.'
-          example: '2017-07-21'
-      x-examples:
-        Access Level für eine Kategorie auf "N" und "R" setzen:
-          value:
-            permissionAccessCategory:
-              - level: 'N'
-                category: practitioner
-              - level: R
-                category: practitioner
-              - level: 'N'
-                category: patientdoc
-              - level: R
-                category: patientdoc
-            permissionAccessWhitelist:
-              - 'urn:uuid:7861449a-9676-4fa5-90dd-8836d33401b2'
-            permissionAccessBlacklist: []
-            validThrough: '2022-07-31'
-        Access Level für eine Kategorie auf "R" setzen:
-          value:
-            permissionAccessCategory:
-              - level: R
-                category: practitioner
-              - level: R
-                category: patientdoc
-            permissionAccessWhitelist:
-              - 'urn:uuid:7861449a-9676-4fa5-90dd-8836d33401b2'
-            permissionAccessBlacklist: []
-            validThrough: '2022-07-31'
-    PermissionEntry:
-      type: object
-      properties:
-        telematikOrInsurantId:
-          type: string
-          description: Telematik-ID bzw. Versicherten-ID des Berechtigten
-        name:
-          type: string
-          description: Name des Berechtigten
-        permissionLeiProperties:
-          $ref: '#/components/schemas/PermissionProp'
-      required:
-        - telematikOrInsurantId
-        - name
-    PermissionsRequestDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        documentEntryUUID:
-          type: string
-      required:
-        - account
-    PermissionsResponseDTO:
-      type: object
-      properties:
-        success:
-          type: boolean
-        statusMessage:
-          type: string
-        permissions:
-          type: array
-          items:
-            $ref: '#/components/schemas/PermissionEntry'
-      required:
-        - success
-    PermissionHcpoDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        hcpoTelematikId:
-          type: string
-          description: Telematik-ID der Leistungserbringerinstitution (LEI)
-        hcpoName:
-          type: string
-          description: Name der LEI (Common Name aus dem VZD)
-        permissionLeiProperties:
-          $ref: '#/components/schemas/PermissionProp'
-      required:
-        - account
-    PermissionRepresentativeDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        representativeInsurantId:
-          type: string
-          minLength: 10
-          maxLength: 10
-          description: Versicherten-ID des Vertreters (unveränderliche Teil der KVNR)
-        representativeName:
-          type: string
-          description: Name des Vertreters
-        representativeNotificationInfo:
-          type: string
-          format: email
-          description: Benachrichtigungsadresse (E-Mail) für die Geräteautorisierung
-      required:
-        - account
-        - representativeInsurantId
-        - representativeName
-        - representativeNotificationInfo
-    PermissionInsuranceDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        insuranceTelematikId:
-          type: string
-          description: Telematik-ID des Kostenträgers (KTR)
-        insuranceName:
-          type: string
-          description: Name des KTR
-      required:
-        - account
-        - insuranceTelematikId
-        - insuranceName
-    DeletePermissionDTO:
-      type: object
-      title: ''
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        telematikOrInsurantId:
-          type: string
-          description: Versicherten-ID für Vertreter oder Telematik-ID für LEI bzw. KTR
-      required:
-        - account
-        - telematikOrInsurantId
-    NotificationInformationRequestDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        notificationInformation:
-          type: string
-          format: email
-          description: Benachrichtigungsadresse (E-Mail) für die Geräteautorisierung
-      required:
-        - account
-        - notificationInformation
-    GetNotificationInformationRequestDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-      required:
-        - account
-    GetNotificationInformationResponseDTO:
-      type: object
-      properties:
-        success:
-          type: boolean
-        statusMessage:
-          type: string
-        notificationInfoList:
-          type: array
-          items:
-            type: string
-            description: Email Adresse des Vertreters
-      required:
-        - success
-        - notificationInfoList
-    NotificationInformationWithId:
-      type: object
-      properties:
-        insurantId:
-          type: string
-          minLength: 10
-          maxLength: 10
-          description: Versicherten-ID (unveränderliche Teil der KVNR)
-        notificationInformation:
-          type: string
-          format: email
-          description: Benachrichtigungsadresse (E-Mail) für die Geräteautorisierung
-      required:
-        - insurantId
-        - notificationInformation
-    ChangeProviderRequestDTO:
-      type: object
-      properties:
-        account:
-          $ref: '#/components/schemas/Login'
-        fqdnNewProvider:
-          type: string
-          description: FQDN des neuen Anbieters
-        transferPermission:
-          type: boolean
-          default: true
-          description: 'legt fest, ob die Berechtigungen mit übertragen werden sollen'
-        RepresentativeNotificationInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/NotificationInformationWithId'
-      required:
-        - account
-        - fqdnNewProvider
     ProtocolEntry:
       type: object
       description: Protokolleintrag
@@ -1971,55 +1348,6 @@ components:
             $ref: '#/components/schemas/ProtocolEntry'
       required:
         - success
-    SignedProtocolResponseDTO:
-      type: object
-      properties:
-        success:
-          type: boolean
-        statusMessage:
-          type: string
-        document:
-          $ref: '#/components/schemas/Document'
-      required:
-        - success
-    ConfigurationEntry:
-      type: object
-      properties:
-        configurationEntryId:
-          type: string
-          enum:
-            - OwnerInsurantId
-            - OwnerFqdnProvider
-            - OwnerDeviceId
-            - OwnerDeviceName
-            - OwnerLastLoginDate
-            - Representation1Name
-            - Representation1InsurantId
-            - Representation1FqdnProvider
-            - Representation1DeviceId
-            - Representation1LastLoginDate
-            - Representation2Name
-            - Representation2InsurantId
-            - Representation2FqdnProvider
-            - Representation2DeviceId
-            - Representation2LastLoginDate
-            - Notification
-            - NotificationPeriod
-            - ShowPermissionOnAddDocuments
-            - UseEGK
-            - SignatureServiceURL
-            - DefaultConfidentialityCode
-          description: 'Schlüsselwerte für die in A_15292-XX definierten Parameter, die durch den Nutzer für die Konfiguration des FdV eingegeben werden.; OwnerInsurantId - Versicherten-ID des Aktenkontoinhabers, Teil der Akten-ID; OwnerFqdnProvider - FQDN Anbieter ePA-Aktensystem des Aktenkontoinhabers; OwnerDeviceName - Gerätename des GdV; In der Testtreiber-Konfiguration können 2 Vertretungen eingerichtet werden.; Representation1Name - Name des zu Vertretenden; Representation1InsurantId - Versicherten-ID des zu Vertretenden, Teil der Akten-ID; Representation1FqdnProvider - FQDN Anbieter ePA-Aktensystem des zu Vertretenden; Notifcation - Benachrichtigungen aktivieren; NotificationPeriod - Benachrichtigungszeitraum; ShowPermissionOnAddDocuments - Dokumente einstellen Berechtigte anzeigen; UseEGK (boolean) - gibt an, ob für die Authentisierung die eGK oder die alternative kryptographische Versichertenidentität genutzt wird.'
-        configurationEntryValue:
-          type: string
-          description: 'Wert für den Konfigurationsparameter. für die Parameter Notification, ShowPermissionOnAddDocuments und UseEGK sind nur die Werte "ja" und "nein" zulässig.'
-      required:
-        - configurationEntryId
-        - configurationEntryValue
-    ConfigurationEntries:
-      type: array
-      items:
-        $ref: '#/components/schemas/ConfigurationEntry'
     ResponseProductInformationDTO:
       type: object
       description: Produktinformation
@@ -2041,188 +1369,45 @@ components:
         - producerId
         - code
         - version
-    ResponsePingDTO:
-      type: object
-      properties:
-        success:
-          type: boolean
-        statusMessage:
-          type: string
-        version:
-          type: string
-      required:
-        - success
-        - version
     UpdateMetadataRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         documentMetadata:
           $ref: '#/components/schemas/DocumentMetadata'
         newConfidentialityCode:
           type: string
           description: Neue ConfidentialityCode eines Dokumentes oder Folder. Ersetzt die alten Codes.
       required:
-        - account
         - newConfidentialityCode
     ReplaceDocumentRequestDTO:
       type: object
       properties:
-        account:
-          $ref: '#/components/schemas/Login'
         documentEntryUUID:
           type: string
           description: EntryUUID eines zu ersetzenden Dokumentes
         documentWithMetadata:
           $ref: '#/components/schemas/DocumentWithMetadata'
       required:
-        - account
         - documentEntryUUID
         - documentWithMetadata
-    UpdateKeysResponseDTO:
+
+    Account:
+      description: "Allgemeine Informationen über den Nutzer und das verwendete bzw. zu verwendende Aktenkonto"
+      readOnly: true
       type: object
-      properties:
-        success:
-          type: boolean
-        statusMessage:
-          type: string
-        rollbackTime:
-          type: string
-          format: date-time
-          description: 'Ende Zeitraum für die erfolgreiche Umschlüsselung, nach Ablauf wird die Umschlüsselung abgebrochen und die ursprünglichen Schlüssel bleiben weiterhin aktiv; date-time notation as defined by RFC 3339, section 5.6'
-          example: '2017-07-21T17:32:28Z'
       required:
-        - success
-    PermissionAccessCategory:
-      title: PermissionAccessCategory
-      type: object
-      x-examples:
-        '''Normal'' access für practitioner Folder':
-          value:
-            level: 'N'
-            category: practitioner
-        '''Restricted'' access für practitioner Folder':
-          value:
-            level: R
-            category: practitioner
+        - insurantId
+        - accountId
       properties:
-        level:
+        accountId:
           type: string
-          description: Vertraulikeitscode (N oder R)
-          enum:
-            - 'N'
-            - R
-            - V
-          example: 'N'
-          default: 'N'
-        category:
+          minLength: 10
+          maxLength: 10
+          description: "ID (Typ KVNR) des verwendeten bzw. zu verwendenden Aktenkontos."
+          example: "X1234567890"
+        insurantId:
           type: string
-          description: 'Folder Code (z.B. practitioner, patientdoc)'
-      required:
-        - level
-        - category
-    PseudomiseRequestDTO:
-      title: PseudomiseRequestDTO
-      type: object
-      description: Request Objekt für die Operation "pseudomiseMio"
-      x-examples:
-        Beispiel mit einem Dokument:
-          documents:
-            - content: Base64-Encodierte-Inhalt
-              formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-          account:
-            account: K1234567890
-            insurantId: K123456890
-            pkcs12: string
-            passwordPrivateKey: string
-            passwordKeyStore: string
-            pin: 0
-            can: string
-            token: string
-        Beispiel mit mehreren Dokumenten:
-          documents:
-            - content: Base64-Encodierte-Inhalt
-              formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-            - content: Base64-Encodierte-Inhalt
-              formatCode: 'urn:gematik:ig:Mutterpass:v1.1.0'
-          account:
-            account: K1234567890
-            insurantId: K123456890
-            pkcs12: string
-            passwordPrivateKey: string
-            passwordKeyStore: string
-            pin: 0
-            can: string
-            token: string
-      x-tags:
-        - pseudomise
-      properties:
-        documents:
-          type: array
-          items:
-            $ref: '#/components/schemas/PseudomiseDocument'
-        account:
-          $ref: '#/components/schemas/Login'
-      required:
-        - documents
-    PseudomiseResponseDTO:
-      title: PseudomiseResponseDTO
-      type: object
-      description: Response Objekt für die Operation "pseudomiseMio"
-      x-examples:
-        Beispiel mit einem Dokument:
-          success: true
-          statusMessage: string
-          documents:
-            - content: string
-              formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-        Beispiel mit mehreren Dokumenten:
-          success: true
-          statusMessage: Operation Completed
-          documents:
-            - content: Base64-String
-              formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
-            - content: Base64-String
-              formatCode: 'urn:gematik:ig:Mutterpass:v1.1.0'
-        Beispiel mit Fehler:
-          success: false
-          statusMessage: 'Could not perform the operation: invalid schema'
-          documents: []
-      properties:
-        success:
-          type: boolean
-          enum:
-            - true
-            - false
-          example: true
-        statusMessage:
-          type: string
-          description: Eine optionale Meldung für die Operation
-        documents:
-          type: array
-          description: Liste von pseudoanonymisierten Dokumenten
-          items:
-            $ref: '#/components/schemas/PseudomiseDocument'
-      required:
-        - success
-        - documents
-    PseudomiseDocument:
-      title: PseudomiseDocument
-      type: object
-      description: Ein Dokument für die Pseudonymisierung Operation
-      properties:
-        content:
-          type: string
-          description: Dokument-Inhalt als Base64 encodiertes Wert
-        formatCode:
-          type: string
-          example: 'urn:gematik:ig:Impfausweis:v1.1.0'
-          description: Format Code als documentEntry.formatCode.code
-      required:
-        - content
-        - formatCode
-      x-examples:
-        Beispiel Impfausweis (leer):
-          content: PEJ1bmRsZSB4bWxucz0iaHR0cDovL2hsNy5vcmcvZmhpciI+CiAgICA8aWQgdmFsdWU9IjAwMTU3OGY4LTBiNzYtNDE5Ny1hZmQ5LWQ4MzIyNzUxNmU0NiIgLz4KICAgIDxtZXRhPgogICAgICAgIDxsYXN0VXBkYXRlZCB2YWx1ZT0iMjAxOS0xMi0yNFQxMjozMDowMloiIC8+CiAgICAgICAgPHByb2ZpbGUgdmFsdWU9Imh0dHBzOi8vZmhpci5rYnYuZGUvU3RydWN0dXJlRGVmaW5pdGlvbi9LQlZfUFJfTUlPX1ZhY2NpbmF0aW9uX0J1bmRsZV9FbnRyeXwxLjEuMCIgLz4KICAgIDwvbWV0YT4KPC9CdW5kbGU+
-          formatCode: 'urn:gematik:ig:Impfausweis:v1.1.0'
+          minLength: 10
+          maxLength: 10
+          description: "Versicherten ID (Typ KVNR) des Nutzers."
+          example: "X9876543210"

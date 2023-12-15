@@ -2,10 +2,10 @@
   "fhirVersions": [
     "4.0.1"
   ],
-  "name": "de.gematik.fhir.epa",
-  "version": "3.0.0",
+  "name": "de.gematik.epa",
+  "version": "0.0.3",
   "author": "gematik",
   "dependencies": {
-    "de.basisprofil.r4": "1.3.2"
+    "de.basisprofil.r4": "1.4.0"
   }
 }
