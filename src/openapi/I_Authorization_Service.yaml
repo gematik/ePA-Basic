@@ -189,16 +189,43 @@ paths:
   /send_authorization_request_bearertoken/v1:
     parameters:
       - $ref: '#/components/parameters/useragent'      
-    get:
+    post:
       tags:
-        - Authorization BearerToken
+        - Authorization BearerToken 
       operationId: sendAuthorizationRequestBearerToken
-      summary: client authorization based on client credentials grant
-      description: sends an authorization request from the FdV client to the authorization service, which in turn verifies the client credentials grant and returns appropriate access token / refresh token for the authenticated client.
-     #t.b.d
+      summary: client authorization based on JWT authorization grant (see rfc7523)
+      description: sends an authorization request from the eRezept service to the authorization service in order to be allowed to put eRezept data into an ePA system. returns appropriate access token / refresh token for the authenticated client.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:  
+                  enum: ["urn:ietf:params:oauth:grant-type:jwt-bearer"] 
+                  type: string    
+                assertion:    
+                  type: string
+                  example: single JWT, e.g.  eyJhbGciOiJFUzI1NiIsImtpZCI6IjE2In0.eyJpc3Mi[...omitted for brevity...].J9l-ZhwP[...omitted for brevity...]
+                    #to be replaced with a real JWT example
       responses:
         '200':         
           description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  expires_in: 
+                    type: number
+                  refresh_token:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ARBEARERError400BadRequest'  
+        
 
           
   /logoutFdV/v1:
@@ -379,6 +406,16 @@ components:
           example:
             errorCode: 'input parameters invalid'
             errorDetail: 'check the registered client_id and redirect_uri at the IDP.'
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    
+    ARBEARERError400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: 'invalid_grant'
+            errorDetail: 'audience validation failed'
           schema:
             $ref: '#/components/schemas/ErrorType'
 
