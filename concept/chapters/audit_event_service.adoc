@@ -1,0 +1,60 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_protokollierung]
+=== Audit Event Service
+
+Die jeweiligen Services im ePA-Aktensysem protokollieren Ereignisse zum Zwecke der Datenschutzkontrolle für den Versicherten. Es werden alle Ereignisse protokolliert, die für diesen Zweck nötig sind. Dies beinhaltet insbesondere:
+
+* alle Zugriffe und versuchten Zugriffe auf die Daten des Versicherten im XDS Document Service sowie FHIR Data Service (Medication Service),
+* das Einstellen neuer Befugnisse sowie das Löschen von Befugnissen im Entitlement Management durch einen Vertreter,
+* alle Änderungen im Consent Management,
+* alle erfolgreichen Anmeldungen am Authorization Service,
+* die Registrierung neuer Geräte im Device Management,
+* den Anbieterwechsel beim Health Record Relocation Service,
+* den Abruf von Protokollen beim Audit Event Service durch Vertreter oder die Ombudsstelle.
+
+Am Protokolleintrag muss der Versicherte erkennen können, welcher Nutzer was zu welchem Zeitpunkt durchgeführt hat. Die Informationen im Protokolleintrag werden so gewählt, dass sie für den Zweck der Datenschutzkontrolle geeignet sind.
+
+Protokolleinträge werden im Aktensystem mit dem versichertenindividuellen Befugnispersistierungsschlüssel verschlüsselt gespeichert. Protokolleinträge werden im Aktensystem für drei Jahre aufbewahrt, danach werden sie vom Aktensystem automatisch gelöscht, ohne dass dafür eine VAU benötigt würde. Die verschlüsselten Protokolleinträge werden dafür mit entsprechenden unverschlüsselten Metadaten versehen (Löschdatum).
+
+Die Schnittstelle des Audit Event Service ermöglicht dem ePA-FdV den parametrisierten Abruf:
+
+* von Protokolleinträgen mit Rückgabe der Menge, die die Suchparameter erfüllen und
+
+* aller Protokolleinträge in vom Aktensystem signierter Form als PDF/A-Dokument.
+
+Das ePA-FdV ermöglicht dem Nutzer, sich alle im Aktensystem vorhandenen Protokolleinträge in verständlicher Form anzeigen zu lassen. Dem Nutzer werden Filterfunktionen zur Verfügung gestellt. Vertreter dürfen mittels ePA-FdV ebenfalls alle Protokolleinträge des Versicherten einsehen.
+
+Versicherte können bei ihrer zuständigen Ombudsstelle beantragen, die Protokolleinräge zur Verfügung gestellt zu bekommen. Die für den Versicherten zuständige Ombudsstelle wird als befugter Nutzer für das Aktenkonto des Versicherten bei der Anlage der Akte hinterlegt, damit diese die Protolleinträge auslesen und dem Versicherten zur Verfügung stellen kann.
+
+Das Aktensystem stellt sicher, dass ein lesender Zugriff auf die Protokolldaten ausschließlich durch den Versicherten als Aktenkontoinhaber, einen befugten Vertreter oder die befugte Ombudsstelle erfolgen kann. Lesende Zugriffe auf die Protokolldaten durch andere Nutzer werden vom ePA-Aktensystem technisch ausgeschlossen.
+
+Die Ombudsstelle erhält eine SM-B inkl. Authentisierungs-, Verschlüsselungs- und Signaturschlüssel sowie zugehörigen Zertifikaten. Die Zertifikate enthalten eine spezifische Rolle für Ombudsstellen.
+
+Damit eine Ombudsstelle Protokolldaten für einen Versicherten auslesen kann, muss sie sich über den IDP-Dienst mittels des AuthN-Materials ihrer SM-B am Aktenkonto des Versicherten anmelden. In der VAU werden die Protokolleinträge dann mit dem versichertenindividuellen Befugnispersistierungsschlüssel entschlüsselt und die Ombudsstelle kann die Protokolleinträge des Versicherten vom Aktensystem abrufen. 
+
+Die Gestaltung der Identifikation des Versicherten und die Mechanismen zur Übermittlung der ausgelesenen Protokolldaten an den Versicherten obliegen der Ombudsstelle. Die gematik macht hier keine Vorgaben.

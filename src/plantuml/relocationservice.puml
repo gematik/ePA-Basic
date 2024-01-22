@@ -1,0 +1,94 @@
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+
+participant "Kostenträger\n(new)" as ktr_n
+box "ePA Aktensystem (new)"
+participant "(VAU) \nHealth Record \nRelocation Service" as hrrl_n #eb5e34
+participant "Information \nService" as info_n
+end box
+box "ePA Aktensystem (current)"
+participant "Information \nService" as info_c
+participant "Download \nLocation" as dl_c
+participant "(VAU) \nHealth Record \nRelocation Service" as hrrl_c #eb5e34
+end box
+participant "Kostenträger\n(current)" as ktr_c
+
+'create health record
+ktr_n -> info_n : Please create health record KVNRx
+activate info_n
+
+' request export of health record
+info_n -> info_c : Does health record KVNRx exist? \nIf yes, please relocate it to my side. \n(ENC-Certificate  of provider)
+activate info_c
+alt Health record does not exist
+info_c --> info_n : This record is not known to me.
+end
+
+info_c -> ktr_c : Please relocate KVNRx (ENC-Certificate of provider)
+ktr_c -> hrrl_c : Create export package (ENC-Certificate of provider)
+activate hrrl_c
+
+hrrl_c -> hrrl_c : Create Download-URL and set state to SUPSENDED
+hrrl_c --> ktr_c : Download-URL
+
+hrrl_c -> hrrl_c : Fetch all data from \ninternal services and \nform export package
+hrrl_c -> hrrl_c : Encrypt export package with \nENC-Certificate of provider
+hrrl_c -> dl_c : Store export package
+deactivate hrrl_c
+
+ktr_c --> info_c : Export package created (Download-URL)
+
+info_c -> info_c : Check that export package exists
+info_c -> info_n : Export package created (Download-URL)
+deactivate info_c
+
+' Import health record
+info_n -> ktr_n : Export package created (Download-URL), start import
+deactivate info_n
+
+ktr_n -> hrrl_n : Import export package from Download-URL
+activate hrrl_n
+hrrl_n -> dl_c : Fetch export package
+hrrl_n --> ktr_n : OK
+
+hrrl_n -> hrrl_n : Decrypt export package
+hrrl_n -> hrrl_n : Extract all data from \nexport package and give it \nto internal services
+
+alt import has been successful
+hrrl_n -> hrrl_n : Set state to ACTIVATED
+hrrl_n -> info_c : delete export package
+else import has not been successful
+hrrl_n -> info_c : import failed
+info_c -> ktr_c : relocation failed
+ktr_c -> hrrl_c : Set state back to ACTIVATED
+activate hrrl_c
+hrrl_c --> ktr_c : OK
+deactivate hrrl_c
+end
+
+deactivate hrrl_n
+
+
+@enduml

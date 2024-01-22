@@ -2,23 +2,22 @@ openapi: 3.0.3
 info:
   title: I_Audit_Event
   description: |
-    The AuditEvent adheres to the FHIR profile  [AuditEvent for the ePA (Elektronische Patientenakte)](https://gematik.de/fhir/epa/StructureDefinition/audit-event), and it MUST ensure compliance with the requirements and guidelines 
-    of this profile.
+    The AuditEvent adheres to the FHIR profile  [AuditEvent for the ePA (Elektronische Patientenakte)](https://gematik.de/fhir/epa/StructureDefinition/audit-event), and it MUST ensure compliance with the requirements and guidelines of this profile.
 
-    ## **Prereqisites**:
+    ### **Prerequisites**:
     
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
-    - identifier (telematik-id or kvnr)
+    - identifier (telematik-id or KVNR)
     - indication of a valid entitlement 
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
-    and a valid ID-Token. If one of these conditions is not met, then the response
+    Operations mandating a valid entitlement implicitly mandate use of a VAU channel
+    and a valid ID-Token. If one of these conditions is not met, the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
-    ## **Retry interval**:
+    ### **Retry interval**:
     
     The following retry intervals are suggested in case of an error response:<br>
     - '409' Conflict (statusMismatch).
@@ -26,15 +25,15 @@ info:
     - '500' Internal Error
       - approx. 10 minutes
 
-    ## **User Agent**:
+    ### **User Agent**:
   
     The user agent information (x-useragent) is part of any request, even if 
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-    ## **Log-Entries**
+    ### **Log Entries**
     
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    Whenever a _Postcondition_ mandates a log entry, this entry shall contain
     data as defined in A_24991*.
 
 
@@ -46,17 +45,24 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
+  version: 1.0.0
+
+  # version history:
+  # ----------------
+  # version 1.0.0
+  #   - first release version
+  # version 0.0.1
+  #   - initial version for review
 
 servers:
-- url: https://epa-hst1.prod.epa4all.de/api
+- url: https://epa-hst1.prod.epa4all.de
 
 tags:
 - name: AuditEvent
   description: The AuditEvent FHIR resource type
 
 paths:
-  /audit/v1/fhir/AuditEvent:
+  /epa/audit/api/v1/fhir/AuditEvent:
     get:
       tags:
       - AuditEvent
@@ -70,7 +76,7 @@ paths:
 
         ## **Pagination**
 
-        The AuditEvent Service supplies the client with page navigation information in its response.
+        The Audit Event Service supplies the client with page navigation information in its response.
         
         #### **URL parameter**:
         To implement the pagination function, the URL parameters ***_count*** and ***_offset*** are used. ***_count*** determines the number of entries per page, while ***_offset*** indicates the starting element of the page. Additionally, ***_total*** is a parameter that decides if the total number of entries should be included in the response.
@@ -79,7 +85,7 @@ paths:
         |---------------|-------------|---------|
         | _count | The client can specify the maximum number of elements to be included on one "page" of the response. This means the AuditEvent Service limits the result set to this maximum specified number. | 25 |
         | _offset | This parameter indicates the (zero-based) offset of the first returned element in the collection. | 0 |
-        | _total | This parameter controls whether and how the AuditEvent Service returns the total number of search results. The following values can be set: none, estimate, accurate | |
+        | _total | This parameter controls whether and how the Audit Event Service returns the total number of search results. The following values can be set: none, estimate, accurate | |
 
         Values for ***_total***:
         - **none** (default): The total number of search hits is not displayed.
@@ -88,15 +94,15 @@ paths:
 
         ##### **Example**: Request for 10 elements, starting with element 20 of the list:
         ```
-        GET [BASE]/audit/v1/fhir/AuditEvent?_count=10&_offset=20
+        GET [BASE]/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=20
         ```
         ##### **Example**: Request for the first 5 elements:
         ```
-        GET [BASE]/audit/v1/fhir/AuditEvent?_count=5
+        GET [BASE]/epa/audit/api/v1/fhir/AuditEvent?_count=5
         ```
         ##### **Example**: Requesting only the total count of entries:
         ```
-        GET [BASE]/audit/v1/fhir/AuditEvent?_count=0&_total=accurate
+        GET [BASE]/epa/audit/api/v1/fhir/AuditEvent?_count=0&_total=accurate
         ```
         ### **Links for page navigation**
         In a FHIR searchset bundle, the links attribute contains an array of link elements, each serving a specific navigational purpose within the bundle. The following relations are provided according to [Link Relation Types](https://www.iana.org/assignments/link-relations/link-relations.xhtml#link-relations-1). 
@@ -120,28 +126,28 @@ paths:
           "link": [
             {
               "relation": "self",
-              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=20"
+              "url": "http://example.com/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=20"
             },
             {
               "relation": "first",
-              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=0"
+              "url": "http://example.com/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=0"
             },
             {
               "relation": "previous",
-              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=10"
+              "url": "http://example.com/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=10"
             },
             {
               "relation": "next",
-              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=30"
+              "url": "http://example.com/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=30"
             },
             {
               "relation": "last",
-              "url": "http://example.com/audit/v1/fhir/AuditEvent?_count=10&_offset=90"
+              "url": "http://example.com/epa/audit/api/v1/fhir/AuditEvent?_count=10&_offset=90"
             }
           ],
           "entry": [
             {
-              "fullUrl": "http://example.com/audit/v1/fhir/AuditEvent/5abff610-a1ad-450d-aa63-a60622b1052e",
+              "fullUrl": "http://example.com/epa/audit/api/v1/fhir/AuditEvent/5abff610-a1ad-450d-aa63-a60622b1052e",
               "resource": {
                 "resourceType": "AuditEvent",
                 "id": "5abff610-a1ad-450d-aa63-a60622b1052e",
@@ -202,11 +208,11 @@ paths:
         #### Examples:
         ##### *All AuditEvents updated before January 15, 2025.*
         ```
-        GET [base]/audit/v1/fhir/AuditEvent?_lastUpdated=lt2025-15-01 
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=lt2025-15-01 
         ```
         ##### *All AuditEvents after January 15, 2025.*
         ```
-        GET [base]/audit/v1/fhir/AuditEvent?date=gt2025-15-01 
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=gt2025-15-01 
         ```
 
         ### **AuditEvent Search Parameters**
@@ -214,11 +220,11 @@ paths:
 
         ***_id***: Refers to the logical id of the resource (AuditEvent.id).
         ##### Example
-        ``GET [base]/audit/v1/fhir/AuditEvent?_id=eeb3b455-4fba-44c9-b522-7192fd3d40b8``
+        ``GET [base]/epa/audit/api/v1/fhir/AuditEvent?_id=eeb3b455-4fba-44c9-b522-7192fd3d40b8``
 
         ***_lastUpdated***: Can be used to select audit events on the last time they were changed.
         ##### Example
-        ``GET [base]/audit/v1/fhir/AuditEvent?_lastUpdated=2025-15-01``
+        ``GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=2025-15-01``
 
         | Name | Type | Description | Expression |
         |------|------|-------------|------------|
@@ -234,15 +240,15 @@ paths:
         #### **Example**:
         ##### *All AuditEvents since January 15, 2025 and from the general medical practice "Praxis Dr. John Doe"*
         ```
-        GET [base]/audit/v1/fhir/AuditEvent?date=ge2025-15-01&altid=1-883110000092404
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=ge2025-15-01&altid=1-883110000092404
         ```
         ##### *All AuditEvents from January 15, 2025 and all AuditEvents that have been created*
         ```
-        GET [base]/audit/v1/fhir/AuditEvent?date=2025-15-01&action=C
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=2025-15-01&action=C
         ```
         ##### *All AuditEvents for the XDS Document Arztbrief4711*
         ```
-        GET [base]/audit/v1/fhir/AuditEvent?entity-name=Arztbrief4711
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?entity-name=Arztbrief4711
         ```
 
         ## **Error Handling**
@@ -261,6 +267,11 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | A log-entry for the operation exists | representative and ombuds office only, all operation results |
+
+        #### **OperationOutcome**
+        ##### Profile: 
+        [https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0](https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0)
+
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -346,7 +357,7 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
-  /audit/v1/fhir/AuditEvent/{id}:
+  /epa/audit/api/v1/fhir/AuditEvent/{id}:
     get:
       tags:
       - AuditEvent
@@ -362,7 +373,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Invalid request | 400 | | OperationOutcome | 
-        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+        | Requestor role is not in the list of allowed user groups | 403 | invalidOid ||
         | Resource is not known | 404 | | OperationOutcome |
         | Unknown resource type | 404 | | OperationOutcome |
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
@@ -411,7 +422,7 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
-  
+
 components:
   responses:
     Error403Forbidden:
@@ -457,34 +468,46 @@ components:
               summary: Unknown search parameter
               value:
                 resourceType: OperationOutcome
+                meta:
+                  profile:
+                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
                 issue:
                   - severity: error
                     code: processing
                     details:
-                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                        code: MSG_PARAM_UNKNOWN
+                      coding:
+                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                          code: MSG_PARAM_UNKNOWN
                     diagnostic: "Unknown search parameter"
             invalid_query_parameter:
               summary: Invalid query parameter(s)
               value:
                 resourceType: OperationOutcome
+                meta:
+                  profile:
+                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
                 issue:
                   - severity: error
                     code: processing
                     details:
-                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                        code: MSG_BAD_SYNTAX
+                      coding:
+                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                          code: MSG_BAD_SYNTAX
                     diagnostic: "Invalid query parameter(s)"
             invalid_request:
               summary: Invalid request
               value:
                 resourceType: OperationOutcome
+                meta:
+                  profile:
+                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
                 issue:
                   - severity: error
                     code: not-supported
                     details:
-                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                        code: MSG_BAD_FORMAT
+                      coding:
+                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                          code: MSG_BAD_FORMAT
                     diagnostic: "Invalid request"
           schema:
             $ref: '#/components/schemas/OperationOutcome'
@@ -498,23 +521,31 @@ components:
               summary: Resource is not known
               value:
                 resourceType: OperationOutcome
+                meta:
+                  profile:
+                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
                 issue:
                   - severity: error
                     code: processing
                     details:
-                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                        code: MSG_RESOURCE_ID_FAIL
+                      coding:
+                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                          code: MSG_RESOURCE_ID_FAIL
                     diagnostic: "Resource is not known"
             unknown_resource_type:
               summary: Unknown resource type
               value:
                 resourceType: OperationOutcome
+                meta:
+                  profile:
+                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
                 issue:
                   - severity: error
                     code: processing
                     details:
-                        system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                        code: MSG_UNKNOWN_TYPE
+                      coding:
+                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
+                          code: MSG_UNKNOWN_TYPE
                     diagnostic: "Unknown resource type"
 
   parameters:
@@ -538,7 +569,7 @@ components:
       type: string
       description: |-
         The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any home community id.
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     UserAgentType:
@@ -565,6 +596,17 @@ components:
         resourceType:
           type: string
           example: OperationOutcome
+        meta:
+          type: object
+          properties:
+            profile:
+              description: A list of profiles (references to [[[StructureDefinition]]]
+                resources) that this resource claims to conform to. The URL is a reference
+                to [[[StructureDefinition.url]]].
+              type: array
+              items:
+                type: string
+                example: https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.0
         issue:
           type: array
           items:
@@ -604,7 +646,7 @@ components:
           type: array
           items:
             type: string
-            example: https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
+            example: https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0.0
 
     Resource:
       description: This is the base resource type for everything.
@@ -620,20 +662,12 @@ components:
     AuditEvent_SearchSet_Bundle:
       description: "Contains a collection of resources + Rule: entry.search only when a search"
       allOf:
-      - $ref: "#/components/schemas/Resource"
       - type: object
         properties:
           resourceType:
             type: string
             enum:
             - Bundle
-          meta:
-            type: object
-            properties:
-              lastUpdated:
-                description: When the resource last changed - e.g. when the version changed.
-                type: string
-                format: date-time
           type:
             description: "222"
             type: string
@@ -778,7 +812,7 @@ components:
         type:
           description: Specification of the participation type the user plays when performing the event.
           $ref: '#/components/schemas/CodeableConcept'
-            
+
         who:
           description: Identifies the agent. Identifier of who
           type: object
@@ -817,7 +851,7 @@ components:
         observer:
           description: Identifier of the source where the event was detected.
           type: object
-          properties: 
+          properties:
             display:
               type: string
               example: Elektronische Patientenakte Fachdienst
@@ -859,7 +893,7 @@ components:
         valueString:
           description: Property value (e.g. urn:gematik:ig:Zahnbonusheft:v1.1.0)
           type: string
-                                
+
 
   examples:
     AuditEvent_XDS_Document_Service:
@@ -869,7 +903,7 @@ components:
         meta:
           versionId: 1
           lastUpdated: '2025-01-15T14:43:33.244Z'
-          profile: 
+          profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
         resourceType: AuditEvent
         type:
@@ -911,7 +945,7 @@ components:
         meta:
           versionId: 1
           lastUpdated: '2025-01-15T14:43:33.244Z'
-          profile: 
+          profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
         resourceType: AuditEvent
         type:
@@ -950,7 +984,7 @@ components:
         meta:
           versionId: 1
           lastUpdated: '2025-01-15T14:43:33.244Z'
-          profile: 
+          profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
         resourceType: AuditEvent
         type:

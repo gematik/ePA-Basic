@@ -1,0 +1,55 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "epa-operation-outcome",
+  "url": "https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome",
+  "version": "1.0.0",
+  "name": "EPAOperationOutcome",
+  "title": "EPA OperationOutcome",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-01-22",
+  "publisher": "gematik GmbH",
+  "description": "Defines the operation outcome for the ePA system.",
+  "fhirVersion": "4.0.1",
+  "mapping": [
+    {
+      "identity": "rim",
+      "uri": "http://hl7.org/v3",
+      "name": "RIM Mapping"
+    },
+    {
+      "identity": "v2",
+      "uri": "http://hl7.org/v2",
+      "name": "HL7 v2 Mapping"
+    }
+  ],
+  "kind": "resource",
+  "abstract": false,
+  "type": "OperationOutcome",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/OperationOutcome",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "OperationOutcome.issue.severity",
+        "path": "OperationOutcome.issue.severity",
+        "mustSupport": true
+      },
+      {
+        "id": "OperationOutcome.issue.code",
+        "path": "OperationOutcome.issue.code",
+        "mustSupport": true
+      },
+      {
+        "id": "OperationOutcome.issue.details",
+        "path": "OperationOutcome.issue.details",
+        "min": 1,
+        "mustSupport": true,
+        "binding": {
+          "strength": "required",
+          "valueSet": "https://gematik.de/fhir/epa/ValueSet/epa-operation-outcome-vs"
+        }
+      }
+    ]
+  }
+}

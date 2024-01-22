@@ -1,11 +1,13 @@
 {
   "resourceType": "StructureDefinition",
   "id": "epa-auditevent",
-  "url": "https://gematik.de/fhir/epa/StructureDefinition/audit-event",
-  "version": "1.0",
+  "url": "https://gematik.de/fhir/epa/StructureDefinition/epa-auditevent",
+  "version": "1.0.0",
   "name": "EPAAuditEvent",
   "title": "AuditEvent for the ePA (Elektronische Patientenakte)",
-  "status": "draft",
+  "status": "active",
+  "experimental": false,
+  "date": "2024-01-22",
   "publisher": "gematik GmbH",
   "description": "Defines the data structure for audit events in the ePA system.",
   "fhirVersion": "4.0.1",
@@ -49,18 +51,6 @@
   "differential": {
     "element": [
       {
-        "id": "AuditEvent.meta",
-        "path": "AuditEvent.meta",
-        "min": 1
-      },
-      {
-        "id": "AuditEvent.meta.profile",
-        "path": "AuditEvent.meta.profile",
-        "min": 1,
-        "fixedCanonical": "https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0",
-        "mustSupport": true
-      },
-      {
         "id": "AuditEvent.type",
         "path": "AuditEvent.type",
         "binding": {
@@ -94,8 +84,8 @@
       {
         "id": "AuditEvent.outcome",
         "path": "AuditEvent.outcome",
-        "short": "success: 0; failure: 4",
-        "definition": "success: 0; failure: 4",
+        "short": "success: 0; failure: 4; major failure: 12",
+        "definition": "success: 0; failure: 4; major failure: 12",
         "min": 1,
         "mustSupport": true
       },
@@ -146,8 +136,7 @@
             "code": "Identifier",
             "profile": [
               "http://fhir.de/StructureDefinition/identifier-telematik-id",
-              "http://fhir.de/StructureDefinition/identifier-kvid-10",
-              "https://gematik.de/fhir/epa/StructureDefinition/telematik-service-identifier"
+              "http://fhir.de/StructureDefinition/identifier-kvid-10"
             ]
           }
         ]

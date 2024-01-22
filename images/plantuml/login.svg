@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="790px" preserveAspectRatio="none" style="width:1275px;height:790px;background:#FFFFFF;" version="1.1" viewBox="0 0 1275 790" width="1275px" zoomAndPan="magnify"><defs/><g><rect fill="#DDDDDD" height="771.2266" style="stroke:#181818;stroke-width:0.5;" width="348" x="435" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="144" x="537" y="18.0669">ePA Aktensystem 1</text><rect fill="#DDDDDD" height="771.2266" style="stroke:#181818;stroke-width:0.5;" width="348" x="921" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="144" x="1023" y="18.0669">ePA Aktensystem n</text><rect fill="#FFFFFF" height="44.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="346.5" y="144.2891"/><rect fill="#FFFFFF" height="29.1328" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="526.5" y="248.8203"/><rect fill="#FFFFFF" height="269.6719" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="701.5" y="495.5547"/><rect fill="#FFFFFF" height="127.5313" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="706.5" y="637.6953"/><rect fill="#FFFFFF" height="29.1328" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="1012.5" y="364.0234"/><rect fill="none" height="90.5313" style="stroke:#000000;stroke-width:1.5;" width="419" x="10" y="106.0234"/><rect fill="none" height="232.7344" style="stroke:#000000;stroke-width:1.5;" width="1110" x="10" y="210.5547"/><rect fill="none" height="193.4063" style="stroke:#000000;stroke-width:1.5;" width="970.5" x="10" y="457.2891"/><rect fill="none" height="46.7422" style="stroke:#000000;stroke-width:1.5;" width="393" x="30" y="539.6875"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="82" x2="82" y1="89.0234" y2="783.2266"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="351" x2="351" y1="89.0234" y2="783.2266"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="531" x2="531" y1="89.0234" y2="783.2266"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="706" x2="706" y1="89.0234" y2="783.2266"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="1017" x2="1017" y1="89.0234" y2="783.2266"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="1192" x2="1192" y1="89.0234" y2="783.2266"/><rect fill="#3483EB" height="30.2969" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="85" x="40" y="57.7266"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71" x="47" y="77.7217">ePA-Client</text><rect fill="#3483EB" height="62.8906" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="95" x="304" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30" x="336.5" y="45.1279">DNS</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77" x="311" y="61.4248">(Konnektor</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77" x="313" y="77.7217">or Internet)</text><rect fill="#3483EB" height="30.2969" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="145" x="459" y="57.7266"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="131" x="466" y="77.7217">Information Service</text><rect fill="#EB5E34" height="62.8906" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="105" x="654" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="28" x="690.5" y="45.1279">VAU</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="55" x="677" y="61.4248">Session</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91" x="661" y="77.7217">Management</text><rect fill="#3483EB" height="30.2969" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="145" x="945" y="57.7266"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="131" x="952" y="77.7217">Information Service</text><rect fill="#EB5E34" height="62.8906" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="105" x="1140" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="28" x="1176.5" y="45.1279">VAU</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="55" x="1163" y="61.4248">Session</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91" x="1147" y="77.7217">Management</text><rect fill="#FFFFFF" height="44.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="346.5" y="144.2891"/><rect fill="#FFFFFF" height="29.1328" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="526.5" y="248.8203"/><rect fill="#FFFFFF" height="269.6719" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="701.5" y="495.5547"/><rect fill="#FFFFFF" height="127.5313" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="706.5" y="637.6953"/><rect fill="#FFFFFF" height="29.1328" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="1012.5" y="364.0234"/><path d="M10,106.0234 L80,106.0234 L80,113.1563 L70,123.1563 L10,123.1563 L10,106.0234 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="90.5313" style="stroke:#000000;stroke-width:1.5;" width="419" x="10" y="106.0234"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="25" x="25" y="119.0903">opt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="169" x="95" y="118.2339">[Not required for ePA-FdV]</text><polygon fill="#1E90FF" points="334.5,140.2891,344.5,144.2891,334.5,148.2891,338.5,144.2891" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="340.5" y1="144.2891" y2="144.2891"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="139.2231">1</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="159" x="102.5" y="139.2231">get entry for "epa4all.de"</text><polygon fill="#1E90FF" points="93.5,184.5547,83.5,188.5547,93.5,192.5547,89.5,188.5547" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="350.5" y1="188.5547" y2="188.5547"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="99.5" y="175.9224">2</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="113" x="112.5" y="168.356">entry "epa4all.de"</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="227" x="112.5" y="183.4888">with endpoints for all Aktensysteme</text><path d="M10,210.5547 L80,210.5547 L80,217.6875 L70,227.6875 L10,227.6875 L10,210.5547 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="232.7344" style="stroke:#000000;stroke-width:1.5;" width="1110" x="10" y="210.5547"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="25" x="25" y="223.6216">opt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="371" x="95" y="222.7651">[Clientsystem does not know where to find health record]</text><polygon fill="#1E90FF" points="514.5,244.8203,524.5,248.8203,514.5,252.8203,518.5,248.8203" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="520.5" y1="248.8203" y2="248.8203"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="243.7544">3</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="228" x="102.5" y="243.7544">Do you host health record #12345?</text><polygon fill="#1E90FF" points="93.5,273.9531,83.5,277.9531,93.5,281.9531,89.5,277.9531" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="530.5" y1="277.9531" y2="277.9531"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="99.5" y="272.8872">4</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53" x="112.5" y="272.8872">Yes, I do</text><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="124.5" y1="307.0859" y2="307.0859"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="124.5" x2="124.5" y1="307.0859" y2="320.0859"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="83.5" x2="124.5" y1="320.0859" y2="320.0859"/><polygon fill="#1E90FF" points="93.5,316.0859,83.5,320.0859,93.5,324.0859,89.5,320.0859" style="stroke:#1E90FF;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="302.02">5</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="135" x="102.5" y="302.02">Store endpoint localy</text><line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="10" x2="1120" y1="329.0859" y2="329.0859"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="277" x="15" y="339.2964">[Health record not found at Aktensystem 1]</text><polygon fill="#1E90FF" points="1000.5,360.0234,1010.5,364.0234,1000.5,368.0234,1004.5,364.0234" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="1006.5" y1="364.0234" y2="364.0234"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="358.9575">6</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="228" x="102.5" y="358.9575">Do you host health record #12345?</text><polygon fill="#1E90FF" points="93.5,389.1563,83.5,393.1563,93.5,397.1563,89.5,393.1563" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="1016.5" y1="393.1563" y2="393.1563"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="99.5" y="388.0903">7</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53" x="112.5" y="388.0903">Yes, I do</text><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="124.5" y1="422.2891" y2="422.2891"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="124.5" x2="124.5" y1="422.2891" y2="435.2891"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="83.5" x2="124.5" y1="435.2891" y2="435.2891"/><polygon fill="#1E90FF" points="93.5,431.2891,83.5,435.2891,93.5,439.2891,89.5,435.2891" style="stroke:#1E90FF;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="417.2231">8</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="135" x="102.5" y="417.2231">Store endpoint localy</text><path d="M10,457.2891 L188,457.2891 L188,464.4219 L178,474.4219 L10,474.4219 L10,457.2891 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="193.4063" style="stroke:#000000;stroke-width:1.5;" width="970.5" x="10" y="457.2891"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="133" x="25" y="470.356">Start user session</text><polygon fill="#1E90FF" points="689.5,491.5547,699.5,495.5547,689.5,499.5547,693.5,495.5547" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="695.5" y1="495.5547" y2="495.5547"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="89.5" y="490.4888">9</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="193" x="102.5" y="490.4888">initiate secure channel to VAU</text><polygon fill="#1E90FF" points="93.5,520.6875,83.5,524.6875,93.5,528.6875,89.5,524.6875" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="700.5" y1="524.6875" y2="524.6875"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="18" x="99.5" y="519.6216">10</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="184" x="121.5" y="519.6216">ok with server authentication</text><path d="M30,539.6875 L94,539.6875 L94,546.8203 L84,556.8203 L30,556.8203 L30,539.6875 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="46.7422" style="stroke:#000000;stroke-width:1.5;" width="393" x="30" y="539.6875"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="19" x="45" y="552.7544">alt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="261" x="109" y="551.8979">[User authenticates with GesundheitsID]</text><line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="30" x2="423" y1="557.8203" y2="557.8203"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="326" x="35" y="568.0308">[User authenticates with IDP-Dienst as pratitioner]</text><line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="30" x2="423" y1="572.625" y2="572.625"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="388" x="35" y="582.8354">[User authenticates with self-signed ID-Token as TI-Service]</text><line style="stroke:#1E90FF;stroke-width:1.0;" x1="711.5" x2="758.5" y1="624.6953" y2="624.6953"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="758.5" x2="758.5" y1="624.6953" y2="637.6953"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="717.5" x2="758.5" y1="637.6953" y2="637.6953"/><polygon fill="#1E90FF" points="727.5,633.6953,717.5,637.6953,727.5,641.6953,723.5,637.6953" style="stroke:#1E90FF;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="18" x="723.5" y="612.063">11</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="219" x="745.5" y="604.4966">Secure connection ist established,</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="114" x="745.5" y="619.6294">start user session</text><polygon fill="#1E90FF" points="694.5,674.8281,704.5,678.8281,694.5,682.8281,698.5,678.8281" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="82.5" x2="700.5" y1="678.8281" y2="678.8281"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="18" x="89.5" y="673.7622">12</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="178" x="111.5" y="673.7622">Operation for KVNR #12345</text><line style="stroke:#1E90FF;stroke-width:1.0;" x1="716.5" x2="758.5" y1="723.0938" y2="723.0938"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="758.5" x2="758.5" y1="723.0938" y2="736.0938"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="717.5" x2="758.5" y1="736.0938" y2="736.0938"/><polygon fill="#1E90FF" points="727.5,732.0938,717.5,736.0938,727.5,740.0938,723.5,736.0938" style="stroke:#1E90FF;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="18" x="723.5" y="710.4614">13</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="155" x="745.5" y="702.895">Load and decrypt health</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="260" x="745.5" y="718.0278">record context #12345 into user session</text><polygon fill="#1E90FF" points="93.5,761.2266,83.5,765.2266,93.5,769.2266,89.5,765.2266" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="87.5" x2="705.5" y1="765.2266" y2="765.2266"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="18" x="99.5" y="760.1606">14</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="62" x="121.5" y="760.1606">Response</text><!--MD5=[af1f8f525d48a80897ec4434765be4fd]
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+participant "ePA-Client" as client
+participant "DNS\n(Konnektor \nor Internet)" as dns
+box "ePA Aktensystem 1"
+participant "Information Service" as info1
+participant "VAU \nSession \nManagement" as vau1 #eb5e34
+end box
+box "ePA Aktensystem n"
+participant "Information Service" as info2
+participant "VAU \nSession \nManagement" as vau2 #eb5e34
+end box
+
+' Find endpoints
+opt Not required for ePA-FdV
+client -> dns : get entry for "epa4all.de"
+activate dns
+dns - -> client : entry "epa4all.de" \nwith endpoints for all Aktensysteme
+deactivate dns
+end
+
+
+' Locate health record
+opt Clientsystem does not know where to find health record 
+client -> info1 : Do you host health record #12345?
+activate info1
+info1 - -> client : Yes, I do
+deactivate info1
+client -> client : Store endpoint localy
+else Health record not found at Aktensystem 1
+client -> info2 : Do you host health record #12345?
+activate info2
+info2 - -> client : Yes, I do
+deactivate info2
+client -> client : Store endpoint localy
+end
+
+' Open VAU-connections to endpoint and start user session
+group Start user session
+client -> vau1 : initiate secure channel to VAU
+activate vau1
+vau1 - -> client : ok with server authentication
+
+' User authetication
+alt User authenticates with GesundheitsID
+else User authenticates with IDP-Dienst as pratitioner
+else User authenticates with self-signed ID-Token as TI-Service
+end
+
+vau1 -> vau1 : Secure connection ist established, \nstart user session
+activate vau1
+end
+
+' start health record context
+client -> vau1 : Operation for KVNR #12345
+vau1 -> vau1 : Load and decrypt health \nrecord context #12345 into user session
+vau1 - -> client : Response
+deactivate vau1
+deactivate vau1
+
+@enduml
+
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+participant "ePA-Client" as client
+participant "DNS\n(Konnektor \nor Internet)" as dns
+box "ePA Aktensystem 1"
+participant "Information Service" as info1
+participant "VAU \nSession \nManagement" as vau1 #eb5e34
+end box
+box "ePA Aktensystem n"
+participant "Information Service" as info2
+participant "VAU \nSession \nManagement" as vau2 #eb5e34
+end box
+
+opt Not required for ePA-FdV
+client -> dns : get entry for "epa4all.de"
+activate dns
+dns - -> client : entry "epa4all.de" \nwith endpoints for all Aktensysteme
+deactivate dns
+end
+
+
+opt Clientsystem does not know where to find health record 
+client -> info1 : Do you host health record #12345?
+activate info1
+info1 - -> client : Yes, I do
+deactivate info1
+client -> client : Store endpoint localy
+else Health record not found at Aktensystem 1
+client -> info2 : Do you host health record #12345?
+activate info2
+info2 - -> client : Yes, I do
+deactivate info2
+client -> client : Store endpoint localy
+end
+
+group Start user session
+client -> vau1 : initiate secure channel to VAU
+activate vau1
+vau1 - -> client : ok with server authentication
+
+alt User authenticates with GesundheitsID
+else User authenticates with IDP-Dienst as pratitioner
+else User authenticates with self-signed ID-Token as TI-Service
+end
+
+vau1 -> vau1 : Secure connection ist established, \nstart user session
+activate vau1
+end
+
+client -> vau1 : Operation for KVNR #12345
+vau1 -> vau1 : Load and decrypt health \nrecord context #12345 into user session
+vau1 - -> client : Response
+deactivate vau1
+deactivate vau1
+
+@enduml
+
+PlantUML version 1.2022.7(Mon Aug 22 19:01:30 CEST 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

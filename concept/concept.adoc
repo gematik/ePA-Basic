@@ -1,0 +1,478 @@
+= Grobkonzept der "ePA für alle"
+:title-page:
+:title-logo-image: image:Gematik_Logo_Flag.svg[pdfwidth=4.25in,align=center]
+:imagesdir: ../images
+:pdf-themesdir: ./themes
+:pdf-theme: pdf
+:icons:
+:toc: macro
+:toc-title: Inhaltsverzeichnis
+ifdef::env-github[]
+:toc-placement: macro
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+ifndef::env-github[]
+:caution-caption: Achtung
+:important-caption: Wichtig
+:note-caption: Hinweis
+:tip-caption: Tip
+:warning-caption: Warnung
+:pdf-themesdir: ./themes
+:pdf-theme: pdf
+// --- PlantUML directories ---
+:plantumlsimages: plantuml
+:plantumlsdir: ../src/plantuml
+:chapterplantumlsdir: ../../src/plantuml
+endif::[]
+:xrefstyle: full
+:toclevels: 3
+:sectanchors:
+:numbered:
+:sectnums:
+
+// :revdate: 22.01.2024
+:revnumber: 3.0 RC
+:document-title: Grobkonzept der "ePA für alle"
+:document-subtitle: gemKPT_ePAfuerAlle
+:organization: gematik GmbH
+// :doctype: book
+:chapter-signifier:
+
+ifndef::backend-pdf[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+ifdef::backend-pdf[]
+[.metadata]
+//Version: 3.0 RC, 22.01.2024
+endif::[]
+
+
+
+[width="100%",cols="50%,50%", options="header",]
+|===
+|Version:
+|{revnumber}
+|Referenzierung:
+|{document-subtitle}
+|===
+
+
+[big]*Dokumentenhistorie*
+
+[width="100%",cols="11%,11%,7%,58%,13%",options="header",]
+|===
+|Version
+|Stand
+|Kap./ Seite
+|Grund der Änderung, besondere Hinweise
+|Bearbeitung
+
+|3.0 RC
+|22.01.2024
+|
+|Ersterstellung
+|gematik
+
+|===
+
+toc::[]
+
+
+== Einordnung des Dokumentes
+
+Die "ePA für alle" realisiert technisch einen souveränen, sicheren und möglichst benutzerfreundlichen Zugang zu  den Gesundheitsdaten eines Versicherten. Fachlich ermöglicht die ePA eine Vereinfachung der Anamnese, die Auswertung von longitudinalen Daten und einen verbesserten Übergang in einer sektorenübergreifenden Versorgung.
+
+Dieses Dokument beschreibt wesentliche Kernmechanismen, Basisfunktionalitäten sowie technische Konzepte zu den Diensten des ePA-Aktensystems und den beteiligten Client-Systemen der Fachanwendung ePA.
+
+Eine wesentliche Neuausrichtung der aktuellen ePA-Architektur ist die Unterstütztung von digital gestützten Versorgungsprozessen – initial unterstützt die "ePA für alle" den digital gestützten Medikationsprozess. Weiterhin basiert die ePA-Architektur auf eine stringente Serviceorientierung innerhalb des ePA-Aktensystems und einer weiterentwickelten, modernen Sicherheitsarchitektur.
+
+
+=== Zielgruppe
+
+Das Dokument richtet sich an die interessierte Öffentlichkeit, an die Fachöffentlichkeit und an die umsetzende Industrie.
+
+
+== Systemüberblick
+
+Dieses Kapitel gibt einen Systemüberblick über die Fachanwendung ePA und beschreibt sämtliche mit ihr in Verbindung stehende Systeme.
+
+[#fig:grobarchitektur]
+.A
+image::ePA-Grobarchitektur.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Systemüberblick der Fachanwendung ePA (FMC-Blockdiagramm)",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+
+=== Aktensystem
+
+Das *ePA-Aktensystem* verwaltet pro Versicherten-/Aktenkonto alle vom Versicherten oder seinem berechtigten Vertreter legitimierten Zugriffe auf die Akte. Alle Zugriffe über das *<<#_epa_fdv, ePA-Frontend des Versicherten>>* (ePA-FdV) sind ausschließlich über am Aktensystem registrierte Geräte möglich. Die zentralen Funktionen des Aktensystems sind das integre Management von wohl definierten Metadaten und den medizinischen Dokumenten als auch die Unterstützung von digitalen Versorgungsprozessen. Initial bedient das Aktensystem den *digital gestützten Medikationsprozess* durch die Bereitstellung einer Elektronischen Medikationsliste (eML) an Leistungserbringer.
+
+Für das ePA-FdV ist das ePA Aktensystem via Internet über ein *Access Gateway* erreichbar, welches die Weiterleitung von Nachrichten über interne Proxies durchführt. Die ePA wird von mehreren Aktenanbietern/Kostenträgern (KTR) für ihre Versicherten angeboten.
+
+
+=== Clients der ePA
+
+[#_epa_fdv]
+==== ePA-Frontend des Versicherten
+
+Das ePA-Frontend des Versicherten (ePA-FdV) unterstützt den Versicherten beim Zugriff auf seine ePA, als auch in seiner Rolle als Vertreter für andere ePAs. Es läuft auf einem Gerät unter der Kontrolle des Versicherten (mobil oder stationär) und kann daher auch sensible Informationen verarbeiten. Alle Anwendungsfälle des Versicherten werden über dieses Frontend bereitgestellt oder integriert. Neben der Funktionalität für die ePA bietet das ePA-FdV das Frontend für verschiedene andere Anwendungen der Telematikinfrastruktur (TI) oder Funktionalitäten des KTR. Die ePA-FdV werden in verschiedenen Realisierungen durch die Kostenträger für die Versicherten bereitgestellt.
+
+
+[#_epa_ps]
+==== Primärsystem/Clientsystem
+
+Das *Primär- oder Client-System* (PS/CS) bietet das Frontend für alle Nutzer, ausgenommen den Versicherten. Als Primärsysteme bezeichnen wir die Verwaltungssysteme der Leistungserbringer (Praxisverwaltungssysteme oder Krankenhausinformationssysteme), als Clientsysteme die Systeme anderer Nutzergruppen (z.B. Kostenträger, Digitale Gesundheitsanwendung). Hier liegt die Client-Logik der ePA und werden alle Anwendungsfälle ausgelöst. Die PS/CS gibt es in vielen verschiedenen Realisierungen. Zusammengefasst werden die PS und CS oft als *ePA-Clients* bezeichnet.
+
+
+[#_sigd]
+=== Signaturdienst
+
+Der *Signaturdienst* (SigD) stellt den Nutzern eines ePA-FdV, nach erfolgreicher Authentifizierung am *Sektoralen Identity Provider* (Sektoraler IdP), eine kryptographische Identität zur Content-Signatur von Daten bereit. Er wird verwendet, um <<#_befugnis, Befugnisse>>, die über ein *ePA-FdV* eingestellt werden, authentisch und integer zu halten. Die SigD werden von zum *Aktensystem* getrennten Anbietern im Auftrag der KTR bereitgestellt.
+
+
+=== Beteiligte Systeme
+
+Unter beteiligten Systemen werden Dienste oder Komponenten der Telematikinfrastruktur verstanden, die in der ePA, aber auch durch andere Anwendungen der Telematikinfrastruktur genutzt werden.
+
+
+[#_vzd]
+:sectnums!:
+[discrete]
+==== FHIR Verzeichnisdienst
+:sectnums:
+
+Bei der Erteilung von Befugnissen für Nutzer der ePA mit einer Telematik-ID, wird der entsprechende Nutzer über das ePA-FdV im *Verzeichnisdienst FHIR-Directory* (VZD-FHIR-Directory) gesucht und dessen Telematik-ID dort entnommen.
+
+
+[#_idp]
+:sectnums!:
+[discrete]
+==== Sektoraler Identity Provider
+:sectnums:
+
+Der *Sektoraler IdP* der KTR stellt Versicherten eine sichere Digitale Identität (*GesundheitsID*) in der Telematikinfrastruktur bereit. Mit dieser digitalen Identität meldet sich der Versicherte an den Diensten der ePA sowie weiteren Diensten der TI an.
+
+
+[#_idp_dienst]
+:sectnums!:
+[discrete]
+==== IDP-Dienst
+:sectnums:
+
+Der *IDP-Dienst* stellt Nutzern der TI, die sich über eine Institutionskarte (SMC-B) ausweisen können, eine sichere GesundheitsID in der Telematikinfrastruktur bereit. Mit dieser digitalen Identität meldet sich der Nutzer an den Diensten der ePA sowie weiteren Diensten der Telematikinfrastruktur an.
+
+
+[#_eh_kt]
+:sectnums!:
+[discrete]
+==== Konnektor, TI-Gateway und eHealth-Kartenterminal
+:sectnums:
+
+Der *Konnektor* oder das *TI-Gateway* als sicheres Gerät/Dienst bietet den Primärsystemen/Clientsystemen den netztechnischen Zugang zu den Diensten der ePA an. Über das *eHealth-Kartenterminal* (eH-KT) ermöglicht ein Konnektor den Zugriff auf kartengebundene Identitäten der Institutionen (SMC-B) oder der Versicherten (eGK) in der von ihm verwalteten Umgebung.
+
+
+[#_ktr]
+:sectnums!:
+[discrete]
+==== Basis-Consumer
+:sectnums:
+
+Der *Basis-Consumer* stellt das Gegenstück zum Konnektor in den Rechenzentren der Kostenträger dar. Er ist auf die Nutzungsszenarien und -umgebungen der Kostenträger optimiert. Auch er bietet den Zugriff auf die Identitäten der Kostenträger (SMC-B KTR).
+
+[#_erp]
+:sectnums!:
+[discrete]
+==== E-Rezept-Fachdienst
+:sectnums:
+
+Der *E-Rezept-Fachdienst* (eRP-FD) speichert bei fehlendem Widerspruch alle Verordnungsdaten und die zugehörigen Dispensierinformationen in der Akte des Versicherten ab, damit diese Informationen im *digital gestützten Medikationsprozess* (dgMP) über die *elektronische Medikationsliste* (eML) verwendet werden können. Dem dgMP kann separat widersprochen werden (siehe <<#_widerspruch, Consent Management>>).
+
+
+:sectnums!:
+[discrete]
+==== Externe Services
+:sectnums:
+
+Die Gruppe der *externen Services* ist vielfältig. Sie umfasst alle Dienste, die außerhalb der Fachanwendung ePA liegen, aber über das ePA-FdV integriert werden. Die Dienste können zu Anwendungen der Telematikinfrastruktur gehören (z.B. der TI-Messenger) oder externe Dienste, die aufgrund der gesetzlichen Vorgaben in das ePA-FdV integriert werden (z.B. Organspendeerklärung oder das nationale Gesundheitsportal).
+
+
+== Kernmechanismen
+
+Das folgende Kapitel beschreibt elementare Funktionen des ePA-Aktensystems. Sie stellen die vertrauliche und integre Verarbeitung von medizinischen Daten innerhalb des ePA-Aktensystems sicher.
+
+
+[#_vau]
+=== Vertrauenswürdige Ausführungsumgebung
+
+Die *Vertrauenswürdige Ausführungsumgebung (VAU)* erlaubt es, sensible medizinische Daten im Klartext serverseitig zu verarbeiten sowie Zugang und Zugriff serverseitig durchzusetzen, ohne dass der Anbieter/Betreiber des ePA-Aktensystems und seine Mitarbeiter (u.a. die Administratoren) auf diese Daten zugreifen können. Der Ausschluss des Anbieters/Betreibers erfolgt bei einer VAU durch technische Maßnahmen.
+
+
+[#_datenablage]
+=== Sichere Datenablage
+:sectnums:
+
+Die Daten der ePA werden in zwei unterschiedlichen sicheren Speicherbereichen verschlüsselt persistiert:
+
+* Den *Secure Data Storage*, in dem die Fachdaten der ePA, zugehörige Informationen und Konfigurationsdaten gespeichert werden und
+* den *Secure Entitlement Storage*, in dem Befugnisse der ePA gespeichert werden.
+
+Die Speicherbereiche werden durch getrennte versichertenindividuelle kryptographische Schlüssel gesichert.
+
+Ein Kernelement der Sicherheitsarchitektur der ePA ist, dass der Zugang zum Schlüsselmaterial des *Secure Data Storage* technisch nur möglich ist, wenn für den authentifizierten Nutzer eine Befugnis im ePA-Aktensystem vorliegt. Der Schlüsselspeicher (Hardware Security Module (HSM)) prüft, dass der anfragende ePA-Dienst integer ist, der Nutzer authentifiziert ist sowie zur verifizierten Befugnis passt. Nur bei erfolgreicher Prüfung kann der kryptographische Schlüssel für den *Secure Data Storage* verwendet werden.
+
+
+=== Zugangssteuerung
+
+Die Menge der technisch befugten Akteure, welche die Daten einer Akte zur Gesundheitsversorgung implizit in einer *Behandlungssituation* oder explizit auf Wunsch des Versicherten verarbeiten dürfen, werden über *Befugnisse* zusammengefasst. Einer Befugnis liegen in der Regel ein oder mehre Versorgungs- oder Behandlungskontexte zugrunde, welche in der ePA jedoch nicht abgebildet sind. Diese Kontexte können z.B. eine Episode of Care/Behandlungspfade, ein Workflow, ein stationärer Aufenthalt oder ambulanter Kontakt eines Patienten in einer Gesundheitseinrichtung sein.
+
+Die Zugangssteuerung im ePA-Aktensystem setzt durch, dass ausschließlich über registrierte Befugnisse von authentifizierten Nutzern die sicheren Speicherbereiche für eine Datenverarbeitung zur Verfügung gestellt werden. Über ein ePA-FdV ist zusätzlich noch ein registriertes Gerät am ePA-Aktensystem erforderlich, um eine Befugnis zu legitimieren.
+
+
+==== Nutzerauthentisierung
+
+Zugreifende Nutzer der ePA werden mittels Identity Provider (IdP) der Telematikinfrastruktur (TI) authentifiziert. Dies bewerkstelligt ein *Authorization Service* innerhalb der VAU, der die Kommunikation zu den IdP (*IDP-Dienst* und *Sektoraler IdP*) steuert. Nach einer erfolgreichen Authentisierung wird eine *User Session* etabliert. Im Rahmen dieser Session kann ein Nutzer verschiedene Befugnisse in Akten wahrnehmen.
+
+
+[#_befugnis]
+==== Zugangssteuerung über Befugnisse
+
+Der Zugang zu einer Akte darf nur erfolgen, wenn der authentifizierte Nutzer befugt ist, mit der konkreten Akte zu arbeiten. Diese Befugnis ist integer und authentisch im ePA-Aktensystem gespeichert. Die Integrität und Authentizität der Befugnis wird über eine Signatur umgesetzt. Ist eine Befugnis für den Nutzer gültig, wird ein interner *Health Record Context* aufgebaut. Innerhalb dieses Kontextes kann der Nutzer spezifische Fachoperationen ohne eine erneute Authentisierung ausführen. Auch ist es möglich, den Aktenkontext innerhalb einer User Session zu wechseln.
+
+Über eine vom Kostenträger (KTR) eingerichtete Ombudsstelle oder das ePA-FdV kann ein Verbot für eine Befugnis für eine spezielle Leistungserbringerinstitution (LEI) auf Basis der Telematik-ID registriert werden. Eine für diese LEI eventuell vorhandene Befugnis wird in diesem Fall gelöscht und neu eingestellte Befugnisse über ein Primärsystem dieser LEI werden aktensystemseitig verworfen und damit nicht gespeichert.
+
+
+[#_devicemanagement]
+==== Zugangssteuerung über Geräte
+
+Der Zugang des Versicherten zum ePA-Aktensystem über das ePA-FdV setzt voraus, dass das Gerät des Versicherten durch den *Device Management* Service registriert und verifiziert ist. Wird versucht, mit einem nicht registrierten oder unverifizierten Gerät auf das System zuzugreifen, informiert der Device Management Service, dass die User Session aufgrund der fehlenden Registrierung oder Verifizierung des Geräts geschlossen werden muss. Der *Device Unlock Service* regelt die Verifizierung der Geräte, indem er dem Versicherten einen Aktivierungs-Link per E-Mail zusendet.
+
+[#_zugriffssteuerung]
+=== Zugriffssteuerung
+
+Die Zugriffssteuerung stellt sicher, dass nur solche Zugriffe eines befugten Nutzers zugelassen werden, die den gesetzlichen Zugriffsregeln entsprechen und nicht vom Versicherten oder seinem Vertreter über eine widerspruchsfähige Funktion ausgeschlossen wurden. Eine Autorisierung auf medizinische Daten und Services wird damit durch die Kombination aus einer Befugnis, den gesetzlichen Regeln für Nutzer(-gruppen), als auch möglichen Widersprüchen (z.B. Widerspruch des Medikationsprozesses) repräsentiert. Im Rahmen dieser _Autorisierung_ ist ein genereller Schreibzugriff legitim. Im Anhang werden die gesetzlichen Zugriffsregeln in einer "<<#_legalpolicy, Legal Policy>>" im Überblick dargestellt.
+
+
+[#_widerspruch]
+==== Consent Management
+
+Das *Consent Management* verwaltet die widerspruchsfähigen Funktionen der Akte durch den Versicherten, Vertreter oder eine vom Versicherten beauftragten Ombudsstelle der Krankenkasse. Es setzt die spezifischen "Opt-out Rechte" des Versicherten um. Es kann gegen die Teilnahme an  Versorgungsprozessen widersprochen werden.
+
+Der *Information Service* stellt weiterhin lesend die Konfigurationseinstellungen der Widersprüche zu Versorgungsprozessen außerhalb der VAU für andere Akteure zur Verfügung. Damit kann beispielsweise ein technischer Akteur eines medizinischen Versorgungsdienstes die Daten ohne eine Anmeldung am ePA-Aktensystem verarbeiten und ggf. unnötige Verbindungsversuche zur VAU im Vorfeld vermeiden.
+
+
+[#_audit]
+=== Protokollierung für den Versicherten
+
+Zum Zwecke der Datenschutzkontrolle werden alle versuchten und getätigten Zugriffe auf die Daten des Versicherten im ePA-Aktensystem protokolliert.
+Die Protokolleinträge können durch den Versicherten oder durch einen befugten Vertreter über das ePA-FdV eingesehen werden. Versicherte ohne ein ePA-FdV können bei ihrer zuständigen Ombudsstelle beantragen, die Protokolldaten zur Verfügung gestellt zu bekommen. Der Zugriff auf die Protokoldaten durch andere Akteure ist technisch ausgeschlossen.
+
+
+[#_services]
+=== Medical Services
+
+Das ePA-Aktensystem unterstützt sowohl das Verwalten von medizinischen Dokumenten, als auch digital gestützte, versorgungsspezifische Prozesse mittels Medical Services.
+
+
+== Aktenlokalisierung und Login
+
+ifndef::env-github[]
+
+[#fig:login]
+[plantuml, "{plantumlsimages}/login", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Aktenlokalisierung und Login in die Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{plantumlsdir}/login.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/login.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Aktenlokalisierung und Login in die Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+
+=== Lokalisierung der Service-Endpunkte der ePA
+
+Die Endpunkte der verschiedenen Aktensysteme erfahren ePA-Clients (nicht das ePA-FdV) über die DNS Service Discovery (DNS-SD) für eine übergreifende Domäne (epa4all.de) entweder über den DNS Resolver des Konnektors oder den konfigurierten DNS Resolver für das Internet. Hinterlegt sind dort alle Service-Endpunkte in der Telematikinfrastruktur (TI) für die verschiedenen Aktensysteme. Die DNS-SD wird durch den entsprechenden ePA-Client einmal täglich abgefragt.
+
+
+=== Lokalisierung der Akte eines Versicherten
+
+Die ePA-Clients (Primärsystem, ePA-FdV, E-Rezept-Fachdienst oder auch ein Clientsystem der Kostenträger (KTR) oder der Ombudsstelle) halten den ermittelten zuständigen Service-Endpunkt für eine Akte vor. Sollte diese Information nicht im ePA-Client vorliegen, wendet sich der ePA-Client an den *Information Service*, um dort nach der Akte zu fragen und wenn dort für die gegebene Krankenversicherungsnummer (KVNR) eine Akte existiert den Service-Endpunkt lokal zu speichern. Ist keine Akte auf diesem Aktensystem vorhanden, erfolgt die Abfrage am anderen Aktensystem.
+
+Kennt kein Aktensystem die Akte, hat der Versicherte der Bereitstellung einer ePA widersprochen und es existiert keine Akte.
+
+
+=== Login in die Akte des Versicherten
+
+Ein ePA-Client (Primärsystem, ePA-FdV, Clientsystem der Kostenträger oder der Ombugdsstelle) oder der E-Rezept-Fachdienst baut einen Kanal in die VAU des Aktensystems auf und authentifiziert dabei die VAU als authentische VAU des Anbieters. Nachfolgend wird eine User Session für den Nutzer angelegt und der Nutzer mit Hilfe des *IDP-Dienstes*, des *Sektoralen IdPs (GesundheitsID)* oder über einen mit dem Zertifikatsprofil C.FD.AUT zugehörigen Schlüsssel - selbst signiertes IDToken (nur Dienste der TI) - authentifiziert.
+
+Nach erfolgreicher Aktivierung der User Session können Anfragen vom ePA-Client bzw. E-Rezept-Fachdienst an beliebige Akten gerichtet werden. Mit der ersten Anfrage an eine bestimmte Akte wird diese nach Befugnisprüfung in der User Session als *Health Record Context* geladen und Fachoperationen können beliebig ausgeführt werden.
+
+
+== Basisfunktionalitäten
+
+In diesem Kapitel werden technische Konzepte zu verschiedenen Basisfunktionalitäten der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
+
+ifndef::env-github[]
+include::chapters/account_creation.adoc[]
+include::chapters/VAU.adoc[]
+include::chapters/entitlement_management.adoc[]
+include::chapters/consent_management.adoc[]
+include::chapters/device_management.adoc[]
+include::chapters/audit_event_service.adoc[]
+include::chapters/relocation_service.adoc[]
+endif::[]
+ifdef::env-github[]
+link:./chapters/account_creation.adoc[Anlage einer Akte]
+
+link:./chapters/VAU.adoc[Vertrauenswürdige Ausführungsumgebung (VAU)]
+
+link:./chapters/entitlement_management.adoc[Befugnismanagement (Entitlement Management)]
+
+link:./chapters/consent_management.adoc[Widerspruchsmanagement (Consent Mangement)]
+
+link:./chapters/device_management.adoc[Device Management]
+
+link:./chapters/audit_event_service.adoc[Audit Event Service]
+
+link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
+endif::[]
+
+
+== Medical Services
+
+In diesem Kapitel werden technische Konzepte zu verschiedenen Medical Services der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
+
+
+In den folgenden Links werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
+
+link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.0/concept[Dokumentenmanagement (XDS Document Service)]
+
+
+[#_versorgungsprozesse]
+=== Versorgungsspezifische Services
+
+Die ePA unterstützt verschiedene Versorgungsprozesse mittels dedizierter Medical Services. Initial unterstützt die Fachanwendung ePA den *digital gestützten Medikationsprozess* (dgMP) durch die Bereitstellung einer Elektronischen Medikationsliste (eML) über einen FHIR Data Service.
+
+link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0/concept[Medikationsprozess (Medication Service)]
+
+
+[#_glossar]
+== Abkürzungsverzeichnis und Glossar
+
+//*A*
+
+//*B*
+
+//*C*
+
+*D*
+
+* dgMP – digital gestützter Medikationsprozess – Gesamtheit aller möglichen Teilprozesse des Medikationsprozesses, die ganz oder in Teilen mit strukturierten Daten elektronisch unterstützt werden
+
+* DiGA – Digitale Gesundheitsanwendung
+
+*E*
+
+* eML – Elektronische Medikationsliste – Neben dem eMP die Basis für den dgMP
+
+* eMP – Elektronischer Medikationsplan
+
+*F*
+
+//* FDZ – Forschungsdatenzentrum
+
+* FHIR – Fast Healthcare Interoperability Resources – International etablierter IT-Standard für die Beschreibung von u.a. medizinischen Daten
+
+* FMC – Fundamental Modeling Concepts
+
+*G*
+
+* GesundheitsID - Digitale Identität
+
+*H*
+
+* HSM – Hardware Security Module – Sicherer Speicher für kryptographische Schlüssel
+
+//*I*
+
+*J*
+
+* JSON – JavaScript Object Notation
+
+*K*
+
+* KIM – Kommunikation im Medizinwesen
+
+* KTR – Kostenträger
+
+* KVNR – Krankenversicherungsnummer
+
+*L*
+
+* LE – Leistungserbringer
+
+* LEI – Leistungserbringerinstitution
+
+//*M*
+
+//*N*
+
+*O*
+
+* OTC – Over the Counter
+
+*P*
+
+* PZN – Pharmazentralnummer
+
+// *Q*
+
+//*R*
+
+*S*
+
+* Sektoraler Identity Provider - Sektoraler IdP
+
+*T*
+
+* TI-M – Telematikinfrastruktur-Messenger (kurz: TI-Messenger) – Standard für sicheres, interoperables Instant Messaging im deutschen Gesundheitswesen
+
+//*U*
+
+*V*
+
+* VAU – Vertrauenswürdige Ausführungsumgebung
+
+* VZD – Verzeichnisdienst
+
+//*W*
+
+//*X*
+
+//*Y*
+
+//*Z*
+
+
+[#_anhang]
+== Anhang
+
+:sectnums!:
+[#_legalpolicy]
+[discrete]
+:sectnums:
+=== Legal Policy
+ifndef::env-github[]
+include::chapters/legal_policy.adoc[]
+endif::[]
+ifdef::env-github[]
+link:./chapters/legal_policy.adoc[Überblick zur Legal Policy]
+endif::[]
+

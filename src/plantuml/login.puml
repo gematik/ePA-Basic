@@ -1,0 +1,83 @@
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+participant "ePA-Client" as client
+participant "DNS\n(Konnektor \nor Internet)" as dns
+box "ePA Aktensystem 1"
+participant "Information Service" as info1
+participant "VAU \nSession \nManagement" as vau1 #eb5e34
+end box
+box "ePA Aktensystem n"
+participant "Information Service" as info2
+participant "VAU \nSession \nManagement" as vau2 #eb5e34
+end box
+
+' Find endpoints
+opt Not required for ePA-FdV
+client -> dns : get entry for "epa4all.de"
+activate dns
+dns --> client : entry "epa4all.de" \nwith endpoints for all Aktensysteme
+deactivate dns
+end
+
+
+' Locate health record
+opt Clientsystem does not know where to find health record 
+client -> info1 : Do you host health record #12345?
+activate info1
+info1 --> client : Yes, I do
+deactivate info1
+client -> client : Store endpoint localy
+else Health record not found at Aktensystem 1
+client -> info2 : Do you host health record #12345?
+activate info2
+info2 --> client : Yes, I do
+deactivate info2
+client -> client : Store endpoint localy
+end
+
+' Open VAU-connections to endpoint and start user session
+group Start user session
+client -> vau1 : initiate secure channel to VAU
+activate vau1
+vau1 --> client : ok with server authentication
+
+' User authetication
+alt User authenticates with GesundheitsID
+else User authenticates with IDP-Dienst as pratitioner
+else User authenticates with self-signed ID-Token as TI-Service
+end
+
+vau1 -> vau1 : Secure connection ist established, \nstart user session
+activate vau1
+end
+
+' start health record context
+client -> vau1 : Operation for KVNR #12345
+vau1 -> vau1 : Load and decrypt health \nrecord context #12345 into user session
+vau1 --> client : Response
+deactivate vau1
+deactivate vau1
+
+@enduml

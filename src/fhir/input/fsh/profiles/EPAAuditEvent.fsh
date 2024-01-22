@@ -3,16 +3,7 @@ Id: epa-auditevent
 Parent: AuditEvent
 Title: "AuditEvent for the ePA (Elektronische Patientenakte)"
 Description: "Defines the data structure for audit events in the ePA system."
-
 * insert Meta
-
-* ^url = "https://gematik.de/fhir/epa/StructureDefinition/audit-event"
-* ^version = "1.0"
-* ^status = #draft
-* meta 1..1
-* meta.profile 1.. MS
-* meta.profile = "https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0" (exactly)
-
 * type from EPAAuditEventTypeVS (required)
 * subtype 0..0
 * action 1..1 MS
@@ -21,8 +12,8 @@ Description: "Defines the data structure for audit events in the ePA system."
 * period 0..0
 * recorded 1..1 MS
 * outcome 1..1 MS
-  * ^short = "success: 0; failure: 4"
-  * ^definition = "success: 0; failure: 4"
+  * ^short = "success: 0; failure: 4; major failure: 12"
+  * ^definition = "success: 0; failure: 4; major failure: 12"
 * outcomeDesc 0..0
 * purposeOfEvent 0..0
 * agent 1..1 MS
@@ -36,7 +27,7 @@ Description: "Defines the data structure for audit events in the ePA system."
     * ^short = "The subject Id of the IDToken"
     * ^definition = "The subject Id of the IDToken"
     * identifier 1..1
-    * identifier only IdentifierTelematikId or IdentifierKvid10 or EPATelematikServiceIdentifier
+    * identifier only IdentifierTelematikId or IdentifierKvid10
   * altId 0..1 MS
   * name 1..1
     * ^short = "Name of HCP or Insurant or a Service (e.g. E-Rezept-Fachdienst)"

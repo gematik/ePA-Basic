@@ -1,0 +1,48 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_anlage]
+=== Anlage einer Akte
+
+Rahmenbedingung für die Aktenanlage ist es, dass Dokumente durch den Kostenträger (z.B. Abrechnungsdaten) durch den E-Rezept-Fachdienst vor der ersten Verwendung der Akte in der Versorgung in die Akte eines Nutzers eingestellt werden können.
+
+Die Initialisierung der Akte erfolgt - wie in der aktuellen ePA - durch den Kostenträger und wird durch organisatorische Prozesse bestimmt. Gleiches gilt für den Widerspruch gegen die Anlage einer Akte durch den Versicherten, der zur Nicht-Anlage oder zur Löschung der Akte mitsamt ihren Inhalten führt. Initialisierte ePA für alle-Akten gehen in den Status "Initialized" über, damit ePA2.x-Konnektoren nicht versuchen diese zu aktivieren. Sollte in der ePA 2.x noch eine Akte im Status "Registered" vorliegen, wird der Status auf "Unknown" zurückgesetzt und für den Versicherten in der ePA für alle eine neue Akte angelegt.
+
+Vor Anlage einer neue Akte klärt das Aktensystem am *Information Service* der anderen Aktensysteme, ob schon eine Akte für die entsprechende KVNR existiert, da für einen Versicherten nur eine aktive Akte in der Telematikinfrastruktur bestehen darf. Wenn schon eine Akte existiert, wird die Akte vorbereitet und der Anbieterwechsel eingeleitet.
+
+Im *Consent Management* werden die Widerspruchsinformationen mit Standardwerten initialisiert. Damit Widerspruchsinformationen möglichst leichtgewichtig (d.h. ohne die VAU zu öffnen) abgefragt werden können, werden die Widerspruchsinformationen bei Anlage und Änderung in den lokalen Cache des *Information Service* repliziert.
+
+Im *Entitlement Management* sind der Versicherte selbst, der zuständige Kostenträger, die zuständige Ombudsstelle und der E-Rezept-Fachdienst als befugt hinterlegt. Die Befugnisse für den zuständigen Kostenträger und der zuständigen Ombudsstelle müssen durch diese mit deren SMC-B Zertifikatsprofil C.HCI.OSIG signiert werden. Die beiden Befugnisse werden im Aktensystem hinterlegt und beim Start der VAU ins *Entitlement Management* übernommen.
+
+Der Statusübergang zu "Activated" wird durch die Kostenträger nachfolgend separat angestoßen. Danach ist die Akte in der Versorgung nutzbar.
+
+//NOTE: Nach Start der ePA für alle ist kein Zugriff mehr über ePA2.x-Systeme (Primärsysteme) möglich, da sich die grundsätzliche Architektur des Anwendung ändert.
+
+==== Migration von "ePA 2.x"-Dokumenten
+
+Wenn schon ein aktiviertes Aktenkonto (ePA 2.x) vorliegt, sollen die dort vorliegenden Dokumente in die ePA für alle migriert werden. Dies erfolgt über das *ePA-FdV*, welches dafür weiterhin Zugriff auf das ePA 2.x Schlüsselmaterial benötigt. Das Schlüsselmaterial wird dem *XDS Document Service* übergeben, der damit die Daten der ePA 2.x in die ePA für alle importiert. Die Funktion kann Aktensystemspezifisch im Zusammenspiel mit dem zugehörigen *ePA-FdV* realisiert werden, da kein Interoperabilität zu anderen Produkten nötig ist.
+
+Schon bestehende Berechtigungen für Vertreter müssen durch das *ePA-FdV* als Befugnisse neu eingestellt werden. Die entsprechenden Informationen können im *ePA-FdV* zwischgespeichert werden, um das erneute Einrichten der Vertreter zu unterstützen.

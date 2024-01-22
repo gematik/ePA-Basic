@@ -2,21 +2,19 @@ openapi: 3.0.3
 info:
   title: I_Audit_Event_Render_Insurant
   description: |
-    **Prereqisites**:</br>
-    -
+    **Prerequisites**:</br>
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
-    - identifier (telematik-id or kvnr)
+    - identifier (telematik-id or KVNR)
     - indication of a valid entitlement 
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
-    and a valid ID-Token. If one of these conditions is not met, then the response
+    Operations mandating a valid entitlement implicitly mandate use of a VAU channel
+    and a valid ID-Token. If one of these conditions is not met, the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
     **Retry interval**:</br>
-    -
     The following retry intervals are suggested in case of an error response:<br>
     - '409' Conflict (statusMismatch).
       - approx. 24 hours
@@ -24,13 +22,12 @@ info:
       - approx. 10 minutes
 
     **User Agent**:</br>
-    -
     The user agent information (x-useragent) is part of any request, even if 
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-    **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    **Log Entries**
+    Whenever a _Postcondition_ mandates a log entry, this entry shall contain
     data as defined in A_24991*.
 
   contact:
@@ -41,30 +38,37 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
+  version: 1.0.0
+
+  # version history:
+  # ----------------
+  # version 1.0.0
+  #   - first release version
+  # version 0.0.1
+  #   - initial version for review
 
 servers:
-- url: https://epa-hst1.prod.epa4all.de/api
+- url: https://epa-hst1.prod.epa4all.de
 
 tags:
 - name: PDF/A
-  description: Signed PDF/A File
+  description: Signed PDF/A file
 
 
 
 paths:
-  /audit/v1/render/pdf:
+  /epa/audit/render/v1/pdf:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent' 
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
       - PDF/A
       operationId: renderAuditEventsToPDF
-      summary: "Returns a signed PDF/A file of all AuditEvents in a human-readable format."
+      summary: "Returns a signed PDF/A file of all audit events in a human-readable format."
       description: |
-        The AuditEvent Service **SHALL** return the list of all AuditEvent entries as a signed PDF/A file. 
-        The signature key **SHALL** correspond to the issuer identity ID.FD.SIG. The associated certificate C.FD.SIG contains the role "oid_epa_logging".
+        The Audit Event Service **SHALL** return the list of all AuditEvent entries (i.e. FHIR resources) as a signed PDF/A file. 
+        The signature key **SHALL** correspond to the issuer identity ID.FD.SIG. The associated certificate profile C.FD.SIG MUST contain the role "oid_epa_logging".
 
         
         **Allowed user groups [professionOID]**
@@ -77,14 +81,14 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Requestor has no valid entitlement | 403 | notEntitled ||
-        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+        | Requestor role is not in the list of allowed user groups | 403 | invalidOid ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | A log-entry for the operation exists | representative only, all operation results |
+        | A log entry for the operation exists | representative only, all operation results |
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -97,7 +101,7 @@ paths:
               schema:
                 type: string
                 format: byte
-              example: Signed PDF/A File
+              example: Signed PDF/A file
         '403':
           $ref: '#/components/responses/Error403Forbidden'
         '409':
@@ -162,7 +166,7 @@ components:
       type: string
       description: |-
         The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+        For today the record identifier equals the insurant id (KVNR). The record identifier does not include any home community id.
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     UserAgentType:

@@ -2,8 +2,7 @@ openapi: 3.0.1
 info:
   title: I_Consent_Decision_Management
   description: |-
-    This interface provides access to the service **Consent Decision Management** of a personal health 
-    record for insurants, representatives and ombuds offices.<br/>
+    This interface provides access to the service **Consent Decision Management** of the Electronic Health Record system for insurants, representatives and ombuds offices.<br/>
     
     **General conditions**:</br> 
     For all operations if applicable:
@@ -11,17 +10,17 @@ info:
     - a section _Provider_ in operation descriptions covers requirements for the server side. 
     - error responses may be extended by helpful information about the error condition in _errorDetail_
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
-    - identifier (telematik-id or kvnr)
+    - identifier (telematik-id or KVNR)
     - indication of a valid entitlement
     
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
-    and a valid ID-Token. If one of these conditions is not met, then the response
+    Operations mandating a valid entitlement implicitly mandate use of a VAU channel
+    and a valid ID-Token. If one of these conditions is not met, the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
     **Retry interval**:</br>
@@ -40,36 +39,37 @@ info:
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
 
-  version: 0.0.1
-  
+  version: 1.0.0
+
   # version history:
   # ----------------
+  # version 1.0.0
+  #   - first release version
   # version 0.0.1
   #   - initial version for review
 
   contact:
     name: gematik GmbH
-    email: epa@gematik.de
     url: 'http://www.gematik.de'
   license:
     name: Apache 2.0
     url: "https://www.apache.org/licenses/LICENSE-2.0"
 
 servers:
-  - url: https://epa-hst1.prod.epa4all.de/api
+  - url: https://epa-hst1.prod.epa4all.de
 
 tags:
   - name: ConsentDecisions
     description: |
      Consent decision management operations allow to view current decisions made and to change those 
      decisions regarding consent related functions of the health record.
-  
+
 paths:
-  /consentdecisionmanagement/v1/{functionid}:
+  /epa/basic/api/v1/consents/{functionid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: "#/components/parameters/functionid"
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     put:
       tags:
         - ConsentDecisions
@@ -90,18 +90,33 @@ paths:
         Changed consents of class "healthCareProcess" shall also be made available for the Information Service.
 
         _functionid_ == _medication_:</br> 
-        The change of this decision shall cause special impact for the XDS 
-        document service and the Fhir data service.</br>        
-          - (*) lock (write protect) the following data categories if _functionid_ = _medication_ is 
+        The change of this decision alters the medication process participation and shall cause special impact 
+        for the XDS document service and the Fhir data service. If set to _deny_, no client (any oid) - except 
+        the ePrescription backend (oid_erp-vau) - shall be able to read or write medication related data (locked). 
+        Vice versa these clients are unlocked for intented use if decision is set to _permit_. </br>        
+          - (a) lock the following data categories if _functionid_ = _medication_ is 
             set to _deny_: 
-          - (**) unlock (write enable) the following data categories if _functionid_ = _medication_ is 
+            - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
+            - fhir data service "medication"
+          - (b) unlock the following data categories if _functionid_ = _medication_ is 
             set to _permit_: 
             - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
-            - fhir data category "medication"
-          - (***) remove all data from following data category (folder/service) if _functionid_ = _medication_ is 
+            - fhir data service "medication"
+
+        _functionid_ == _erp-submission_:</br> 
+        The change of this decision shall cause special impact for the XDS document service and the Fhir data service
+        and disable the data collection related to the medication process if set to _deny_. 
+        A decision _deny_ also sets the decision for _medication_ to _deny_ implicitly.</br> 
+          - (c) remove all data from following data category (folder/service) if _functionid_ = _erp-submission_ is 
             set to _deny_:
             - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
-            - fhir data category "medication"
+            - fhir data service "medication"
+          - (d) lock all operations for the ePrescription backend (oid_erp-vau) if _functionid_ = _erp-submission_ is 
+            set to _deny_.
+          - (e) unlock all operations for the ePrescription backend (oid_erp-vau) if _functionid_ = _erp-submission_ is 
+            set to _permit_.
+          - (f) set the decision for _medication_ to _deny_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
+            set to _deny_.
 
         If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
 
@@ -126,10 +141,13 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The updated consent decision is stored in SecureDataStorage ||
-        | Associated data categories are write protected for clients | conditional, see (*) |
-        | Associated data categories are empty (all content deleted) | conditional, see (***) |
-        | Associated data categories are write enabled for clients | conditional, see (**) |
+        | The updated consent decision is stored in SecureDataStorage |in case of (f): both decisions |
+        | Associated data categories are read and write protected for clients | conditional, see (a) |
+        | Associated data categories are read and write enabled for clients | conditional, see (b) |
+        | Associated data categories are empty (all content deleted) | conditional, see (c) |
+        | Operations for ePrescription backend (oid_erp-vau) are locked | conditional, see (d) |
+        | Operations for ePrescription backend (oid_erp-vau) are unlocked | conditional, see (e) |
+        | Decision for _medication_ is set to o_deny_| conditional, see (f) |
         | The Information Service has updated consent decisions | conditional, if functions of class "healthCareProcess" are changed |
         | An email is sent to the insurant | success case with change of consent only |
         | A log-entry for the operation exists | all operation results |
@@ -155,15 +173,20 @@ paths:
           content:
             application/json:
               examples:
-                Permit:
-                  summary: Permit request response
+                Permit_Medication:
+                  summary: Permit medication request response
                   value:
                     functionId: "medication"
                     decision: "permit"
-                Deny:
-                  summary: Deny request response
+                Deny_Medication:
+                  summary: Deny medication request response
                   value:
                     functionId: "medication"
+                    decision: "deny"
+                Deny_Erp-submission:
+                  summary: Deny erp-submission request response
+                  value:
+                    functionId: "erp-submission"
                     decision: "deny"
               schema:
                 $ref: "#/components/schemas/ConsentDecisionsResponseType"
@@ -228,10 +251,10 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /consentdecisionmanagement/v1:
+  /epa/basic/api/v1/consents/:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - ConsentDecisions
@@ -268,6 +291,8 @@ paths:
               example:
                 - functionId: "medication"
                   decision: "deny"
+                - function: "erp-submission"
+                  decision: "permit"
               schema:
                 type: array
                 items:
@@ -349,7 +374,7 @@ components:
             errorCode: internalError
           schema:
             $ref: '#/components/schemas/ErrorType'
-    
+
   schemas:
     ConsentDecisionType:
       description: "Consent Decision"

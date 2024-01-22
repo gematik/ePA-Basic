@@ -3,9 +3,9 @@ info:
   title: Authorization Service
   description: |
     This interface provides access to Authorization Service.</br>
-    Through this interface, client systems can carry out user authentication. There are two differnt ways
+    Through this interface, client systems can carry out user authentication. There are two different ways
     - Authentication of the insurant or representative using the insurant's device through sectoral IDP of the health insurance company
-    - Authentication of other client systems through the central IDP
+    - Authentication of other client systems through the central IDP (IDP-Dienst)
 
     **General conditions**:</br> 
     For all operations if applicable:
@@ -13,13 +13,13 @@ info:
 
     **Prereqisites**:</br>
     For insurant and representatives
-    - The sektorale IDP of Health insurance is registered with the TI-Federation
+    - The sectoral IDP of Health insurance is registered with the TI-Federation
     - The authorization service of a Health Record System is registered with the TI-Federation
-    - The authenticator modul of the sektorale IDP is part of the frontend application on insurant's device 
+    - The authenticator modul of the sectoral IDP is part of the frontend application on insurant's device 
     
     For other client systems
-    - The authorization service of a Health Record System is registered with the central IDP
-    
+    - The authorization service of the Electronic Health Record System is registered with the central IDP (IDP-Dienst)
+
   contact:
     name: gematik GmbH
     url: 'https://www.gematik.de'
@@ -28,23 +28,51 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.3
+  version: 1.0.0
+
+  # version history:
+  # ----------------
+  # version 1.0.0
+  #   - first release version
+  # version 0.0.3
+  #   - initial version for review
 
 servers:
-- url: https://epa-hst1.prod.epa4all.de/api
+- url: https://epa-hst1.prod.epa4all.de
 
 tags:
 - name: Authorization FdV
-  description: This interface method enables the authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance 
+  description: This interface method enables the authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance
 - name: Authorization SMC-B
   description: This interface method enables the authentication of other client systems through the central IDP
 - name: Authorization BearerToken
-  description: This interface method enables the authorization of applications through a BearerToken 
+  description: This interface method enables the authorization of applications through a BearerToken
+- name: FHIRVZDtoken
+  description: Interface to receive FHIR VZD search access-token from health record system for clients
 
 paths:
-  /getNonce/v1:
+  /epa/vzd/v1/vzdToken:
+    get:
+      tags:
+      - FHIRVZDtoken
+      summary:  Get FHIR VZD search access-token
+      description: Clients shall use this interface to receive the FHIR VZD search access-token provided by the 
+       health record system for their clients to access the FHIR VZD directory-
+      operationId: getFHIRVZDtoken
+      responses:
+        '200':
+          description: OK
+          content: 
+             application/json: 
+              schema:
+                $ref: '#/components/schemas/SearchAccessToken'
+
+        '500':
+          $ref: '#/components/responses/NonceError500InternalError'
+
+  /epa/authz/v1/getNonce:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Authorization SMC-B
@@ -63,20 +91,20 @@ paths:
               schema:
                 type: string
                 example: aff157
-        '400':        
-          $ref: '#/components/responses/NonceError400BadRequest'              
+        '400':
+          $ref: '#/components/responses/NonceError400BadRequest'
         '500':
           $ref: '#/components/responses/NonceError500InternalError'
-  
-  /send_authorization_request_sc/v1:
+
+  /epa/authz/v1/send_authorization_request_sc:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Authorization SMC-B
       operationId: sendAuthorizationRequestSC
       summary: user authorization
-      description: sends an authorization request from the primary system client (medical facility) to the IDP-Dienst, that triggers the authenticator, which returns an authorization code grant for a user within this medical facility. The authorization code can then be exchanged for an ID token.
+      description: sends an authorization request from the system client of a SMC-B user to the IDP-Dienst, that triggers the authenticator, which returns an authorization code grant for a user of this SMC-B. The authorization code can then be exchanged for an ID token.
       parameters:
         - $ref: '#/components/parameters/client_id'
         - $ref: '#/components/parameters/state'
@@ -84,20 +112,20 @@ paths:
         '302':
           $ref: '#/components/responses/AuthorizationResponseSC302'
         '400':
-          $ref: '#/components/responses/ARSCError400BadRequest'        
+          $ref: '#/components/responses/ARSCError400BadRequest'
         '500':
           $ref: '#/components/responses/Error500InternalError'
         #todo: include the deferred authenticator response with the auth_code
 
-  /send_authcode_sc/v1:
+  /epa/authz/v1/send_authcode_sc:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
         - Authorization SMC-B
       operationId: sendAuthCodeSC
       summary: send AUTH_CODE
-      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation. 
+      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
       requestBody:
         required: true
         content:
@@ -105,11 +133,11 @@ paths:
             schema:
               type: object
               properties:
-                client_id:          
+                client_id:
                   type: string
                   example: ePAfa
                   maxLength: 32
-                state:    
+                state:
                   type: string
                   example: af0ifjsldkj
                   maxLength: 255
@@ -121,14 +149,14 @@ paths:
           $ref: '#/components/responses/AuthCodeRequest403'
           example:
             errorCode: unknownDevice
-            errorDetail: 
+            errorDetail:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
 
-  /send_authorization_request_fdv/v1:
+  /epa/authz/v1/send_authorization_request_fdv:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Authorization FdV
@@ -139,24 +167,27 @@ paths:
         - $ref: '#/components/parameters/client_id'
         - $ref: '#/components/parameters/idp_iss'
         - $ref: '#/components/parameters/deviceId'
+        - $ref: '#/components/parameters/deviceToken'
         - $ref: '#/components/parameters/state'
       responses:
         '302':
           $ref: '#/components/responses/AuthorizationResponseFdV302'
         '400':
-          $ref: '#/components/responses/ARFdVError400BadRequest'        
+          $ref: '#/components/responses/ARFdVError400BadRequest'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
-  /send_authcode_fdv/v1:
+  /epa/authz/v1/send_authcode_fdv:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/deviceId'
+      - $ref: '#/components/parameters/deviceToken'
     post:
       tags:
         - Authorization FdV
       operationId: sendAuthCodeFdV
       summary: send AUTH_CODE
-      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation. 
+      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
       requestBody:
         required: true
         content:
@@ -164,17 +195,14 @@ paths:
             schema:
               type: object
               properties:
-                code:          
+                code:
                   type: string
                   example: 2435623452hkjlk34t
                   maxLength: 2000
-                state:    
+                state:
                   type: string
                   example: af0ifjsldkj
                   maxLength: 512
-                deviceId:
-                  type: string
-                  example: t.b.d.
       responses:
         '200':
           $ref: '#/components/responses/AuthCodeRequest200'
@@ -182,19 +210,19 @@ paths:
           $ref: '#/components/responses/AuthCodeRequest403'
           example:
             errorCode: unknownDevice
-            errorDetail: 
+            errorDetail:
         '500':
           $ref: '#/components/responses/Error500InternalError'
-  
-  /send_authorization_request_bearertoken/v1:
+
+  /epa/authz/v1/send_authorization_request_bearertoken:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
-        - Authorization BearerToken 
+        - Authorization BearerToken
       operationId: sendAuthorizationRequestBearerToken
-      summary: client authorization based on JWT authorization grant (see rfc7523)
-      description: sends an authorization request from the eRezept service to the authorization service in order to be allowed to put eRezept data into an ePA system. returns appropriate access token / refresh token for the authenticated client.
+      summary: client authorization based on JWT authorization grant (see RFC 7523)
+      description: sends an authorization request from the ePrescription service (E-Rezept-Fachdienst) to the authorization service in order to be allowed to put prescription data into the ePA system. returns appropriate ACCESS token / REFRESH token for the authenticated client.
       requestBody:
         required: true
         content:
@@ -202,15 +230,15 @@ paths:
             schema:
               type: object
               properties:
-                grant_type:  
-                  enum: ["urn:ietf:params:oauth:grant-type:jwt-bearer"] 
-                  type: string    
-                assertion:    
+                grant_type:
+                  enum: ["urn:ietf:params:oauth:grant-type:jwt-bearer"]
+                  type: string
+                assertion:
                   type: string
                   example: single JWT, e.g.  eyJhbGciOiJFUzI1NiIsImtpZCI6IjE2In0.eyJpc3Mi[...omitted for brevity...].J9l-ZhwP[...omitted for brevity...]
                     #to be replaced with a real JWT example
       responses:
-        '200':         
+        '200':
           description: "OK"
           content:
             application/json:
@@ -219,18 +247,18 @@ paths:
                 properties:
                   access_token:
                     type: string
-                  expires_in: 
+                  expires_in:
                     type: number
                   refresh_token:
                     type: string
         '400':
-          $ref: '#/components/responses/ARBEARERError400BadRequest'  
-        
+          $ref: '#/components/responses/ARBEARERError400BadRequest'
 
-          
-  /logoutFdV/v1:
+
+
+  /epa/authz/v1/logoutFdV/{tokenid}:
     parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Authorization FdV
@@ -243,10 +271,10 @@ paths:
         '200':
           description: "OK"
         '404':
-          $ref: '#/components/responses/Error404NotFound' 
+          $ref: '#/components/responses/Error404NotFound'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-    
+
 
 components:
   parameters:
@@ -280,8 +308,16 @@ components:
       schema:
         type: string
         example: 4ab42e19-7d33-40fa-949f-3499135b910b
+    deviceToken:
+      name: x-device-token
+      in: header
+      description: The device Token should be set in the header. When this is combined with the 'x-device-id' header, it results in a unique authorization for the device
+      required: false
+      schema:
+        type: string
+        example: sdthsdrndtrhmsyetsbrts        
     clientAttest:
-      name: x-client-attestation 
+      name: x-client-attestation
       in: header
       description: signed nonce
       required: false
@@ -314,17 +350,17 @@ components:
         type: string
         maxLength: 256
         example: dfkldfsnAAarnflerjfarlelagl
-        
+
   responses:
     Nonce200:
       description: "OK"
       content:
         application/json:
-          example: 
+          example:
             nonce: aff157
           schema:
             description: generated nonce
-            type: string  
+            type: string
 
     AuthorizationResponseFdV302:
       description: "Found"
@@ -370,7 +406,7 @@ components:
             errorDetail: 'The client id sent in the request header is unknown. Please register your client at first.'
           schema:
             $ref: '#/components/schemas/ErrorType'
-            
+
     NonceError500InternalError:
       description: Internal Server Error
       content:
@@ -408,7 +444,7 @@ components:
             errorDetail: 'check the registered client_id and redirect_uri at the IDP.'
           schema:
             $ref: '#/components/schemas/ErrorType'
-    
+
     ARBEARERError400BadRequest:
       description: Bad Request.
       content:
@@ -458,6 +494,15 @@ components:
       required:
         - errorCode
 
+    SearchAccessToken:
+      type: string
+      example: 
+        {
+        "access_token":"MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3",
+        "token_type":"Bearer",
+        "expires_in":86400
+          }
+
     AuthorizationResponseFdV:
       description: AuthorizationResponse
       type: object
@@ -500,14 +545,14 @@ components:
         responseType:
           readOnly: true
           type: string
-          format: code  
+          format: code
         nonce:
           type: string
           format: uuid
         scope:
           type: string
           example: openid+ePA
-    
+
     AuthCodeResponse:
       type: object
       properties:
@@ -528,4 +573,4 @@ components:
       required:
         - errorCode
 
-  
+

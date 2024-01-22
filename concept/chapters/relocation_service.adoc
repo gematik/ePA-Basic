@@ -1,0 +1,83 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_anbieterwechsel]
+=== Anbieterwechsel
+
+image::Feature-Relocation-Service.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Health Record Relocation Service - Beteiligte Komponenten",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+In der "ePA für alle" erfolgt ein betreiberübergreifender Anbieterwechsel über das Zusammenspiel mit dem Kostenträger, bei dem der Versicherte bisher versichert war ("Kostenträger alt"), und dem Kostenträger, bei dem der Versicherte ab sofort versichert ist ("Kostenträger neu"). Die Kommunikation zwischen den Aktensystemen und den dazugehörigen Kostenträgern ist nicht normiert.
+
+Ein Anbieterwechsel beim selben Betreiber führt lediglich zu einer Anpassung der Verwaltungsdaten und Befugnisse für den Kostenträger und für die Ombudsstelle. Der Wechsel kann daher ohne den Umweg über ein externes Export-Paket durchgeführt werden.
+
+
+==== Betreiberübergreifender Anbieterwechsel
+
+ifndef::env-github[]
+
+[#fig:relocation-service]
+[plantuml, "{diagramsdir}/relocationservice", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf Anbieterwechsel",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/relocationservice.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/relocationservice.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf Anbieterwechsel",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+===== Anstoßen eines Aktentransfers
+
+Der "Kostenträger neu" lässt im Aktensystem eine neue Akte anlegen. Das Aktensystem fragt am *Information Service* der anderen Aktensysteme nach, ob für diese KVNR schon eine Akte existiert. Sollte dies der Fall sein, wird der Anbieterwechsel angestoßen. In dieser Kommunikation wird auch das Verschlüsselungszertifikat des neuen Betreibers ausgetauscht.
+
+Dafür informiert der *Information Service* des alten Aktensystems den "Kostenträger alt" über den Wechsel. Der "Kostenträger alt" meldet sich an der ePA an, startet die Erstellung eines Export-Pakets im *Health Record Relocation Service* und übergibt dabei das Verschlüsselungszertifikat. Der Service ändert den Status der Akte auf "Suspended" und sammelt die zu transferierenden Informationen in allen anderen internen Services ein und erstellt daraus das Export-Paket mit folgendem Inhalt:
+
+* XDS-Dokumente mitsamt Metadaten
+* FHIR-Daten aus den Versorgungsprozessen
+* Zugriffsprotokolle
+* Befugnisse
+* Widersprüche
+* Informationen zu verborgenen Dokumenten
+
+Nachdem die Informationen im Export-Paket zusammengefasst sind, wird das Export-Paket mit dem Verschlüsselungszertifikat für die VAU des neuen Betreibers verschlüsselt.
+
+Das verschlüsselte Export-Paket wird anschließend auf dem Download-Punkt des Aktensystems, dass bisher die Akte verwaltet hat, abgelegt und die entsprechende Download URL dem "Kostenträger alt" bekannt gemacht. Dieser übermittelt die Download URL an den *Information Service* seines Aktensystems, welches diese an den *Information Service* des neuen Aktensystems übergibt, welches schließlich die Download URL mit der Information, dass ein Anbieterwechsel ansteht, an den "Kostenträger neu" weiterleitet.
+
+Sollte der Import des Export-Pakets nicht erfolgreich durchgeführt werden können, wird die Akte durch den "Kostenträger alt" über den *Health Record Relocation Service* wieder in den Status "Activated" gesetzt und der Export zu einem späteren Zeitpunkt erneut angestoßen.
+
+
+===== Import einer Akte
+
+Der "Kostenträger neu" meldet sich an der ePA an und startet am *Health Record Relocation Service* den Import der Akte. Nachdem der *Health Record Relocation Service* das Export-Paket abgerufen und entschlüsselt hat, werden die Daten in die entsprechenden Services importiert und die Akte ist beim neuen Anbieter nutzbar – der Status wechselt auf "Activated".
+
+
+==== Anbieterwechsel innerhalb eines Betreibers
+
+Der Anbieterwechsel innerhalb eines Aktensystems erfolgt über die Aktenkontoverwaltung des Betreibers. Der "Kostenträger neu" teilt den Wechsel mit und hinterlegt die mit dem SMC-B Zertifikatsprofil C.HCI.OSIG selbst-signierten Befgugnisse des Kostenträgers und der zuständigen Ombudsstelle im Aktensystem. Die Befugnisse werden beim nächsten Öffnen der Akte in das *Entitlement Management* importiert und ersetzen dort die bisherigen Befugnisse des Kostenträgers und der Ombudsstelle.

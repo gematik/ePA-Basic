@@ -1,0 +1,20 @@
+{
+  "resourceType": "ValueSet",
+  "status": "active",
+  "name": "EPAOperationOutcomeVS",
+  "id": "epa-operation-outcome-vs",
+  "title": "EPA  OperationOutcome  VS",
+  "description": "Include all VS of Operation Outcome codes used by FHIR",
+  "url": "https://gematik.de/fhir/epa/ValueSet/epa-operation-outcome-vs",
+  "version": "1.0.0",
+  "experimental": false,
+  "publisher": "gematik GmbH",
+  "date": "2024-01-22",
+  "compose": {
+    "include": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/operation-outcome"
+      }
+    ]
+  }
+}

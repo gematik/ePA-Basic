@@ -1,11 +1,14 @@
 {
   "resourceType": "ValueSet",
-  "status": "draft",
+  "status": "active",
   "name": "EPAAuditEventTypeVS",
   "id": "epa-auditevent-type-vs",
   "title": "EPAAuditEventTypeVS",
   "url": "https://gematik.de/fhir/epa/ValueSet/epa-auditevent-type-vs",
+  "version": "1.0.0",
+  "experimental": false,
   "publisher": "gematik GmbH",
+  "date": "2024-01-22",
   "compose": {
     "include": [
       {

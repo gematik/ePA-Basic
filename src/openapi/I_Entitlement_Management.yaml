@@ -1,5 +1,5 @@
 openapi: 3.0.1
-info: 
+info:
   title: I_Entitlement_Management
   description: |
     This interface provides access to the service **Entitlement Management** of a personal health 
@@ -11,7 +11,7 @@ info:
     - a section _Provider_ in operation descriptions covers requirements for the server side. 
     - error responses may be extended by helpful information about the error condition in _errorDetail_
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
@@ -20,7 +20,7 @@ info:
     
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    Operations mandating a valid entitlement implicitly mandate use of a VAU-channel
     and a valid ID-Token. If one of these conditions is not met, then the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
@@ -35,22 +35,23 @@ info:
 
   contact:
     name: gematik GmbH
-    email: epa@gematik.de
     url: 'http://www.gematik.de'
 
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
-  
+  version: 1.0.0
+
   # version history:
   # ----------------
+  # version 1.0.0
+  #   - first release version
   # version 0.0.1
   #   - initial version for review
 
 servers:
-  - url: https://epa-hst1.prod.epa4all.de/api
+  - url: https://epa-hst1.prod.epa4all.de
 
 tags:
   - name: Entitlements-ePA-FdV
@@ -65,7 +66,7 @@ tags:
      even delete existing ones. Additionally the validity period of existing entitlements may be changed (set a 
      new Entitlement with desired validity period).</br>
      Exceptions apply for the mandatory and temporary unlimited (static) entitlements of the insurant, the insurance,
-     the ombuds office and the eprescription backend.
+     the ombuds office and the prescription backend.
 
      **Allowed usergroups for entitlements:**
      Entitlements can only be set for particular users of defined roles. The following list of allowed roles (professionOid)
@@ -81,7 +82,8 @@ tags:
      - oid_praxis-physiotherapeut
      - oid_institution-oegd
      - oid_institution-arbeitsmedizin
-     - oid_versicherter (for representatves)
+     - oid_versicherter (for representatives)
+     - oid_diga
      
      not allowed for entitlement management are the static entitlements.
 
@@ -101,7 +103,7 @@ tags:
      any user and enables general access to health care related data and services for a period of time.
 
      Entitlements are set by provision of a proof of audit as prepared by the VSDM Service of the TI in a patient
-     presense situation. This proof of audit substitutes the (not yet) existing entitlement granting access to 
+     presence situation. This proof of audit substitutes the (not yet) existing entitlement granting access to 
      the health care operation.
      A valid proof of audit shall be signed by an smc-b associated to the health care institution demanding an 
      entitlement. 
@@ -154,15 +156,18 @@ tags:
       - oid_institution-oegd
       - oid_institution-arbeitsmedizin
 
+      Remark: DIGAs (oid_diga) can not be entitled by a proof of audit like other health care institutions, so blocking of DiGAs 
+      is not required.    
+
 paths:
-  /entitlementmanagement/v1:
+  /epa/basic/api/v1/entitlements:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       parameters:
-        - $ref: '#/components/parameters/userid'
-        - $ref: '#/components/parameters/userrole'
+        - $ref: '#/components/parameters/actor-id'
+        - $ref: '#/components/parameters/oid'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       tags:
@@ -224,13 +229,13 @@ paths:
                       offset:
                         description: applied offset to matching results
                         type: integer
-                      limit: 
+                      limit:
                         description: applied limit to matching results
                         type: integer
                       totalMatching:
                         description: total amount of matching results in policies
                         type: integer
-                  entitlements:
+                  data:
                     type: array
                     items:
                       oneOf:
@@ -271,6 +276,8 @@ paths:
        entitlements.</br>
        A client shall (mandatory) apply a date of 9999-21-12 to the _validTo_ claim of a request if the 
        entitlement addresses a user identified by a kvnr (representative).</br>
+       A client shall (mandatory) apply a date of 9999-21-12 to the _validTo_ claim of a request if the 
+       entitlement addresses a DiGA (oid_diga).</br>
        A client shall (mandatory) apply an email address for notification and device registration if the 
        entitlement addresses a user identified by a kvnr (representative).</br>
        A client shall delete an assignment of the Blocked User Policy associated to the addressee of this 
@@ -297,6 +304,7 @@ paths:
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - request claims _actorId_ which is _actorId_ of a static entitlement
        - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-31-12
+       - request claims _oid_ == oid_diga and _validTo_ is not equal 9999-31-12
        - request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request
@@ -311,7 +319,7 @@ paths:
        Additionally a notification mail shall be send to the representative using this mail address
        for information about the new established representative role for the insurant's health record, including 
        kvnr and name of the insurant. This notification is obsolete in case the new entitlement replaces an existing
-       entitlment of the representative.
+       entitlement of the representative.
 
        | Conditions | Status code | Error code | Remarks |
        |------------|-------------|------------|---------|
@@ -322,11 +330,12 @@ paths:
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
-       | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | requestMismatch ||
+       | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | invalidActorId ||
        | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-31-12| 409 | requestMismatch ||
-       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignmentr | 409 | requestMismatch ||
+       | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-31-12| 409 | requestMismatch ||
+       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | blockedActorId ||
        | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant| 409 | requestMismatch ||
-       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request| 409 | requestMismatch ||
+       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request| 409 | noMail ||
        | request claims  _validTo_ which is not equal or in the future of current date| 409 | requestMismatch ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -339,7 +348,7 @@ paths:
        | A log-entry for the operation exists | all operation results |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 
-      requestBody: 
+      requestBody:
         required: true
         content:
           application/json:
@@ -349,9 +358,9 @@ paths:
                 - $ref: '#/components/schemas/EntitlementRequestRepType'
             examples:
               Representative:
-                $ref: '#/components/examples/Set_SingleEntitlmentRepresentative'
+                $ref: '#/components/examples/Set_SingleEntitlementRepresentative'
               Pharmacy:
-                $ref: '#/components/examples/Set_SingleEntitlmentPharmacy'
+                $ref: '#/components/examples/Set_SingleEntitlementPharmacy'
 
       responses:
         '201':
@@ -376,11 +385,11 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
-  /entitlementmanagement/v1/{actorId}:
+  /epa/basic/api/v1/entitlements/{actorId}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/actorId'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Entitlements-ePA-FdV
@@ -414,7 +423,12 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | none ||
-
+      parameters:
+        - in: path
+          name: actorId
+          schema:
+            $ref: "#/components/schemas/ActorIdType"
+          required: true
       responses:
         '200':
           description: OK
@@ -458,8 +472,8 @@ paths:
         a representative shall not delete entitlements of representatives.</br>
         Deletion of static entitlements shall not be successful.
 
-        Deleting an entitlement of a represantative:</br>
-        If an entitlement for a representative is deleted, also the notifiaction mail address associated to 
+        Deleting an entitlement of a representative:</br>
+        If an entitlement for a representative is deleted, also the notification mail address associated to 
         this representative shall be deleted (the mail address provided in context of a _setEntitlement_ operation).
 
         | Conditions | Status code | Error code | Remarks |
@@ -482,8 +496,14 @@ paths:
         | The addressed assignment is removed from the associated policy ||
         | A log-entry for the operation exists | all operation results |
 
+      parameters:
+        - in: path
+          name: actorId
+          schema:
+            $ref: "#/components/schemas/ActorIdType"
+          required: true
       responses:
-        '204':      
+        '204':
           description: OK
         '400':
           $ref: '#/components/responses/Error400BadRequest'
@@ -497,10 +517,10 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
   # Entitlement clients health care
-  /entitlementmanagement/v1/ps:
+  /epa/basic/api/v1/ps/entitlements:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
         - Entitlements
@@ -512,7 +532,7 @@ paths:
        This operation is limited to users of the "Allowed usergroups for entitlements with proof of audit".
        
        **Client**:</br>
-       A client shall use this operation in a patient presense situation only, i.e. in case
+       A client shall use this operation in a patient presence situation only, i.e. in case
        the vsdm update service provides a proof of audit as result of a validation procedure
        of a physical health insurance card (eGK) of the health record owner.
 
@@ -522,7 +542,7 @@ paths:
        an entitlement for this user shall be the result of this operation.
 
        The lack of an existing entitlement for this operation is substituted by verifiable
-       evidence (JWT) associated to the health record owner acting as health record owner's explicite
+       evidence (JWT) associated to the health record owner acting as health record owner's explicit
        permission for the requesting user to establish a new entitlement.
        
        The received JWT shall be passed to the HSM for entitlement verification, using rule _rr3_.
@@ -544,7 +564,7 @@ paths:
        - _actorId_ is referenced by a Blocked User Policy assignment
 
        If an existing and stored entitlement addressing the same user exists and if this stored
-       entitlement indicates a _valildTo_ which is in the future of the new entitlement's _validTo_, 
+       entitlement indicates a _validTo_ which is in the future of the new entitlement's _validTo_, 
        then the existing entitlement shall be kept, else the completed new entitlement shall be stored, 
        encrypted by SecureAdminStorageKey of the health record.</br>
        If the new entitlement is stored, a possibly existing entitlement is deleted automatically.</br>
@@ -556,12 +576,11 @@ paths:
        |------------|-------------|------------|---------|
        | Successful operation | 201 |||
        | Request does not match schema | 400 | malformedRequest ||
-       | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
-       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignmentr | 409 | requestMismatch ||
+       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -571,8 +590,8 @@ paths:
        | The user addressed by the new entitlement is entitled | successful operation only |
        | A log-entry for the operation exists | all operation results |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.1 |
-    
-      requestBody: 
+
+      requestBody:
         required: true
         content:
           application/json:
@@ -580,7 +599,7 @@ paths:
               $ref: '#/components/schemas/EntitlementRequestType'
             examples:
               Request:
-                $ref: '#/components/examples/Set_SingleEntitlment'  
+                $ref: '#/components/examples/Set_SingleEntitlement'
 
       responses:
         '201':
@@ -597,15 +616,15 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
   # User Blocking
-  /entitlementmanagement/v1/blockeduser:
+  /epa/basic/api/v1/blockedusers:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     get:
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
-        - $ref: '#/components/parameters/telematikid'
+        - $ref: '#/components/parameters/telematik-id'
         - $ref: '#/components/parameters/oid'
       tags:
         - UserBlocking
@@ -660,7 +679,7 @@ paths:
                       offset:
                         description: applied offset to matching results
                         type: integer
-                      limit: 
+                      limit:
                         description: applied limit to matching results
                         type: integer
                       totalMatching:
@@ -703,7 +722,7 @@ paths:
         This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
 
         **Client**:</br>
-        A client shall set assigments for users of the allowed roles for 
+        A client shall set assignments for users of the allowed roles for 
         user blocking only.</br>
 
         **Provider**:</br>
@@ -729,6 +748,7 @@ paths:
         |---------------------------------------|---------|
         | The policy assignment is extended with the timestamp and stored in SecureDataStorage ||
         | An existing entitlement for the addressed user of the assignment is deleted ||
+        | An eMail is sent to the insurant, including information about the blocked user policy change| if eMail address is available |
         | A log-entry for the operation exists | all operation results |
 
       requestBody:
@@ -763,12 +783,12 @@ paths:
           $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-  
-  /entitlementmanagement/v1/blockeduser/{actorId}:
+
+  /epa/basic/api/v1/blockedusers/{telematikid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/actorId'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/telematikid'
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - UserBlocking
@@ -791,7 +811,7 @@ paths:
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Resource for _actorId_ does not exist | 404 | noResource ||
+        | Resource for _telematikid_ does not exist | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -843,7 +863,7 @@ paths:
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Assignment (_assignmentid_) does not exist | 404 | noResource ||
+        | Assignment (_telematikid_) does not exist | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -851,6 +871,7 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | The addressed assignment is removed from the associated policy ||
+        | An eMail is sent to the insurant, including information about the blocked user policy change| if eMail address is available |
         | A log-entry for the operation exists | all operation results |
 
       responses:
@@ -948,15 +969,22 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/ActorIdType'
-    userid:
-      name: userid
+    telematikid:
+      name: telematikid
+      in: path
+      description: TelematikID
+      required: true
+      schema:
+        $ref: '#/components/schemas/TelematikIdType'
+    actor-id:
+      name: actor-id
       description:  Query for a specific identifier (kvnr or telematik-id)
       in: query
       required: false
       schema:
         $ref: '#/components/schemas/ActorIdType'
-    userrole:
-      name: userrole
+    oid:
+      name: oid
       description: role (oid) for query
       in: query
       required: false
@@ -976,25 +1004,19 @@ components:
       description: Specifies skipped matching pages ('pagesize' == limit), (default = 0).
       schema:
         type: integer
-    telematikid:
+    telematik-id:
       name: tid
       in: query
       description: Query for a specific telematik-id
       schema:
         $ref: '#/components/schemas/TelematikIdType'
-    oid:
-      name: oid
-      in: query
-      description: 'Query for  a specific role (professionOID)'
-      schema:
-        $ref: '#/components/schemas/OidType'
 
   schemas:
     ActorIdType:
       description: Identifier of an actor (kvnr or telematik-id)
       oneOf:
-        - $ref: '#/components/schemas/KvnrType' 
-        - $ref: '#/components/schemas/TelematikIdType' 
+        - $ref: '#/components/schemas/KvnrType'
+        - $ref: '#/components/schemas/TelematikIdType'
     KvnrType:
       type: string
       pattern: '^[A-Z]{1}\d{9}$'
@@ -1054,48 +1076,44 @@ components:
           properties:
              email:
                 type: string
+                format: email
                 example: "name@example.com"
 
     EntitlementClaimsResponseType:
+      description: Properties of one specific entitlement
       type: object
       required:
-        - claims
+        - actorId
+        - oid
+        - displayName
       properties:
-        claims:
-          description: Properties of one specific entitlement
+        actorId:
+          $ref: '#/components/schemas/ActorIdType'
+        oid:
+          $ref: '#/components/schemas/OidType'
+        displayName:
+          $ref: '#/components/schemas/DisplayNameType'
+        validTo:
+          description: Last day of validity
+          type: string
+          format: date
+          example: 2025-12-31
+        issued:
           type: object
           required:
+            - at
             - actorId
-            - oid
             - displayName
           properties:
+            at:
+              description: Creation time timestamp
+              type: string
+              format: date-time
+              example: 2025-01-01T18:00:00Z
             actorId:
               $ref: '#/components/schemas/ActorIdType'
-            oid:
-              $ref: '#/components/schemas/OidType'
             displayName:
               $ref: '#/components/schemas/DisplayNameType'
-            validTo: 
-              description: Last day of validity
-              type: string
-              format: date
-              example: 2025-12-31
-            issued:
-              type: object 
-              required:
-                - at
-                - actorId
-                - displayName
-              properties:  
-                at:
-                  description: Creation time timestamp 
-                  type: string
-                  format: date-time
-                  example: 2025-01-01T18:00:00Z
-                actorId:
-                  $ref: '#/components/schemas/ActorIdType'
-                displayName:
-                  $ref: '#/components/schemas/DisplayNameType'
 
     BlockedUserPolicyAssignmentType:
       description: Properties of one specific user
@@ -1111,14 +1129,16 @@ components:
           $ref: '#/components/schemas/OidType'
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
-    
+
     BlockedUserPolicyAssignmentResponseType:
       allOf:
         - $ref: '#/components/schemas/BlockedUserPolicyAssignmentType'
-        - type: object 
-          properties:  
+        - type: object
+          required:
+            - at
+          properties:
             at:
-              description: Creation time timestamp 
+              description: Creation timestamp
               type: string
               format: date-time
               example: 2025-01-01T18:00:00Z
@@ -1151,157 +1171,60 @@ components:
     Get_AllEntitlements:
       summary: Get all Entitlements.
       value:
-        query: 
+        query:
           offset: 0
           limit: 50
           totalMatching: 7
-        assignments:
-          - claims:
-              actorId: 2-883110000092419
-              oid: 1.2.276.0.76.4.51
-              displayName: 'Zahnarztpraxis Hillary Gräfin Münchhausen'
-              validTo: 2025-12-07 
-              issued:
-                at: 2025-10-01T14:00:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 1-883110000092404
-              oid: 1.2.276.0.76.4.53
-              displayName: 'Krankenhaus St. Johannes'
-              validTo: 2025-12-07 
-              issued:
-                at: 2025-10-02T14:01:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 2-883110000092417
-              oid: 1.2.276.0.76.4.51
-              displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
-              validTo: 2025-11-01 
-              issued:
-                at: 2025-10-03T14:02:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 3-883110000092471
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Arminius Apotheke'
-              validTo: 2025-10-06 
-              issued:
-                at: 2025-10-04T14:03:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 4-883110000094346
-              oid: 1.2.276.0.76.4.52
-              displayName: 'Psychotherapeutische Praxis Swantje Freifrau Dômbrowski'
-              validTo: 2025-11-11 
-              issued:
-                at: 2025-10-05T14:04:00Z
-                actorId: X110434370
-                displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-          - claims:
-              actorId: 3-88311000009248
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Paracelsius Apotheke'
-              validTo: 2025-10-08 
-              issued:
-                at: 2025-10-06T14:05:00Z
-                actorId: X110434370
-                displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-          - claims:
+        data:
+          - actorId: 2-883110000092419
+            oid: 1.2.276.0.76.4.51
+            displayName: 'Zahnarztpraxis Hillary Gräfin Münchhausen'
+            validTo: 2025-12-07
+            issued:
+              at: 2025-10-01T14:00:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 1-883110000092404
+            oid: 1.2.276.0.76.4.53
+            displayName: 'Krankenhaus St. Johannes'
+            validTo: 2025-12-07
+            issued:
+              at: 2025-10-02T14:01:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 2-883110000092417
+            oid: 1.2.276.0.76.4.51
+            displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
+            validTo: 2025-11-01
+            issued:
+              at: 2025-10-03T14:02:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 3-883110000092471
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Arminius Apotheke'
+            validTo: 2025-10-06
+            issued:
+              at: 2025-10-04T14:03:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 4-883110000094346
+            oid: 1.2.276.0.76.4.52
+            displayName: 'Psychotherapeutische Praxis Swantje Freifrau Dômbrowski'
+            validTo: 2025-11-11
+            issued:
+              at: 2025-10-05T14:04:00Z
               actorId: X110434370
-              oid: 1.2.276.0.76.4.49
               displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-              validTo: 9999-12-31
-              issued:
-                at: 2025-01-01T23:00:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-    Get_AllEntitlements_offset_limit:
-      summary: Get all Entitlements with set offset=1 and limit=2 .
-      value:
-        query: 
-          offset: 1
-          limit: 2
-          totalMatching: 7
-        assignments:
-          - claims:
-              actorId: 2-883110000092417
-              oid: 1.2.276.0.76.4.51
-              displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
-              validTo: 2025-11-01 
-              issued:
-                at: 2025-10-03T14:02:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 3-883110000092471
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Arminius Apotheke'
-              validTo: 2025-10-06 
-              issued:
-                at: 2025-10-04T14:03:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-    Get_EntitlementsQueryForTID:
-      summary: Get Blocked User Policy assignment for telematik-id 3-883110000092471.
-      value:
-        query: 
-          offset: 0
-          limit: 50
-          totalMatching: 1
-        assignments:
-          - claims:
-              actorId: 3-883110000092471
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Arminius Apotheke'
-              validTo: 2025-10-06 
-              issued:
-                at: 2025-10-04T14:03:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-    Get_EntitlementsQueryForRole:
-      summary: Get Blocked User Policy assignment for oid_oeffentliche_apotheke (1.2.276.0.76.4.54).
-      value:
-        query: 
-          offset: 0
-          limit: 50
-          totalMatching: 2
-        assignments:
-          - claims:
-              actorId: 3-883110000092471
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Arminius Apotheke'
-              validTo: 2025-10-06 
-              issued:
-                at: 2025-10-04T14:03:00Z
-                actorId: X999999999
-                displayName: 'Name of health record owner'
-          - claims:
-              actorId: 3-88311000009248
-              oid: 1.2.276.0.76.4.54
-              displayName: 'Paracelsius Apotheke'
-              validTo: 2025-10-08 
-              issued:
-                at: 2025-10-06T14:05:00Z
-                actorId: X110434370
-                displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-    Set_SingleEntitlmentRepresentative:
-      summary: Entitlement representative.
-      value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IlgxMTA0MzQzNzAiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC40OSIsImRpc3BsYXlOYW1lIjoiU2ltb24gdm9uIETDvHN0ZXJiZWhuLUhhcmRlbmJlcmdzaGF1c2VuIiwidmFsaWRUbyI6Ijk5OTktMTItMzEifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
-        email: simon@example.com
-    Set_SingleEntitlmentPharmacy:
-      summary: Entitlement pharmacy.
-      value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IjMtODgzMTEwMDAwMDkyNDcxIiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuNTQiLCJkaXNwbGF5TmFtZSI6IkFybWluaXVzIEFwb3RoZWtlIiwidmFsaWRUbyI6IjIwMjUtMTAtMDYifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
-    Response_SingleEntitlementRepresentative:
-      summary: Entitlement representative.
-      value:
-          claims:
-            actorId: X110434370
+          - actorId: 3-88311000009248
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Paracelsius Apotheke'
+            validTo: 2025-10-08
+            issued:
+              at: 2025-10-06T14:05:00Z
+              actorId: X110434370
+              displayName: 'Simon von Düsterbehn-Hardenbergshausen'
+          - actorId: X110434370
             oid: 1.2.276.0.76.4.49
             displayName: 'Simon von Düsterbehn-Hardenbergshausen'
             validTo: 9999-12-31
@@ -1309,21 +1232,103 @@ components:
               at: 2025-01-01T23:00:00Z
               actorId: X999999999
               displayName: 'Name of health record owner'
-          email: 'simon@example.com'
+    Get_AllEntitlements_offset_limit:
+      summary: Get all Entitlements with set offset=1 and limit=2 .
+      value:
+        query:
+          offset: 1
+          limit: 2
+          totalMatching: 7
+        data:
+          - actorId: 2-883110000092417
+            oid: 1.2.276.0.76.4.51
+            displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
+            validTo: 2025-11-01
+            issued:
+              at: 2025-10-03T14:02:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 3-883110000092471
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Arminius Apotheke'
+            validTo: 2025-10-06
+            issued:
+              at: 2025-10-04T14:03:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+    Get_EntitlementsQueryForTID:
+      summary: Get Entitlement for telematik-id 3-883110000092471.
+      value:
+        query:
+          offset: 0
+          limit: 50
+          totalMatching: 1
+        data:
+          - actorId: 3-883110000092471
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Arminius Apotheke'
+            validTo: 2025-10-06
+            issued:
+              at: 2025-10-04T14:03:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+    Get_EntitlementsQueryForRole:
+      summary: Get Entitlement for oid_oeffentliche_apotheke (1.2.276.0.76.4.54).
+      value:
+        query:
+          offset: 0
+          limit: 50
+          totalMatching: 2
+        data:
+          - actorId: 3-883110000092471
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Arminius Apotheke'
+            validTo: 2025-10-06
+            issued:
+              at: 2025-10-04T14:03:00Z
+              actorId: X999999999
+              displayName: 'Name of health record owner'
+          - actorId: 3-88311000009248
+            oid: 1.2.276.0.76.4.54
+            displayName: 'Paracelsius Apotheke'
+            validTo: 2025-10-08
+            issued:
+              at: 2025-10-06T14:05:00Z
+              actorId: X110434370
+              displayName: 'Simon von Düsterbehn-Hardenbergshausen'
+    Set_SingleEntitlementRepresentative:
+      summary: Entitlement representative.
+      value:
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IlgxMTA0MzQzNzAiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC40OSIsImRpc3BsYXlOYW1lIjoiU2ltb24gdm9uIETDvHN0ZXJiZWhuLUhhcmRlbmJlcmdzaGF1c2VuIiwidmFsaWRUbyI6Ijk5OTktMTItMzEifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
+        email: simon@example.com
+    Set_SingleEntitlementPharmacy:
+      summary: Entitlement pharmacy.
+      value:
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IjMtODgzMTEwMDAwMDkyNDcxIiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuNTQiLCJkaXNwbGF5TmFtZSI6IkFybWluaXVzIEFwb3RoZWtlIiwidmFsaWRUbyI6IjIwMjUtMTAtMDYifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
+    Response_SingleEntitlementRepresentative:
+      summary: Entitlement representative.
+      value:
+          actorId: X110434370
+          oid: 1.2.276.0.76.4.49
+          displayName: 'Simon von Düsterbehn-Hardenbergshausen'
+          validTo: 9999-12-31
+          issued:
+            at: 2025-01-01T23:00:00Z
+            actorId: X999999999
+            displayName: 'Name of health record owner'
     Response_SingleEntitlementPharmacy:
       summary: Entitlement pharmacy.
       value:
-        claims:
-          actorId: 3-883110000092471
-          oid: 1.2.276.0.76.4.54
-          displayName: 'Arminius Apotheke'
-          validTo: 2025-10-06 
-          issued:
-            at: 2025-10-04T14:03:00Z
-            actorId: X999999999
-            displayName: 'Name of health record owner'
+        actorId: 3-883110000092471
+        oid: 1.2.276.0.76.4.54
+        displayName: 'Arminius Apotheke'
+        validTo: 2025-10-06
+        issued:
+          at: 2025-10-04T14:03:00Z
+          actorId: X999999999
+          displayName: 'Name of health record owner'
 
-    Set_SingleEntitlment:
+    Set_SingleEntitlement:
       summary: An entitlement request (dummy data).
       value:
         jwt: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImF1ZGl0RXZpZGVuY2UiOiJ0byBiZSBkZWZpbmVkIn0=.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=="
@@ -1331,11 +1336,11 @@ components:
     Get_AllPolicyAssignments:
       summary: Get all Blocked User Policy assignments.
       value:
-        query: 
+        query:
           offset: 0
           limit: 50
           totalMatching: 4
-        assignments:
+        data:
           - actorId: 2-883110000092414
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Norbert Freiherr Schomaker'
@@ -1353,13 +1358,13 @@ components:
             displayName: 'Süd Apotheke'
             at: 2025-07-04T12:00:00Z
     Get_AllPolicyAssignments_offset_limit:
-      summary: Get all Blocked User Policy assignments with set offset and limit.
+      summary: Get all Blocked User with set offset and limit.
       value:
-        query: 
+        query:
           offset: 1
           limit: 2
           totalMatching: 4
-        assignments:
+        data:
           - actorId: 2-883110000092427
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
@@ -1369,25 +1374,25 @@ components:
             displayName: 'Süd Apotheke'
             at: 2025-07-04T12:00:00Z
     Get_QueryForTID:
-      summary: Get Blocked User Policy assignment for telematik-id 1-883110000092404.
+      summary: Get Blocked User for telematik-id 1-883110000092404.
       value:
-        query: 
+        query:
           offset: 0
           limit: 50
           totalMatching: 1
-        assignments:
+        data:
           - actorId: 1-883110000092404
             oid: 1.2.276.0.76.4.50
             displayName: 'Praxis Dr. Annamaria Heckhausén'
             at: 2025-07-02T12:00:00Z
     Get_QueryForRole:
-      summary: Get Blocked User Policy assignment for oid oid_zahnarztpraxis.
+      summary: Get Blocked User for oid oid_zahnarztpraxis.
       value:
-        query: 
+        query:
           offset: 0
           limit: 50
           totalMatching: 2
-        assignments:
+        data:
           - actorId: 2-883110000092414
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Norbert Freiherr Schomaker'
@@ -1396,14 +1401,14 @@ components:
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
             at: 2025-07-03T12:00:00Z
-    Set_SinglePolicyAssignment: 
-      summary: Set Blocked User Policy assignment for 2-883110000092427.
+    Set_SinglePolicyAssignment:
+      summary: Set Blocked User for 2-883110000092427.
       value:
         actorId: 2-883110000092427
         oid: 1.2.276.0.76.4.51
         displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
     Get_SinglePolicyAssignment:
-      summary: Get Blocked User Policy assignment for 2-883110000092427.
+      summary: Get Blocked User for 2-883110000092427.
       value:
         actorId: 2-883110000092427
         oid: 1.2.276.0.76.4.51

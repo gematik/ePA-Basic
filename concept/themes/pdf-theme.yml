@@ -1,0 +1,54 @@
+extends: default
+base:
+  font-family: Times-Roman
+  font-size: 11
+heading:
+  font-family: Helvetica
+  font-size: 11
+caption:
+  font-family: Helvetica
+table-head:
+  font-family: Helvetica
+  font-size: 10
+header:
+  font_size: 10
+  line_height_length: 12
+  height: 50
+  recto:
+    left:
+      content: '*Grobkonzept der "ePA für alle"*'
+    right:
+      content: image:../../images/Gematik_Logo_Flag.svg[width=100]
+  verso:
+    left:
+      content: '*Grobkonzept der "ePA für alle"*'
+    right:
+      content: image:../../images/Gematik_Logo_Flag.svg[width=100]
+footer:
+  height: 30
+  recto:
+    left:
+      content: |
+        gemKPT_ePAfuerAlle_V3.0RC.pdf +
+        Version: {revnumber}
+    right:
+      content: |
+        Seite {page-number} von {page-count} +
+        Stand: 22.01.2024
+    center:
+      content: |
+        Übergreifendes Konzept +
+        (C) gematik – öffentlich
+  verso:
+    left:
+      content: |
+        gemKPT_ePAfuerAlleV3.0RC.pdf +
+        Version: {revnumber}
+    right:
+      content: |
+        Seite {page-number} von {page-count} +
+        Stand: 22.01.2024
+    center:
+      content: |
+        Übergreifendes Konzept +
+        (C) gematik – öffentlich

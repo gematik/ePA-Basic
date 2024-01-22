@@ -1,0 +1,126 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_geräteverwaltung]
+=== Device Management
+
+Um Zugang zum ePA-Aktensystem zu erhalten, muss jede ePA-FdV-Installation zuerst registriert und verifiziert werden. Wird ein Login-Versuch mit einem Gerät unternommen, das nicht verifiziert ist, beendet das ePA-Aktensystem die entsprechende *User Session* und informiert den Nutzer, dass das Gerät nicht autorisiert ist. Das *Device Management* ist für die Registrierung der Geräte und die Zugangskontrolle zum ePA-Aktensystem verantwortlich. Diese Komponente vergibt das *Device Token*, steuert den Verifizierungsprozess der Geräte und überwacht deren Registrierungsstatus.
+
+
+==== Geräteregistierung und -verifizierung
+
+Für den Zugriff eines Gerätes (ePA-FdV) auf das ePA-Aktensystem ist eine Registrierung und Verifizierung des Gerätes notwendig. Diese Registrierung erfolgt indirekt, nachdem ein authentifizierter Versicherter versucht hat, sich über das ePA-FdV in das ePA-Aktensystem einzuloggen, jedoch ein nicht registriertes Gerät verwendet. Da das *Device Management*  innerhalb der *User Session* angesiedelt ist, kann die Registrierung des Gerätes nur während des Login-Prozesses initiiert werden. Im Rahmen des Geräteverifizierungsprozesses benötigt der Service eine E-Mail-Adresse des Versicherten, welche entweder durch den KTR des Versicherten bereitgestellt oder bei der Einrichtung eines Vertreters im ePA-Aktensystem hinterlegt werden muss. Nach der initialen Registrierung des Geräts erhält der Nutzer einen Verifikations-Link per E-Mail. Durch Anklicken dieses Links, der außerhalb der VAU im ePA-Aktensystem verarbeitet wird, wird das Gerät als verifiziert markiert. Der *Device Unlock Service* ist verantwortlich für das Versenden der Verifikations-E-Mail und die anschließende Verarbeitung der Bestätigung der Verifikation.
+
+Das *Device Management* verwaltet für ein Gerät folgende Attribute:
+
+[caption="Tabelle {counter:table-number}: "]
+.Geräteattribute
+[cols="4,10",options="header"]
+|===
+| Attribut | Beschreibung
+| Device Identifier | Einzigartiges Kennzeichen, das zur Identifizierung eines spezifischen Gerätes verwendet wird
+| Device Token | Gerätespezifisches Token
+| Device Verification Identifier | Gerätespezifischer Verifizierungs-Identifier
+| Status | Registrierungsstatus+
+
+Zustände: *_pending_* oder *_verified_*
+| Created At DateTime | Erstellungsdatum der Registrierung
+| Display Name | Gerätename
+| last Login | Zeitstempel des letzen Logins
+|===
+
+In der nachstehenden Abbildung <<#fig:devicemanagement-registration, ePA-FdV Registrierung>>  wird konzeptionell das Zusammenspiel zwischen dem ePA-FdV, dem *Device Management* Service und dem *Device Unlock Service* bei der Geräteregistrierung dargestellt. 
+
+ifndef::env-github[]
+
+[#fig:devicemanagement-registration]
+[plantuml, "{diagramsdir}/devicemanagement.registration", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="ePA-FdV Registrierung",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/devicemanagement.registration.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/devicemanagement.registration.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="ePA-FdV Registrierung",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+
+Der *Device Unlock Service* ist dafür zuständig, den Verifikations-Link zu erstellen. Zusätzlich versendet er die Verifikations-E-Mail an den Versicherten und verantwortet die Verarbeitung des Aufrufs dieses Verifikations-Links. Der in der E-Mail enthaltene Verifikations-Link ist zeitlich limitiert und nur einmal gültig.
+
+Eine vereinfachte Darstellung, wie der Versicherte den Verifikations-Link über sein ePA-FdV aufruft, ist in der nachfolgenden Abbildung <<#fig:devicemanagement-unlock, Geräteverifizierung>> skizziert.
+
+ifndef::env-github[]
+
+[#fig:devicemanagement-unlock]
+[plantuml, "{diagramsdir}/devicemanagement.unlock", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Geräteverifizierung",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/devicemanagement.unlock.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/devicemanagement.unlock.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Geräteverifizierung",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+Bei einem ePA-FdV Login wird ein unbekanntes (nicht registriertes) oder nicht verifiziertes Gerät erkannt, woraufhin die aktuelle Anfrage abgebrochen und die *User Session* beendet wird. Der *Device Management* Service überprüft bei einem Gerät mit dem Status _pending_ beim *Device Unlock Service*, ob eine Verifizierung stattgefunden hat. Nach erfolgter Geräteverifizierung ändert der *Device Management* Service den Status des Geräts auf _verified_, wodurch keine weiteren Abfragen beim *Device Unlock Service* erforderlich sind. Die folgende Abbildung <<#fig:devicemanagement-login, ePA-FdV Login>> skizziert konzeptionell eine Anfrage durch ein ePA-FdV.
+
+ifndef::env-github[]
+
+[#fig:devicemanagement-login]
+[plantuml, "{diagramsdir}/devicemanagement.login", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="ePA-FdV Login",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/devicemanagement.login.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/devicemanagement.login.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="ePA-FdV Login",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+
+==== Auflisten und Entfernen von Geräten
+
+Das *Device Management* bietet eine RESTful API speziell für das ePA-FdV an. Der Zugriff auf diese RESTful API ist ausschließlich innerhalb einer *User Session* möglich, die von einem authentifizierten Nutzer über das ePA-FdV initiiert wird. Über diese API werden verschiedene Attribute aller Geräte des jeweiligen Versicherten, die im System registriert sind, zur Verfügung gestellt:
+
+* Registierungs Status (*_pending_* oder *_verified_*)
+* Erstellungsdatum der Registrierung
+* Name des Gerätes (Display Name)
+* Zeitstempel des letzen Logins
+* Information, dass es sich um das zugreifende ePA-FdV handelt
+
+Die RESTful API ermöglicht es, spezifische Geräte aus dem *Device Management* zu entfernen. Das Verfahren zur Bestätigung des Löschens dieser Geräte wird einzig und allein über das ePA-FdV und somit dem Versicherten zur Verfügung gestellt.

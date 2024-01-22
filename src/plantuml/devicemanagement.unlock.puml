@@ -1,0 +1,58 @@
+@startuml devicemanagement.unlock
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam participant {
+    BackgroundColor #3483eb
+    BorderColor #3483eb
+    FontSize 14
+    FontColor White
+}
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+actor "Insurant" as insurant
+participant "Device\n<< Insurant >>" as device
+box "ePA Aktensystem"
+participant "Device Unlock Service\n<< Service >>" as dus
+end box
+
+insurant -> device : Uses the <b>Verification Link</b>\ninside the Device Unlock Mail 
+device -> dus: Request for the for Device Verification by the <b>Verification Link</b>
+activate device
+activate dus
+dus -> dus : Search for Device Unlock Record by the\n<b>Verification Link</b>
+
+alt successful case
+
+dus -> dus : Set the related Device Unlock Record as\nverified and invalidate the <b>Verification Link</b>
+dus --> device : Response result with success information
+device --> insurant : Show success information
+
+else Device Unlock Record not found
+
+dus --> device: Response error result
+
+deactivate dus
+
+device --> insurant : Show error information
+
+deactivate device
+
+end
+
+
+@enduml
