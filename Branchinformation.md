@@ -4,10 +4,10 @@
 
 |This branch||
 |:----|----|
-| Context| __ePA 3.0 (ePA für Alle)__|
+| Context| __ePA 3.0 (ePA für alle)__|
 | Designation  | __Release 3.0.0__  |
-| Current status | __pre-released (2023-12-15)__      |
-| Release date   | __2024-01-15 (planned)__    |
+| Current status | __release candidate (2024-01-22)__      |
+| Release date   | __tbd__    |
 | Specifications| [Vorabveröffentlichung ePA](https://fachportal.gematik.de/schnelleinstieg/downloadcenter/vorabveroeffentlichungen#c8090)|
 | Previous release| __Release 2.6.0__|
 | Previous branch | [**ePA-2.6**](https://github.com/gematik/api-ePA/tree/ePA-2.6)|
@@ -15,7 +15,7 @@
 | Associated repositories:||
 | Medication Service | [**ePA-Medication**](https://github.com/gematik/epa-medication/tree/ePA-3.0) |
 | XDS Document Service | [**ePA-XDS-Document**](https://github.com/gematik/epa-xds-document/tree/ePA-3.0) |
-| Fhir Resources | [**Simplifier**](https://simplifier.net/epa) |
+| FHIR Profiles | [**Simplifier**](https://simplifier.net/epa) |
 
 </br>
 </br>

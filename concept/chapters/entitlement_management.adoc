@@ -1,0 +1,103 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_befugnismanagement]
+=== Befugnismanagement
+
+image::Feature-Entitlement-Management.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Entitlement Management - Beteiligte Komponenten",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+==== Informationen des Befugniskontextes
+
+Für jeden Nutzer der ePA, der aufgrund einer Behandlungssituation – oder durch den Versicherten bestimmt – für den Zugriff auf die Akte befugt ist, wird eine Befugnis im *Entitlement Management* der ePA hinterlegt. Die Menge aller befugten Nutzer einer Akte stellt deren Befugniskontext dar.
+Der Versicherte selbst, der zuständige Kostenträger und der E-Rezept-Fachdienst sind statisch befugt – deren Befugnisse  können nicht gelöscht werden.
+
+In einer Befugnis werden folgende Attribute verwaltet:
+
+* Nutzer-ID des befugten Nutzers (Telematik-ID/KVNR vom Client übergeben)
+* Nutzername des befugten Nutzers (vom Client übergeben)
+* Enddatum (ggf. "unbegrenzt", serverseitig oder durch den Versicherten gesetzt)
+* Art der Aufnahme – eingestellt durch einen Vertreter oder ausgelöst durch den Versicherten (serverseitig gesetzt)
+* Optional: Name des Vertreters bei Einrichtung von Befugnissen (serverseitig gesetzt)
+
+Das *Entitlement Management* löscht regelmäßig Befugnisse, bei denen das Enddatum in der Vergangenheit liegt.
+
+
+==== Befugniskontextmanagement in der LEI-Umgebung
+
+===== Hinzufügen einer Befugnis zum Befugniskontext in der Umgebung des Befugten
+
+Wird eine eGK in der Umgebung des zu Befugenden zum Zwecke des Lesens der Versichertenstammdaten gesteckt, wird durch das Primär-/Clientsystem auch eine Befugnis erzeugt und im *Entitlement Mangement* registriert. Die Dauer der Befugnis für Apotheken, Öffentlichen Gesundheitsdienst (ÖGD) und Institutionen der Arbeits- und Betriebsmedizin beträgt 3 Tage und für sonstige Leistungserbringerinstitutionen 90 Tage.
+
+Zum Erstellen einer Befugnis ist ein Anwesenheitsnachweis der eGK verpflichtend. Dieser wird über den Prüfungsnachweis erzeugt, der aus der Durchführung des VSDM-Anwendungsfalls "ReadVSD" im Konnektor/TI-Gateway resultiert. Damit der Prüfungsnachweis in Verbindung zur Umgebung gesetzt werden kann, wird dieser zudem mit der C.HCI.OSIG-Identität der SMC-B signiert, bevor er im *Entitlement Management* registriert wird.
+
+Eine potentiell bereits bestehende Befugnis wird durch die neue Befugnis ersetzt, falls die Dauer der alten Befugnis geringer ist als die der neu hinzuzufügenden Befugnis.
+
+
+==== Befugniskontextmanagement mittels ePA-Frontend des Versicherten
+
+===== Anzeige des Befugniskontextes mittels ePA-Frontend des Versicherten
+
+Der Versicherte oder ein berechtigter Vertreter hat sich mit seinem ePA-FdV an der Akte des Versicherten angemeldet. Das ePA-FdV verfügt über eine Funktion zum Anzeigen des Befugniskontexts. Wird diese Funktion ausgeführt, werden die erforderlichen Informationen am *Entitlement Management* abgefragt. Der Befugniskontext liegt dann dem ePA-FdV vor und wird dort zur Anzeige gebracht.
+
+Die Befugnisse für den Kostenträger, für den E-Rezept-Fachdienst und den Versicherten selbst werden nicht zurückgegeben.
+
+
+===== Hinzufügen eines Nutzers zum Befugniskontext
+
+Unter Verwendung der Suche von Leistungserbringerinstitutionen (LEI) über den Verzeichnisdienst *VZD FHIR-Directory* sucht der Versicherte oder ein berechtigter Vertreter zunächst den neu zu befugenden Nutzer (d.h. eine Leistungserbringerinstitution, Institution des Öffentlicher Gesundheitsdienstes oder eine Institution der Arbeits- und Betriebsmedizin). Das *ePA-FdV* erzeugt dann eine neue Befugnis mit der Telematik-ID aus dem *VZD FHIR-Directory* mit der gewünschten Laufzeit und signiert diese mit Hilfe des Signaturdienstes (SigD). Nach erfolgreicher Anmeldung am Aktensystem wird die Befugnis im *Entitlement Management* registriert.
+
+Der Versicherte bzw. ein berechtigter Vertreter kann die Laufzeit der neuen Befugnis flexibel festlegen oder aber eine dauerhafte Gültigkeit wählen. Die Befugnis für eine DiGA gilt immer bis zu deren Entzug.
+
+Fügt ein Vertreter einen Eintrag zum Befugniskontext des Versicherten hinzu, ist für den Namen des Ausstellers im Eintrag des Befugniskontexts der Name des Vertreters anzugeben.
+
+
+===== Ändern der Dauer für eine befugte Leistungserbringerinstitution
+
+Die Dauer der Befugnis einer Leistungserbringerinstitution, medizinische Daten in einer Akte zu verarbeiten, kann über das ePA-FdV durch den Versicherten oder einen berechtigten Vertreter geändert werden. Dazu selektiert der Versicherte oder ein berechtigter Vertreter im ePA-FdV die zu bearbeitende Befugnis aus dem bestehenden Befugniskontext und erzeugt eine neue Befugnis mit neuer Gültigkeit. Anschließend wird die neue Befugnis mit Hilfe des SigD signiert.
+
+Das ePA-FdV übermittelt die neue Befugnis der Leistungserbringerinstitution an das *Entitlement Management*. Dort wird die alte Befugnis gelöscht und die neue Befugnis registriert.
+
+Ändert ein Vertreter einen Eintrag zum Befugniskontext des Versicherten, ist für den Namen des Ausstellers im Eintrag des Befugniskontexts der Name des Vertreters zu nutzen.
+
+
+===== Löschen eines befugten Nutzers
+
+Der Versicherte oder ein berechtigter Vertreter selektiert im ePA-FdV die zu löschende Befugnis des bestehenden Befugniskontexts des Versicherten. Anschließend sendet das ePA-FdV eine Löschanfrage mit dem zu löschenden Nutzer an das *Entitlement Management*. Die entsprechende Befugnis wird gelöscht.
+
+
+===== Befugen eines Vertreters
+
+Voraussetzung für die Befugnis eines Vertreters ist das Wissen um dessen KVNR und dessen E-Mail-Adresse. Das ePA-FdV erzeugt eine Befugnis für den Vertreter, signiert diese mit Hilfe des SigD und registriert sie am *Entitltement Management*, sofern der Vertreter nicht schon Teil des Befugniskontexts ist. Die Befugnis eines Vertreters gilt immer bis zu deren Entzug. Ein Vertreter kann keinen weiteren Vertreter befugen.
+
+
+===== Entzug der Befugnis für einen Vertreter
+
+Der Versicherte selektiert im ePA-FdV die zu löschende Befugnis des Vertreters. Anschließend sendet das ePA-FdV eine Löschanfrage mit dem zu löschenden Vertreter an das *Entitlement Management*. Dort wird die Befugnis aus dem Befugniskontext des Aktenkontos des Versicherten entfernt.
+
+
+===== Der Nutzung durch eine Leistungserbringerinstitution widersprechen
+
+Der Widerspruch gegen die Nutzung der ePA durch eine spezifische Leistungserbringerinstitution erfolgt über die Ombudsstelle des zuständigen Kostenträgers oder das ePA-FdV. Die authentifizierte Ombudsstelle oder der Versicherte (über sein *ePA-FdV*) vermerkt im *Entitlement Management*, dass für die spezifische Leistungserbringerinstitution keine Befugnisse registriert werden dürfen. Eventuell vorhande Befugnisse werden gelöscht.

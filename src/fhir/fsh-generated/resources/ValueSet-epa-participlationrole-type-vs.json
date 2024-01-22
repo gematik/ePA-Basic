@@ -1,11 +1,14 @@
 {
   "resourceType": "ValueSet",
-  "status": "draft",
+  "status": "active",
   "name": "EPAParticipationRoleTypeVS",
   "id": "epa-participlationrole-type-vs",
   "title": "EPAParticipationRoleTypeVS",
   "url": "https://gematik.de/fhir/epa/ValueSet/epa-participlationrole-type-vs",
+  "version": "1.0.0",
+  "experimental": false,
   "publisher": "gematik GmbH",
+  "date": "2024-01-22",
   "compose": {
     "include": [
       {

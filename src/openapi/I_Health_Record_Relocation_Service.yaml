@@ -1,5 +1,5 @@
 openapi: 3.0.1
-info: 
+info:
   title: I_Health_Record_Relocation_Service
   description: |
     This interface provides access to the **Health Record Relocation Service** of a personal health 
@@ -10,7 +10,7 @@ info:
     - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
     - a section _Provider_ in operation descriptions covers requirements for the server side. 
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
@@ -19,7 +19,7 @@ info:
     
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    Operations mandating a valid entitlement implicitly mandate use of a VAU-channel
     and a valid ID-Token. If one of these conditions is not met, then the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
@@ -41,17 +41,18 @@ info:
 
   contact:
     name: gematik GmbH
-    email: epa@gematik.de
     url: 'http://www.gematik.de'
 
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
-  
+  version: 1.0.0
+
   # version history:
   # ----------------
+  # version 1.0.0
+  #   - first release version
   # version 0.0.1
   #   - initial version for review
 
@@ -78,7 +79,7 @@ paths:
   /relocationservice/v1/export:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
         - Relocation (exporting provider)
@@ -96,7 +97,7 @@ paths:
        request.
 
        **Provider**:</br>
-       The export package shall contain all transferrable data of the health record services:
+       The export package shall contain all transferable data of the health record services:
        - XDS Document Service
        - FHIR Data Service
        - Audit Event Service
@@ -130,7 +131,7 @@ paths:
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state ACTIVATED or SUPSENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
+       | Health record is not in state ACTIVATED or SUSPENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
        | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -138,14 +139,14 @@ paths:
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
        | Export package generation is started | if not aborted by requesting provider |
-       | The health record is in state SUPDENDED | if not aborted by requesting provider |
+       | The health record is in state SUSPENDED | if not aborted by requesting provider |
        | A log-entry for the operation exists | for any operation result, shall be contained in export package |
-      
+
       requestBody:
         required: true
         content:
           application/json:
-            examples: 
+            examples:
               Package generation request:
                 value:
                   requestId: '82d466e7-1125-4997-9de2-e4e8390c68a4'
@@ -165,7 +166,7 @@ paths:
           description: Ok.
           content:
             application/json:
-              examples: 
+              examples:
                 Package generation response:
                   value:
                     requestId: '3cc8d858-c344-45e1-b877-9d4a84632a4b'
@@ -190,11 +191,11 @@ paths:
           $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-    
+
   /relocationservice/v1/import:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
         - Relocation (importing provider)
@@ -256,7 +257,7 @@ paths:
         required: true
         content:
           application/json:
-            examples: 
+            examples:
               Package import request:
                 value:
                   requestId: '82d466e7-1125-4997-9de2-e4e8390c68a4'
@@ -348,7 +349,7 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
-  
+
   schemas:
     RequestIdType:
       description: A unique relocation request id
@@ -356,7 +357,7 @@ components:
       format: uuid
       example: '3dc69bad-6711-4983-b42c-5834f569c6ec'
     CertificateType:
-      description: A certificate in base64 encoding for export package encryption 
+      description: A certificate in base64 encoding for export package encryption
       type: string
       format: byte
     UrlType:

@@ -1,0 +1,79 @@
+@startuml devicemanagement.registration
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam participant {
+    BackgroundColor #3483eb
+    BorderColor #3483eb
+    FontSize 14
+    FontColor White
+}
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+participant "\n\nePA-FdV\n<< Insurant >>" as fdv
+box "ePA Aktensystem"
+participant "\n\nAccess Gateway\n" as gateway
+participant "VAU User Session\n\nAuthorization Service\n<< Service >>" as auth #eb5e34
+participant "VAU User Session\n\nDevice Management\n<< Service >>" as dm #eb5e34
+participant "\n\nDevice Unlock Service\n<< Service >>" as dus
+end box
+participant "Mail Server" as mail
+
+
+fdv -> gateway : Request to login
+activate gateway
+
+gateway -> auth : Route forwading to\nAuthorization Service 
+activate auth
+auth -> auth : Get IDToken with no Device-Token
+auth -> dm : Request to Device Management\nRegistration API
+
+activate dm
+dm -> dm: Get the email address from the KVNR
+dm -> dm : Generate <b>Device Token</b>
+activate dm
+
+dm -> dus : Request to Device Unlock API\nwith the email address
+activate dus
+
+dus -> dus : Generate a <b>Device Verification Identifier</b>\nand a <b>Verification Link</b>
+dus --> dm : Response the <b>Device Verification Identifier</b>
+deactivate dus
+
+deactivate dm
+dm -> dm : Save the <b>Device</b> object with the <b>Device Token</b>\nand the <b>Device Verification Identifier</b>\nas <b>pendig</b>
+alt In the case that it is an email from a representative
+dm -> dm : Remove email address 
+end
+
+dm --> auth : Response\nmessage with\n<b>Device Token</b>
+deactivate dm
+auth -> auth : Close User Session
+auth --> gateway : Response\nmessage with\n<b>Device Token</b>
+deactivate auth
+
+create mail
+dus -> mail : Send <b>email</b> with the\n<b>Verification Link</b>
+dus -x dus : Remove email address 
+
+deactivate dm
+
+gateway --> fdv : Response message\nwith <b>Device Token</b>
+deactivate gateway
+
+
+
+@enduml

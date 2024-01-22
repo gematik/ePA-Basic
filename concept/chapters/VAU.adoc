@@ -1,0 +1,83 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_vau2]
+=== Vertrauenswürdige Ausführungsumgebung
+
+Die *Vertrauenswürdige Ausführungsumgebung* (VAU) gewährleistet mit technischen Maßnahmen, dass sensible Klartextdaten serverseitig im ePA-Aktensystem verarbeitet werden können, ohne dass ein Angreifer (insbesondere auch kein Innentäter beim Betreiber des Dienstes mit maximalen Zugriffsrechten) auf diese Daten zugreifen kann. Zu den in der VAU verarbeiteten sensiblen Daten gehören die medizinischen Daten des Versicherten, Policies, Befugnisse, Widerspruchsinformationen und Protokolle des Versicherten.
+
+
+==== Isolation der in einer VAU laufenden Verarbeitungen
+
+Die Verarbeitung der sensiblen Daten innerhalb der VAU erfolgt technisch getrennt von allen außerhalb der VAU laufenden Verarbeitungen des Dienstes (*äußere Isolation der VAU*), so dass technisch verhindert wird, dass ein Zugriff des Aktensystembetreibers auf die im Klartext verarbeiteten Daten in der VAU erfolgen kann.
+
+Innerhalb der VAU erfolgt die Verarbeitung der sensiblen Daten für ein Aktenkonto technisch getrennt von anderen in der VAU laufenden Verarbeitungen für andere Aktenkonten (*innere Isolation der VAU*), so dass innerhalb einer VAU technisch verhindert wird, dass ein Zugriff von einem Aktenkonto eines Versicherten auf ein Aktenkonto eines anderen Versicherten erfolgen kann. 
+
+Die Verarbeitungen innerhalb einer VAU werden über User Sessions und Health Record Contexts voneinander getrennt. Innerhalb der VAU werden alle Verarbeitungen und Daten einer User Session technich getrennt von anderen User Sessions umgesetzt. In einer VAU können mehrere User Sessions vorliegen, die vom *User Session Manager* verwaltet werden.
+
+* *User Session*: Eine User Session ist genau einem Nutzer zugeordnet. Die User Session wird über einen zuvor aufgebauten VAU-Kanal unter Nutzung des für den Nutzer zuständigen Identity Providers aufgebaut. Als Ergebnis hält die User Session das IDToken für den Nutzer. In einer User Session können mehrere Health Record Contexts zu verschiedenen Aktenkonten parallel aufgebaut werden, auf die der Nutzer dann zugreifen kann. Innerhalb einer User Session verwaltet der *Health Record Context Manager* die Health Record Contexts.
+
+* *Health Record Context*: Im Health Record Context erfolgt die Verarbeitung der (medizinischen) Daten eines Aktenkontos. Alle Verarbeitungen in einem Health Record Context beziehen sich auf genau ein Aktenkonto. In einem Health Record Context werden niemals Daten aus unterschiedlichen Aktenkonten verarbeitet. 
+
+Für dasselbe Aktenkonto kann in unterschiedlichen User Sessions (zur selben Zeit) mit einem Health Record Context gearbeitet werden. Vom Hersteller des Aktensystems werden daher geeignete Synchronisationsmechansimen umgesetzt, um auch bei parallelen Zugriffen von unterschiedlichen Nutzern auf dasselbe Aktenkonto einen konsistenten Aktenkontozustand zu gewährleisten.
+
+In einer VAU dürfen nur eine maximale Anzahl von User Sessions gleichzeitig aufgebaut sein. Werden über die maximale Anzahl hinaus weitere User Sessions benötigt, werden diese in einer separaten, durch hardwarebasierte Mechanismen getrennten VAU, aufgebaut. Innerhalb einer User Session dürfen ebenfalls nur eine maximale Anzahl von Health Record Contexts gleichzeitig aufgebaut sein.
+
+
+==== Verschlüsselung von außerhalb der VAU gespeicherten Daten
+
+Sollen die in der VAU verarbeiteten Daten in den Systemen des Aktensystembetreibers gespeichert werden, werden sie zuvor in der VAU verschlüsselt. Hierzu werden ein:
+
+* *Secure Data Storage Key* für die medizinischen Daten und Verwaltungsdaten einer Akte sowie ein 
+* *Secure Entitlement Storage Key* für die Befugnisse 
+
+als Persistierungsschlüssel verwendet. + 
+
+Die versichertenindividuellen Persistierungsschlüssel werden innerhalb des HSMs aus Masterkeys und der KVNR des Kontoinhabers abgeleitet. Die Persistierungsschlüssel verlassen die VAU niemals und werden beim Schließen der VAU gelöscht. Es wird technisch verhindert, dass der Betreiber des Dienstes auf die Persistierungsschlüssel von Versicherten zugreifen kann.
+
+==== Schutz der VAU-Schlüssel in einem HSM
+
+Die für den Betrieb der VAU notwendigen Schlüssel werden in einem Hardware Security Module (HSM) sicher gespeichert. Dies sind zum einen die Identitäten mit denen sich eine VAU gegenüber ePA-Clients (u.a. ePA-FdV) authentisiert und den Masterkeys, aus denen die versichertenindividuellen Persistierungsschlüssel abgeleitet werden.
+
+Es wird durch das HSM technisch durchgesetzt, dass der Zugriff auf VAU-Schlüssel im HSM nur durch eine attestierte VAU möglich ist. Dadurch wird technisch ausgeschlossen, dass ein Innentäter beim Betreiber auf die VAU-Schlüssel im HSM zugreifen kann. 
+
+Für die Ableitung des versichertenindividuellen *Secure Data Storage Key* müssen dem HSM das IDToken des angemeldeten Nutzers und die signierte Befugnis übergeben werden. Das HSM prüft anhand der signierten Befugnis, ob der Nutzer für das Aktenkonto befugt ist. Nur für diesen speziellen Fall wird der versichertenindividuelle *Secure Data Storage Key* für die KVNR im HSM abgeleitet und über einen sicheren Kanal in die VAU übermittelt. Innerhalb der VAU werden die Daten mittels des *Secure Data Storage Key* verschlüsselt und dann außerhalb der VAU gespeichert.
+
+Für die Ableitung des versichertenindividuellen *Secure Entitlement Storage Key* prüft das HSM lediglich, dass es sich um eine attestierte VAU handelt.
+
+
+==== Erkennen von Manipulationen an der VAU (Attestierung)
+
+Die Integrität der VAU-Software oder der VAU-Hardware wird beim Start einer VAU geprüft, um den Start bei einer manipulierten VAU abzubrechen. Hierzu werden dem HSM in einem gemeinsamen Prozess mit der gematik die zugelassene VAU-Software und die VAU-Hardware bekannt gemacht. Beim Start einer VAU werden sowohl die VAU-Software als auch die VAU-Hardware technisch attestiert. Der Attestierungsnachweis wird im HSM geprüft und ein Zugriff verweigert, wenn die attestierte VAU-Software oder VAU-Hardware dem HSM nicht bekannt sind.
+
+==== Schutz der Daten bei physischen Zugang zur VAU
+
+Auch bei einem physischen Zugang zu den Hardware-Komponenten der VAU gewährleisten technische Maßnahmen, dass keine in der VAU verarbeiteten Daten extrahiert oder manipuliert werden können. 
+
+
+==== Sicherer Kanal vom Client in die VAU (VAU-Kanal)
+
+Die Daten werden ausschließlich über sichere, beiderseitig authentisierte, VAU-Kanäle von Systemen der Nutzer (u.a. Versicherter, Leistungserbringer) in die VAU transportiert bzw. aus der VAU abgerufen. Die VAU-Kanäle stellen sicher, das sowohl externe Angreifer als auch Innentäter beim Betreiber nicht auf die transportierten Daten zugreifen können.

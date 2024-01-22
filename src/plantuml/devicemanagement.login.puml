@@ -1,0 +1,82 @@
+@startuml devicemanagement.login
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+participant "\n\nFdV\n<< Insurant >>" as fdv
+box "ePA Aktensystem"
+participant "\n\nAccess Gateway\n" as gateway
+participant "VAU User Session\n\nAuthorization Service\n<< Service >" as auth #eb5e34
+participant "VAU User Session\n\nDevice Management\n<< Service >" as dm #eb5e34
+participant "\n\nDevice Unlock Service\n<< Service >>" as dus
+end box
+
+
+fdv -> gateway : Request with <b>Device Token</b> to login
+
+activate gateway
+gateway -> auth : Route forwarding with <b>Device Token</b>
+activate auth
+auth -> dm: Ask if device with <b>Device Token</b> is registered and verified
+activate dm
+dm -> dm : Check if Device is saved as verified
+
+alt Device not found
+dm --> auth : Answer: Device has not been registered
+auth -> auth : Close User Session
+auth --> gateway : Response Device has not been registered
+gateway --> fdv : Response Device has not been registered
+
+else Device is not verified
+dm -> dus: Ask for Device Unlock Information\nby <b>Device Verification Identifier</b>
+activate dm
+activate dus
+dus --> dm :  Answer with Device Unlock Information
+deactivate dus
+deactivate dm
+
+alt Device Unlock Information was set to verified
+dm -> dm : Set the Device as verified and\nupdates that the device was seen
+dm --> auth : Answer:  Device is verified
+
+auth -> gateway : Response successful
+gateway --> fdv : Response successful to FdV
+
+else Device Unlock Information was not set to verified
+dm --> auth : Answer: Device is not verified
+auth -> auth : Close User Session
+auth --> gateway : Response Device is not verified
+gateway --> fdv : Response Device is not verified
+end
+
+else Device is verified
+dm -> dm : Updates that the device was seen
+dm --> auth : Answer:  Device is verified
+deactivate dm
+auth -> gateway : Response successful
+deactivate auth
+
+gateway --> fdv : Response successful to FdV
+deactivate gateway
+end
+
+@enduml

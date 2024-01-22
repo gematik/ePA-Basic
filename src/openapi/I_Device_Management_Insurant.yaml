@@ -11,7 +11,7 @@ info:
     - a section _Provider_ in operation descriptions covers requirements for the server side. 
     - error responses may be extended by helpful information about the error condition in _errorDetail_
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     The Health Record System shall provide 
     - name
     - role ((profession-)oid)
@@ -19,7 +19,7 @@ info:
 
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitely mandate use of a VAU-channel
+    Operations mandating a valid entitlement implicitly mandate use of a VAU-channel
     and a valid ID-Token. If one of these conditions is not met, then the response
     of the (aborted) operation shall always be '403': 'notEntitled'. 
 
@@ -41,22 +41,23 @@ info:
 
   contact:
     name: gematik GmbH
-    email: epa@gematik.de
     url: 'http://www.gematik.de'
 
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 0.0.1
-  
+  version: 1.0.0
+
   # version history:
   # ----------------
+  # version 1.0.0
+  #   - first release version
   # version 0.0.1
   #   - initial version for review
 
 servers:
-  - url: https://epa-hst1.prod.epa4all.de/api
+  - url: https://epa-hst1.prod.epa4all.de
 
 tags:
 - name: DeviceManagement
@@ -65,7 +66,7 @@ tags:
     change the registered displayName for easy recognition and to delete obsolete registrations
 
 paths:
-  /devicemanagement/v1/devices:
+  /epa/basic/api/v1/devices:
     parameters:
       - $ref: '#/components/parameters/useragent'
     get:
@@ -123,7 +124,7 @@ paths:
                         description: applied offset to matching results
                         type: integer
                         example: 0
-                      limit: 
+                      limit:
                         description: applied limit to matching results
                         type: integer
                         example: 25
@@ -139,9 +140,10 @@ paths:
               examples:
                 GetAllDevices:
                   value:
-                    offset: 0
-                    limit: 25
-                    totalMatching: 4
+                    query:
+                      offset: 0
+                      limit: 25
+                      totalMatching: 4
                     data:
                       - deviceIdentifier: '549230be-9bfa-4e49-81bb-1e928c37274c'
                         status: verified
@@ -159,19 +161,20 @@ paths:
                         lastLogin: 2025-07-31T12:00:00Z
                       - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
                         status: pending
-                        displayName: "empty string or servcer defined entry, e.g. newDevice001"
+                        displayName: "empty string or server defined entry, e.g. newDevice001"
                         createdAt: 2025-12-24T20:00:00Z
                 GetPendingDevices:
                   value:
-                    offset: 0
-                    limit: 25
-                    totalMatching: 1
+                    query:
+                      offset: 0
+                      limit: 25
+                      totalMatching: 1
                     data:
                       - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
                         status: pending
-                        displayName: "empty string or servcer defined entry, e.g. newDevice001"
+                        displayName: "empty string or server defined entry, e.g. newDevice001"
                         createdAt: 2025-12-24T20:00:00Z
-                  
+
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -179,7 +182,7 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
-  /devicemanagement/v1/devices/{deviceidentifier}:
+  /epa/basic/api/v1/devices/{deviceidentifier}:
     parameters:
       - $ref: '#/components/parameters/useragent'
       - $ref: '#/components/parameters/deviceidentifier'
@@ -266,6 +269,8 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - displayName
               properties:
                 displayName:
                   $ref: '#/components/schemas/DisplayNameType'
@@ -318,7 +323,7 @@ paths:
         | A log-entry for the operation exists | all operation results |
 
       responses:
-        '204':      
+        '204':
           description: 'OK. Device registration deleted.'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
@@ -411,7 +416,7 @@ components:
       type: string
       description: |-
         The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any home community id.
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     DeviceTokenType:
@@ -431,7 +436,7 @@ components:
       - verified
       example: verified
     DisplayNameType:
-      description: A readable name for user's saken
+      description: A readable name for user's device
       type: string
       example: "this is my preferred device for ePA"
     UserAgentType:
@@ -450,7 +455,7 @@ components:
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
         createdAt:
-          description: timestamp of regitration
+          description: timestamp of registration
           type: string
           format: date-time
     DeviceType:

@@ -2,8 +2,7 @@ openapi: 3.0.1
 info:
   title: I_Information_Service
   description: |-
-    This interface provides information about a specific health record for health care institutions and backends 
-    (ePrescription)<br/>
+    This interface provides information about a specific health record for healthcare institutions and backends (ePrescription)<br/>
     This interface collects information about client use case performance.<br/>
 
     **General conditions**:</br> 
@@ -11,7 +10,7 @@ info:
     - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
     - a section _Provider_ in operation descriptions covers requirements for the server side. 
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     This interface does not require an VAU-channel/User Session or entitlements.
 
     **Retry interval**:</br>
@@ -26,55 +25,99 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-  version: 0.0.1
-  
+  version: 1.0.0
+
   # version history:
   # ----------------
+  # version 1.0.0
+  #   - first release version
   # version 0.0.1
   #   - initial version for review
 
   contact:
     name: gematik GmbH
-    email: epa@gematik.de
     url: 'http://www.gematik.de'
   license:
     name: Apache 2.0
     url: "https://www.apache.org/licenses/LICENSE-2.0"
 
 servers:
-  - url: https://epa-hst1.prod.epa4all.de/api
+  - url: https://epa-hst1.prod.epa4all.de
 
 tags:
-  - name: ConsentDecisions
-    description: |
-     Consent decision information for health care institutions and backends (ePrescription).
-
   - name: AccountInformation
     description: |
      Check if a specific health record exists and is in a usable state.
+     
+  - name: ConsentDecisions
+    description: |
+     Consent decision information for healthcare institutions and backends (ePrescription).
 
   - name: UserExperience
     description: |
-     User experience data collection for health care instiutions.</br>
-     (May also be implicitely used for ePA-FdV data collection)
+     User experience data collection for healthcare institutions.</br>
+     (May also be implicitly used for ePA-FdV data collection)
 
 paths:
-  /information/v1/{insurantid}/consentdecisions:
+  /information/api/v1/ehr/{insurantid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
+    get:
+      tags:
+        - AccountInformation
+      operationId: getRecordStatus
+      summary: (getRecordStatus) Get status of a personal health record
+      description: |
+       Check the health record system for an existing health record matching _insurantid_.
+        
+       **Client**</br>
+       This operation may be used to locate the Electronic Health Record system provider associated 
+       to a particular health record.
+        
+       **Provider**</br>
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Health record exists and is in state ACTIVATED | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED (i.e. is in state SUSPENDED) | 409 | statusMismatch | (see 'Retry interval') |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | none ||
+
+      responses:
+        '200':
+          description: Ok. Record exists and is in state ACTIVATED
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+
+
+  /information/api/v1/ehr/{insurantid}/consentdecisions:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - ConsentDecisions
       operationId: getConsentDecisionInformation
-      summary: (getConsentDecisionInformation) Get current health care process relevant consent decisions
+      summary: (getConsentDecisionInformation) Get current healthcare process relevant consent decisions
       description: |
-       Get current decisions about all consent related functions with association to health care processes.</br>
+       Get current decisions about all consent related functions with associated healthcare processes.</br>
         
        **Client**</br>
        This operation may be invoked prior to a login to the addressed health record. </br>
        The current decisions may be evaluated for operational use by a client.</br>
-       The parameter _useragent_ is mandatory for clients of health care institutions. The ePrescription
+       The parameter _useragent_ is mandatory for clients of healthcare institutions. The ePrescription
        backend shall not provide this information.
         
        **Provider**</br>
@@ -115,51 +158,9 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /information/v1/{insurantid}:
+  /information/api/v1/userexperience:
     parameters:
-      - $ref: '#/components/parameters/insurantid'
-      - $ref: '#/components/parameters/useragent'      
-    get:
-      tags:
-        - AccountInformation
-      operationId: getRecordStatus
-      summary: (getRecordStatus) Get status of a personal health record
-      description: |
-       Check the health record system for an existing health record matching _insurantid_.
-        
-       **Client**</br>
-       This operation may be used to locate the health record provider associated 
-       to a particular health record.
-        
-       **Provider**</br>
-       | Conditions | Status code | Error code | Remarks |
-       |------------|-------------|------------|---------|
-       | Health record exists and is in state ACTIVATED | 200 |||
-       | Request does not match schema | 400 | malformedRequest ||
-       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
-       | Any other error | 500 | internalError | (see 'Retry interval') |
-
-       </br>
-       | Postconditions                        | Remarks |
-       |---------------------------------------|---------|
-       | none ||
-
-      responses:
-        '200':
-          description: Ok. Record exists and is in state ACTIVATED
-        '400':
-          $ref: '#/components/responses/Error400BadRequest'
-        '404':
-          $ref: "#/components/responses/Error404NotFound"
-        '409':
-          $ref: "#/components/responses/Error409Conflict"
-        '500':
-          $ref: "#/components/responses/Error500InternalError"
-
-  /information/v1/userexperience:
-    parameters:
-      - $ref: '#/components/parameters/useragent'      
+      - $ref: '#/components/parameters/useragent'
     post:
       tags:
         - UserExperience
@@ -170,7 +171,7 @@ paths:
         
        **Client**</br>
        This operation may be invoked without login to any health record. </br>
-       Clients of health care intitutions shall use the use case identifiers:
+       Clients of health care institutions shall use the use case identifiers:
        - UX_Login_PS
        - UX_Doc_Upload_PS
        - UX_Doc_Download_PS
@@ -178,7 +179,7 @@ paths:
        The provision of parameter _useragent_ is mandatory.
         
        **Provider**</br>
-       The use case meaurements shall be associated to _usaeragent_ and collected, 
+       The use case measurements shall be associated to _useragent_ and collected, 
        processed and distributed according requirements defined in specification gemSpec_Perf
 
        | Conditions | Status code | Error code | Remarks |
@@ -196,7 +197,7 @@ paths:
       requestBody:
         content:
           application/json:
-            example: 
+            example:
               useCase: "UX_Doc_Upload_PS"
               measurement: 1299
             schema:
@@ -287,7 +288,7 @@ components:
       type: string
       description: |-
         The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any homeCommunity identification.
+        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any home community id.
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
     UserAgentType:
@@ -298,8 +299,8 @@ components:
     UxRequestType:
       type: object
       properties:
-        useCase: 
-          description: Use case identifier 
+        useCase:
+          description: Use case identifier
           type: string
           enum:
             - UX_Login_PS

@@ -1,0 +1,325 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+Nachstehend werden die gesetzlichen Regeln für Nutzer/Berufsgruppen als Legal Policy zusammengefasst. Einzelne Zugriffsrechte werden über die grundlegenden Operationen zur Verarbeitung von Daten ausgedrückt:
+
+* ``C``reate (Erstellen)
+* ``R``ead (Lesen)
+* ``U``pdate (Aktualisieren)
+* ``D``elete (Löschen)
+
+Ein Lesezugriff impliziert generell auch das Ausführen von Suchanfragen.
+
+[page-layout=landscape]
+<<<
+[caption="Tabelle {counter:table-number}: "]
+.Legal Policy
+[cols="2,3,5,4,4,4,4,4,4,4,4,4,4,4",options="header"]
+|===
+3+|Datenkategorie gemäß § 341 Abs. 2 SGB V 11+| Zugriffsrecht für Berufsgruppen gemäß § 352 SGB V (hier abgeleitete Betriebsstätten), Fachdienste und Versicherte
+
+.>h|Nr.
+.>h|Technischer Identifikator
+.>h|Beschreibung
+h|Arztpraxis, Zahnarzt- praxis, Krankenhaus, Psycho- therapeut, Vorsorge- und Rehabilitation, Öffentlicher Gesundheits- dienst
+h|Öffentliche Apotheke
+h|Gesundheits-, Kranken- und Altenpflege
+h|Geburtshilfe
+h|Physiotherapie
+h|Arbeitsmedizin
+h|Kostenträger
+h|Ombudsstelle
+h|Digitale Gesundheits- anwendung
+h|E-Rezept-Fachdienst
+h|Versicherter/ Vertreter
+
+14.1+^h|Medical Service «XDS Document Service»
+
+|1a
+|reports
+|Daten zu Befunden, Diagnosen, durchgeführten und geplanten Therapiemaßnahmen, Früherkennungsuntersuchungen, Behandlungsberichten und sonstige untersuchungs- und behandlungsbezogene medizinische Informationen
+^|CRUD
+^|R
+^|R
+^|R
+^|R
+^|R
+^|CU
+^|-
+^|-
+^|-
+^|RD
+
+|1b
+|emp
+|Daten des elektronischen Medikationsplans nach § 334 Abs. 1 S. 2 Nr. 4 SGB V
+^|CRUD
+^|CRUD
+^|R
+^|R
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|1c
+|emergency
+|Daten der elektronischen Notfalldaten gemäß § 334 Abs. 1 S. 2 Nr. 5 und 7
+^|CRUD
+^|R
+^|R
+^|R
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|1d
+|eab
+|Daten in elektronischen Briefen zwischen den an der Versorgung der Versicherten teilnehmenden Ärzten und Einrichtungen (elektronische Arztbriefe)
+^|CRUD
+^|R
+^|R
+^|R
+^|R
+^|R
+^|CU
+^|-
+^|-
+^|-
+^|RD
+
+|2
+|dental
+|Daten zum Nachweis der regelmäßigen Inanspruchnahme zahnärztlicher Vorsorgeuntersuchungen gemäß § 55 Abs. 1 in Verbindung mit § 92 Abs. 1 S. 2 Nr. 2 (elektronisches Zahnbonusheft)
+^|CRUD
+^|-
+^|R
+^|-
+^|-
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|3
+|child
+|Daten gemäß § 92 Absatz 1 Satz 2 Nummer 3 und Absatz 4 in Verbindung mit § 26 beschlossenen Richtlinie des Gemeinsamen Bundesausschusses zur Früherkennung von Krankheiten bei Kindern (elektronisches Untersuchungsheft für Kinder)
+^|CRUD
+^|R
+^|R
+^|CRUD
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD, CU(*)
+
+|4
+|pregnancy_childbirth
+|Daten gemäß § 92 Abs. 1 S. 2 Nr. 4 in Verbindung mit den §§ 24c bis 24f beschlossenen Richtlinie des Gemeinsamen Bundesausschusses über die ärztliche Betreuung während der Schwangerschaft und nach der Entbindung (elektronischer Mutterpass) sowie Daten, die sich aus der Versorgung der Versicherten mit Hebammenhilfe ergeben
+^|CRUD
+^|R
+^|R
+^|CRUD
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|5
+|vaccination
+|Daten der Impfdokumentation nach § 22 des Infektionsschutzgesetzes (elektronische Impfdokumentation)
+^|CRUD
+^|CRUD
+^|R
+^|R
+^|-
+^|CRUD
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|6
+|patient
+|Gesundheitsdaten, die durch den Versicherten bereit gestellt werden
+^|RD
+^|R
+^|R
+^|R
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|CRUD
+
+|8
+|receipt
+|Bei Kostenträgern gespeicherte Daten über die in Anspruch genommenen Leistungen des Versicherten
+^|RD
+^|RD
+^|-
+^|R
+^|R
+^|R
+^|CU
+^|-
+^|-
+^|-
+^|RD
+
+|8
+|diga
+|Daten des Versicherten aus digitalen Gesundheitsanwendungen des Versicherten nach § 33a SGB V
+^|R
+^|R
+^|R
+^|R
+^|R
+^|R
+^|-
+^|-
+^|CU
+^|-
+^|RD
+
+|10
+|care
+|Daten zur pflegerischen Versorgung des Versicherten gemäß §§ 24g, 37, 37b, 37c, 39a und 39c und der Haus- oder Heimpflege gemäß § 44 des Siebten Buches und nach dem Elften Buch
+^|CRUD
+^|R
+^|CRUD
+^|R
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|12
+|eau
+|Daten gemäß § 73 Abs. 2 S. 1 Nr. 9 SGB V ausgestellte Bescheinigung über eine Arbeitsunfähigkeit
+^|CRUD
+^|-
+^|-
+^|-
+^|-
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|13
+|other
+|Sonstige von Leistungserbringern für Versicherten bereitgestellte Daten, insbesondere Daten, die sich aus der Teilnahme des Versicherten an strukturierten Behandlungsprogrammen bei chronischen Krankheiten gemäß § 137f ergeben
+^|CRUD
+^|-
+^|-
+^|-
+^|-
+^|R
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|14
+|rehab
+|Daten der Heilbehandlung und Rehabilitation gemäß § 27 Abs. 1 des
+Siebten Buches
+^|CRUD
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|- -
+|audit
+|Protokolle von Zugriffen seitens Leistungserbringer auf die Akte des Versicherten gemäß § 309 Abs. 1 SGB V
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|R
+^|-
+^|-
+^|R
+
+14.1+^h|Medical Service «Medication Service»
+
+
+|11
+|medication
+|Verordnungs-, Dispensier- und Medikationsdaten in einer Elektronischen Medikationsliste (eML)
+^|R
+^|R
+^|R
+^|R
+^|-
+^|R
+^|-
+^|-
+^|-
+^|CU
+^|R
+
+|===
+
+(*) Der Einsteller einer Elternnotiz eines Kinderuntersuchungshefts kann neben einer Leistungserbringerinstitution der Versicherte bzw. sein Vertreter sein.
+
+[page-layout=portrait]
+<<<
