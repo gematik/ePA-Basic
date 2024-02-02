@@ -6,9 +6,9 @@
 |:----|----|
 | Context| __ePA 3.0 (ePA für alle)__|
 | Designation  | __Release 3.0.0__  |
-| Current status | __release candidate (2024-01-22)__      |
-| Release date   | __tbd__    |
-| Specifications| [Vorabveröffentlichung ePA](https://fachportal.gematik.de/schnelleinstieg/downloadcenter/vorabveroeffentlichungen#c8090)|
+| Current status | __released__ |
+| Release date   | __2024-02-02__  |
+| Specifications| [Fachportal gematik: ePA 3.0.0: ePA für alle](https://fachportal.gematik.de/schnelleinstieg/downloadcenter/releases#c7655)|
 | Previous release| __Release 2.6.0__|
 | Previous branch | [**ePA-2.6**](https://github.com/gematik/api-ePA/tree/ePA-2.6)|
 | Follow-up | not yet defined |

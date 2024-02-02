@@ -143,8 +143,10 @@ paths:
           content:
             application/json:
               example:
-                  functionid: "medication"
+                - functionId: "medication"
                   decision: "deny"
+                - functionId: "erp-submission"
+                  decision: "permit"
               schema:
                 type: array
                 items:
@@ -269,7 +271,7 @@ components:
       description: "Consent Decisions Response"
       type: object
       properties:
-        functionid:
+        functionId:
           $ref: '#/components/schemas/FunctionIdType'
         decision:
           type: string

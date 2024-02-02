@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 22.01.2024
-:revnumber: 3.0 RC
+// :revdate: 30.01.2024
+:revnumber: 3.0
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.0 RC, 22.01.2024
+//Version: 3.0, 30.01.2024
 endif::[]
 
 
@@ -76,6 +76,12 @@ endif::[]
 |22.01.2024
 |
 |Ersterstellung
+|gematik
+
+|3.0
+|30.01.2024
+|
+|Veröffentlichung
 |gematik
 
 |===
@@ -386,8 +392,6 @@ link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0/concept[Medikationsp
 
 *F*
 
-//* FDZ – Forschungsdatenzentrum
-
 * FHIR – Fast Healthcare Interoperability Resources – International etablierter IT-Standard für die Beschreibung von u.a. medizinischen Daten
 
 * FMC – Fundamental Modeling Concepts
@@ -402,9 +406,7 @@ link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0/concept[Medikationsp
 
 //*I*
 
-*J*
-
-* JSON – JavaScript Object Notation
+//*J*
 
 *K*
 
@@ -424,15 +426,11 @@ link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0/concept[Medikationsp
 
 //*N*
 
-*O*
+//*O*
 
-* OTC – Over the Counter
+//*P*
 
-*P*
-
-* PZN – Pharmazentralnummer
-
-// *Q*
+//*Q*
 
 //*R*
 

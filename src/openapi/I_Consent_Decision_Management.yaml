@@ -291,7 +291,7 @@ paths:
               example:
                 - functionId: "medication"
                   decision: "deny"
-                - function: "erp-submission"
+                - functionId: "erp-submission"
                   decision: "permit"
               schema:
                 type: array

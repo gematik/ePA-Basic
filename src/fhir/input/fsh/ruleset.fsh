@@ -5,10 +5,10 @@ RuleSet: Meta
 * ^status = #active
 * ^experimental = false
 * ^publisher = "gematik GmbH"
-* ^date = "2024-01-22"
+* ^date = "2024-01-30"
 
 RuleSet: Meta-Inst
 * version = $version
 * status = #active
 * publisher = "gematik GmbH"
-* date = "2024-01-22"
+* date = "2024-01-30"

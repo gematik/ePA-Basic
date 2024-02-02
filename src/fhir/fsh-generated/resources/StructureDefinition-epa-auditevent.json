@@ -7,7 +7,7 @@
   "title": "AuditEvent for the ePA (Elektronische Patientenakte)",
   "status": "active",
   "experimental": false,
-  "date": "2024-01-22",
+  "date": "2024-01-30",
   "publisher": "gematik GmbH",
   "description": "Defines the data structure for audit events in the ePA system.",
   "fhirVersion": "4.0.1",
