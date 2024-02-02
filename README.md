@@ -14,21 +14,21 @@
 </details>
 
 ## About ePA Basic
-This repository provides technical information for the application Electronic Health Record (ePA) applicaas part of the Telematic Infrastructure (TI).
+This repository provides technical information for the Electronic Health Record (ePA) application as part of the Telematic Infrastructure (TI).
 
 This branch relates to a particular release in context of **ePA version 3** ('ePA für alle') 
 The provided content comprises normative and supplementary resources for the **Basic Services** Entitlement, Constraints and Consent Decision Management, Device Registration, and the Audit Event Service.
 
-For resources related to ePA Data Management see further associated repositories:
+For resources related to ePA data management see further associated repositories:
 
 [**ePA-Medication**](https://github.com/gematik/epa-medication/tree/ePA-3.0)</br>
 [**ePA-XDS-Document**](https://github.com/gematik/epa-xds-document/tree/ePA-3.0)
 
-FHIR profiles of the Basic Services are available on</br>
+FHIR profiles of the basic services are available on</br>
 [**Simplifier**](https://simplifier.net/epa)
 
 The current branch accompanies a particular release of specification documents of ePA version 3 (a set of normative specification documents for components, product types and vendor types) published on the [gematik Fachportal](https://fachportal.gematik.de/) (see [Branchinformation.md](./Branchinformation.md) for specific version information and links).
-The content in /src is normative in context of requirements defined by those specification documents and is essential for product approvals. Any other content is for information. Normative content here, the associated repositories and the documents together form a single product release of the Electronic Personal Health Record system for an approval process.
+The content in /src is normative in context of requirements defined by those specification documents and is essential for product approvals. Any other content is for information. Normative content here, the associated repositories and the documents together form a single product release of the Electronic Health Record system for an approval process.
 The affected and covered product types are **ePA-Aktensystem** and **ePA-Frontend des Versicherten**. 
 
 ## Release Notes
@@ -46,7 +46,7 @@ Unless required by applicable law the software is provided "as is" without warra
  
 The software is the result of research and development activities, therefore not necessarily quality assured and without the character of a liable product. For this reason, gematik does not provide any support or other user assistance (unless otherwise stated in individual cases and without justification of a legal obligation). Furthermore, there is no claim to further development and adaptation of the results to a more current state of the art.
  
-Gematik may remove published results temporarily or permanently from the place of publication at any time without prior notice or justification.
+gematik may remove published results temporarily or permanently from the place of publication at any time without prior notice or justification.
 
 
 ## Contributions

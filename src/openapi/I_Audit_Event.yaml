@@ -928,7 +928,7 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
             code: XDSSVC
             display: XDS Document Service
         entity:
@@ -970,7 +970,7 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
             code: MEDICATIONSVC
             display: Medication Service
         entity:
@@ -1009,7 +1009,7 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs
+            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
             code: MEDICATIONSVC
             display: Medication Service
         entity:

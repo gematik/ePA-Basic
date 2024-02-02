@@ -8,11 +8,11 @@
   "version": "1.0.0",
   "experimental": false,
   "publisher": "gematik GmbH",
-  "date": "2024-01-22",
+  "date": "2024-01-30",
   "compose": {
     "include": [
       {
-        "system": "https://gematik.de/fhir/epa/CodeSystem/audit-event-source-type-cs"
+        "system": "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs"
       }
     ]
   }
