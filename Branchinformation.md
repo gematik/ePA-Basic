@@ -8,7 +8,7 @@
 | Designation  | __Release 3.0.1__  |
 | Current status | __pre-released (3.0.1 RC - 2024-03-18)__ |
 | Release date   | __estimated end of march 2024__  |
-| Specifications| [Vorabverffentlichung ePA 3.0.1](https://fachportal.gematik.de/schnelleinstieg/downloadcenter/vorabveroeffentlichungen#c9332)|
+| Specifications| [Vorabveröffentlichung ePA 3.0.1](https://fachportal.gematik.de/schnelleinstieg/downloadcenter/vorabveroeffentlichungen#c9332)|
 | Previous release| __Release 3.0.0__|
 | Previous branch | [**ePA-3.0.0**](https://github.com/gematik/epa-basic/tree/ePA-3.0)|
 | Follow-up | ePA-3.1.0 (planned)|
