@@ -29,12 +29,12 @@ footer:
   recto:
     left:
       content: |
-        gemKPT_ePAfuerAlle_V3.0.pdf +
+        gemKPT_ePAfuerAlle_V3.0.1RC.pdf +
         Version: {revnumber}
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 30.01.2024
+        Stand: 18.03.2024
     center:
       content: |
         Übergreifendes Konzept +
@@ -42,12 +42,12 @@ footer:
   verso:
     left:
       content: |
-        gemKPT_ePAfuerAlleV3.0.pdf +
+        gemKPT_ePAfuerAlle_V3.0.1RC.pdf +
         Version: {revnumber}
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 30.01.2024
+        Stand: 18.03.2024
     center:
       content: |
         Übergreifendes Konzept +

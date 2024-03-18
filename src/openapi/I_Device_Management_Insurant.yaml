@@ -19,14 +19,12 @@ info:
 
     of the current user (requestor) for evaluation in operations.
 
-    Operations mandating a valid entitlement implicitly mandate use of a VAU-channel
-    and a valid ID-Token. If one of these conditions is not met, then the response
-    of the (aborted) operation shall always be '403': 'notEntitled'. 
+    All operations of this service mandate a VAU-channel and an authorized user session.</br>
+    As this service does not address particular health records, no entitlement for the user
+    is required. Also no (confirmed) device registration for the device used is required.
 
     **Retry interval**:</br>
     The following retry intervals are suggested in case of an error response:<br>
-    - '409' Conflict (statusMismatch).
-      - approx. 24 hours
     - '500' Internal Error
       - approx. 10 minutes
 
@@ -34,10 +32,6 @@ info:
     The user agent information (x-useragent) is part of any request, even if 
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
-
-    **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24975*.
 
   contact:
     name: gematik GmbH
@@ -47,10 +41,15 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - API change to support confirmation of device registration with a confirmation code
+  #   - added operations to register and confirm devices.
+  #   - Improved descriptions
+  #   - editorial corrections
   # version 1.0.0
   #   - first release version
   # version 0.0.1
@@ -62,10 +61,313 @@ servers:
 tags:
 - name: DeviceManagement
   description: |
-    Device Management allows a user to view a list of all devices registered to the user's kvnr, to 
-    change the registered displayName for easy recognition and to delete obsolete registrations
+    **Device Management** allows a user to manage and use all devices registered to the user's kvnr.
+
+    A confirmed device registration is always required for any device with installed ePA-FdV 
+    used to access health record content. An unregistered (i.e. new) or not confirmed device 
+    only has access to the device management service. A device used in an "Authorize Representative"
+    situation with a user temporarily acting on a device of a different user for respresentative 
+    entitlement only has access to the entitlement management of the acting user's health record.
+
+    A client device persists the device parameters of a device registration (device identifier and 
+    device token). Both parameters shall be used for any login for health record access after 
+    confirmation of the device.
+
+    **Device registration process for a new device:**
+    1. (VAU channel shall be established)
+    2. (Login (IDP user authorization) shall be successfully completed)
+    3. Request device identifier and -token for the new device (registerDevice)
+    4. Wait for email from device management, containing a confirmation code 
+    5. Use confirmation code to confirm the new device registration (confirmPendingDevice)
+    6. (Access health record content)
+
+    If login has timeout in step 4, repeat steps 1 and 2 and continue with step 5.
+
+    **Device registration standard process (normal use of registered device):**
+    - (VAU channel shall be established)
+    - (Login (IDP user authorization) shall be successfully completed)
+    - Submit persisted device identifier and -token for verification with the last
+    operation of the login procedure (I_Authorization_Service::sendAuthCodeFdV)
+    - (Access health record content)
+
+    **Manage registered devices:**
+    - (VAU channel shall be established)
+    - (Login (IDP user authorization) shall be successfully completed)
+    - Get a list of all registered devices (getDevices / getDevice)
+    - Pick the device identifier of registered device to manage
+      - Change display name of device (updateDevice) or 
+      - Delete device registration (deleteDevice), e.g. of an outdated device
+
+
+    Device management automatically deletes existing device registrations when: 
+    - device registration (creation time) is more than 2 years old or
+    - device registration is pending and confirmation code for confirmation is not submitted within 6 hours or
+    - device registration is pending and a wrong confirmation code was submitted 5 times in a row
+
+    If a device registration is deleted (i.e. does not exist any longer) a new device registration 
+    process shall be started by a client for further use of the (now deregistered) device. 
+
+ 
 
 paths:
+  /epa/basic/api/v1/devices/manage:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+    post:
+      tags:
+        - DeviceManagement
+      operationId: registerDevice
+      summary: (registerDevice) Get a new device registration
+      description: |
+        Initializes the registration of a new device.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        A client receives device identifier and device token for a new, not yet registered, device.
+        Identifier and token shall be kept for subsequent operations with a health record. 
+
+        A client will then receive an email containing a confirmation code. This confirmation code 
+        shall be used to confirm the new device registration within 6 hours from registration request 
+        time on (_createdAt_, see response content).
+
+        A client shall NOT register a new device if the user is NOT the owner of the device! This 
+        applies in an "Authorize Representative" use case with a user operating on a borrowed device.
+
+        **Provider**</br>
+        A new device registration associated to the kvnr of the requestor shall be created with:
+        - status 'pending'.
+        - timestamp _createdAt_ set to current system time
+        - a unique confirmation code assigned, valid for 6 hours from _createdAt_ time on
+        - a retry counter for failed confirmation attempts, allowing 4 consecutive failed confirmations
+        - a _displayName_ using the provided _deviceName_
+        - a new unique _deviceToken_
+        - a new unique _deviceIdentifier_ (uuid)
+        
+        If no _deviceName_ is provided, a generic but among the kvnr associated devices unique 
+        device name shall be applied (e.g "newDevice001")."
+
+        An email shall be sent to all stored email addresses associated to the kvnr of the user. This email shall
+        request device registration confirmation by the user and contain the confirmation code.
+
+        The registration shall fail in case:
+        - no email address of the user can be evaluated or
+        - too many failed attempts for registration occur in the past
+          - 3 consecutive failed device registrations were requested for the kvnr of the user within a period of 8 hours and
+          - the last failed device registration is less than 8 hours in the past of current system time (waiting time) or
+        - in a "Authorize Representative" use case.
+
+        "Authorize Representative" applies when the last preceding _I_Authorization_Service::sendAuthorizationRequestfdV_ operation 
+        for login used a parameter _x-authorize_representative_ == _true_.        
+
+        A failed device registration is evident in case a not yet confirmed device registration is deleted,
+        either caused by an expired confirmation code or by too many failed attempts for confirmation.
+
+        Device identifier and -token shall be persisted associated to the kvnr. The kvnr shall never be persistet in plain
+        text but must be stored pseudonymously.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 201 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Requestor is in "Authorize Representative" use case| 403 | invalidRequest ||
+        | Mail address of user is not available | 404| noResource ||
+        | Device registration temporarily not allowed | 409 | statusMismatch | errorDetail shall contain end of waiting time |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | A new and pending device registration is created | successful operation only |
+        | An email containing the confirmation code was sent to the user | successful operation only |
+
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceName
+              properties:
+                deviceName:
+                  $ref: '#/components/schemas/DisplayNameType'
+            example:
+              deviceName: "my health care device"
+      responses:
+        '201':
+          description: "Created"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  deviceIdentifier:
+                    $ref: '#/components/schemas/DeviceIdentifierType'
+                  deviceToken:
+                    $ref: '#/components/schemas/DeviceTokenType'
+                  data:
+                    $ref: '#/components/schemas/PendingDeviceType'
+              examples:
+                New_Device_1:
+                  summary: A new device registration
+                  value:
+                    deviceIdentifier: '1d20dfa6-e920-4196-80ab-d411ee257748'
+                    deviceToken: 8827da6359c78d81a5df7650b972308aa88394fa8f325b742b125372d7f70f50
+                    data:
+                      status: pending
+                      displayName: "my health care device"
+                      createdAt: 2025-04-22T14:23:01Z
+                      remainingConfirmationRetries: 4
+                New_Device_2:
+                  summary: Another new device registration
+                  value:
+                    deviceIdentifier: '3def7890-f754-4db5-b563-adc8e888495a'
+                    deviceToken: ae9877f42898a24674d75aed479cabbf02adfa68ebb40a03020c910599337c53
+                    data:
+                      status: pending
+                      displayName: "newDevice001"
+                      createdAt: 2025-05-01T08:47:12Z
+                      remainingConfirmationRetries: 4
+
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              examples:
+                Temporary_blocked:
+                  summary: New registration rejected until (waiting time)
+                  value:
+                    errorCode: statusMismatch
+                    errorDetail: 2025-07-14T17:22:00Z
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    put:
+      tags:
+        - DeviceManagement
+      operationId: confirmPendingDevice
+      summary: (confirmPendingDevice) Confirm pending device registration with a confirmation code
+      description: |
+        Confirm a pending device registration with a confirmation code.
+
+        **Client**:</br>
+        A client shall submit the _confirmationCode_ for confirmation of a new device registration 
+        as received via email.
+        A client may retry the confirmation in case the submitted _confirmationCode_ was wrong. The 
+        remaining amount of allowed failed attempts for confirmation are returned on every failed attempt
+        for information. A client shall start a complete new device registration in case no more attempts for
+        confirmation remain.
+
+        **Provider**</br>
+        The submitted _confirmationCode_ shall be validated. _confirmationCode_ and _deviceToken_
+        shall match the registered values. The device registration's _status_ shall 
+        become _confirmed_ in case of a complete match.
+        
+        If the confirmation is not valid, the counter for failed confirmation attempts (retry counter)
+        shall count this attempt and the device registration _status_ shall not be set to _confirmed_.
+
+        If the counter for failed confirmation attempts reaches the maximum of allowed consecutive failed 
+        attempts (5 attempts) then the pending device registration shall be deleted completely.
+
+        A successful confirmation shall be logged by a _lastUse_ timestamp of current system time 
+        added to the registered device values. The confirmation code, retry counter
+        counter and waiting time timer shall be removed from devcie registration.
+
+        A successful confirmation result shall be recorded as successful device verification in the user session 
+        for later evaluation. 
+
+        The updated device registration shall be returned after successful confirmation. The timestamp 
+        of the registration (_createdAt_) shall not be altered.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200|||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Wrong _confirmationCode_ and/or _deviceToken_  | 403 | invalidCode | errorDetail shall indicate amount of remaining allowed failed retries |
+        | Registered device (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
+        | Registered device already confirmed (not pending) | 409 | statusMismatch | retry not recommended |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The device _status_ is _confirmed_ | successful operation only |
+        | A pending device registration is deleted | wrong _confirmationCode_ and/or _deviceToken_ with expired retry counter only |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - confirmationCode
+              properties:
+                deviceIdentifier:
+                  $ref: '#/components/schemas/DeviceIdentifierType'
+                deviceToken:
+                  $ref: '#/components/schemas/DeviceTokenType'
+                confirmationCode:
+                  $ref: '#/components/schemas/ConfirmationCodeType'
+            example:
+              deviceIdentifier: '1d20dfa6-e920-4196-80ab-d411ee257748'              
+              deviceToken: 8827da6359c78d81a5df7650b972308aa88394fa8f325b742b125372d7f70f50
+              confirmationCode: '654321'
+
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceType'
+              example:
+                deviceIdentifier: '1d20dfa6-e920-4196-80ab-d411ee257748'
+                status: confirmed
+                displayName: "my health care device"
+                createdAt:  2025-04-22T14:23:01Z 
+                lastUse: 2025-04-22T18:02:17Z              
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                ConfirmationCode_invalid:
+                  summary: Confirmation failed, 2 retries left
+                  value:
+                    errorCode: invalidCode
+                    errorDetail: "2"
+                ConfirmationCode_invalid_blocked:
+                  summary: Confirmation failed, no retry left
+                  value:
+                    errorCode: invalidCode
+                    errorDetail: "0"
+                Userrole_invalid:
+                  summary: User's role not allowed
+                  value:
+                    errorCode: invalidOid
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
   /epa/basic/api/v1/devices:
     parameters:
       - $ref: '#/components/parameters/useragent'
@@ -77,9 +379,9 @@ paths:
       tags:
         - DeviceManagement
       operationId: getDevices
-      summary: (getDevices) Get a list of all devices
+      summary: (getDevices) Get a list of all registered devices
       description: |
-        Get a list of all devices registered for a user (associated to kvnr of requestor).</br>
+        Get a list of all devices registered for the user (associated to kvnr of user).</br>
         This operation is limited to users of role oid_versicherter. An entitlement 
         is not required.
 
@@ -146,23 +448,25 @@ paths:
                       totalMatching: 4
                     data:
                       - deviceIdentifier: '549230be-9bfa-4e49-81bb-1e928c37274c'
-                        status: verified
+                        status: confirmed
                         displayName: "my personal tablet"
                         createdAt: 2025-07-01T12:00:00Z
-                        lastLogin: 2025-07-02T18:00:00Z
+                        lastUse: 2025-07-02T18:00:00Z
                       - deviceIdentifier: 'aaec1b6e-7cb5-41a5-a761-da2d6d967f5e'
-                        status: verified
+                        status: confirmed
                         displayName: "my new android phone"
                         createdAt: 2025-08-01T12:00:00Z
+                        lastUse: 2025-08-01T17:00:00Z
                       - deviceIdentifier: '8c405fcc-ca5d-4459-9809-43705a0a297d'
-                        status: verified
+                        status: confirmed
                         displayName: "my old android phone"
                         createdAt: 2025-02-01T12:00:00Z
-                        lastLogin: 2025-07-31T12:00:00Z
+                        lastUse: 2025-07-31T12:00:00Z
                       - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
                         status: pending
-                        displayName: "empty string or server defined entry, e.g. newDevice001"
+                        displayName: "newDevice001"
                         createdAt: 2025-12-24T20:00:00Z
+                        remainingConfirmationRetries: 3
                 GetPendingDevices:
                   value:
                     query:
@@ -172,9 +476,9 @@ paths:
                     data:
                       - deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
                         status: pending
-                        displayName: "empty string or server defined entry, e.g. newDevice001"
+                        displayName: "newDevice001"
                         createdAt: 2025-12-24T20:00:00Z
-
+                        remainingConfirmationRetries: 3
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -190,7 +494,7 @@ paths:
       tags:
         - DeviceManagement
       operationId: getDevice
-      summary: (getDevice) Get a device by deviceIdentifier
+      summary: (getDevice) Get a registered device by deviceIdentifier
       description: |
         Retrieves information about a specific registered device.</br>
         This operation is limited to users of role oid_versicherter. An entitlement 
@@ -222,6 +526,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceType'
+              examples:
+                GetDevice_conf:
+                  value:
+                    deviceIdentifier: 'aaec1b6e-7cb5-41a5-a761-da2d6d967f5e'
+                    status: confirmed
+                    displayName: "my new android phone"
+                    createdAt: 2025-08-01T12:00:00Z
+                    lastUse: 2025-08-01T17:00:00Z
+                GetDevice_pend:
+                  value:
+                    deviceIdentifier: 'c310d761-d49d-484c-b3d8-736a90e12832'
+                    status: pending
+                    displayName: "newDevice001"
+                    createdAt: 2025-12-24T20:00:00Z
+                    remainingConfirmationRetries: 3
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -235,17 +554,18 @@ paths:
       tags:
         - DeviceManagement
       operationId: updateDevice
-      summary: (updateDevice) Update device registration parameter displayName
+      summary: (updateDevice) Update device registration parameter _displayName_
       description: |
-        Change the user defined _displayName_ of a specific device.</br>
+        Change the user defined display name of a specific device registration.</br>
         This operation is limited to users of role oid_versicherter. An entitlement 
         is not required.
 
         **Client**:</br>
-        A user may choose a readable name for a specific device registration 
+        A user may choose a readable name for a specific device registration.
 
         **Provider**</br>
-        The device registration shall be associated to kvnr of requestor.
+        The device registration shall be associated to kvnr of requestor. A change
+        of _displayName_ shall be allowed for existing device registrations in any _status_.
 
         The changed device registration shall be returned. Timestamps of the registration
         shall not be altered.
@@ -261,7 +581,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The _displayName_ of the addressed device registration is updated ||
+        | The _displayName_ of the addressed device registration is updated | successful operation only |
 
       requestBody:
         required: true
@@ -301,12 +621,15 @@ paths:
         is not required.
 
         **Client**:</br>
-        A client shall double check _deviceidentifier_ and may abstain from deletion of
-        the device registration of the actual used device.
+        A client shall double check _deviceidentifier_ before deletion of
+        the device registration of the currently used device.</br>
+        (deletion of device in use is not prevented)
 
         **Provider**</br>
         The device registration shall be associated to kvnr of requestor.
         The device registration shall be finally deleted.
+
+        An active user session is not affected by deletion of any device registration.
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
@@ -319,8 +642,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The _displayName_ of the addressed device registration is updated ||
-        | A log-entry for the operation exists | all operation results |
+        | The device registration is deleted | successful operation only |
 
       responses:
         '204':
@@ -334,15 +656,9 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
+
 components:
   parameters:
-    insurantid:
-      name: x-insurantid
-      in: header
-      description: Health Record Identifier.
-      required: true
-      schema:
-        $ref: '#/components/schemas/InsurantIdType'
     useragent:
       name: x-useragent
       in: header
@@ -373,7 +689,6 @@ components:
     devicestatus:
       name: devicestatus
       in: query
-      required: true
       schema:
         $ref: '#/components/schemas/DeviceStatusType'
 
@@ -402,6 +717,16 @@ components:
             errorCode: noResource
           schema:
             $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
       content:
@@ -412,13 +737,6 @@ components:
             $ref: '#/components/schemas/ErrorType'
 
   schemas:
-    InsurantIdType:
-      type: string
-      description: |-
-        The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr). The record identifier does not include any home community id.
-      pattern: '^[A-Z]{1}\d{9}$'
-      example: Z123456789
     DeviceTokenType:
       type: string
       description: "Device tokens are strings with 64 hexadecimal symbols."
@@ -433,12 +751,18 @@ components:
       type: string
       enum:
       - pending
-      - verified
-      example: verified
+      - confirmed
+      example: confirmed
     DisplayNameType:
-      description: A readable name for user's device
+      description: A readable name for the user's device
       type: string
+      maxLength: 80
       example: "this is my preferred device for ePA"
+    ConfirmationCodeType:
+      description: 6-digit confirmation code for device registration confirmation.
+      type: string
+      pattern: '^\d{6}$'
+      example: '123456'
     UserAgentType:
       description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
@@ -451,13 +775,23 @@ components:
           $ref: '#/components/schemas/DeviceIdentifierType'
         status:
           $ref: '#/components/schemas/DeviceStatusType'
-          example: verified
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
         createdAt:
           description: timestamp of registration
           type: string
           format: date-time
+    PendingDeviceType:
+      allOf:
+        - $ref: '#/components/schemas/BaseDeviceType'
+        - type: object
+          properties:
+            remainingConfirmationRetries:
+              description: Indication of acceptable consecutive failed confirmation attemps
+              type: integer
+              maximum: 4
+              minimum: 0
+              example: 4
     DeviceType:
       allOf:
         - $ref: '#/components/schemas/BaseDeviceType'
@@ -467,6 +801,7 @@ components:
               description: timestamp of last login associated to the registered device
               type: string
               format: date-time
+
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object

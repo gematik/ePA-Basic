@@ -4,8 +4,10 @@ info:
   description: |
     This interface provides access to Authorization Service.</br>
     Through this interface, client systems can carry out user authentication. There are two different ways
-    - Authentication of the insurant or representative using the insurant's device through sectoral IDP of the health insurance company
-    - Authentication of other client systems through the central IDP (IDP-Dienst)
+    - Authentication of the insurant or representative using the insurant's device through sectoral IDP of 
+    the health insurance company
+    - Authentication of client systems through the central IDP (IDP-Dienst)
+    - Authentication by bearer token (erp-backend)
 
     **General conditions**:</br> 
     For all operations if applicable:
@@ -14,11 +16,17 @@ info:
     **Prereqisites**:</br>
     For insurant and representatives
     - The sectoral IDP of Health insurance is registered with the TI-Federation
-    - The authorization service of a Health Record System is registered with the TI-Federation
+    - The authorization service of a Health Record System is registered with the TI-Federation (clientid)
     - The authenticator modul of the sectoral IDP is part of the frontend application on insurant's device 
     
     For other client systems
-    - The authorization service of the Electronic Health Record System is registered with the central IDP (IDP-Dienst)
+    - The authorization service of the Health Record System is registered with the central IDP 
+    (IDP-Dienst)
+
+    **Retry interval**:</br>
+    The following retry intervals are suggested in case of an error response:<br>
+    - '500' Internal Error
+      - approx. 10 minutes
 
   contact:
     name: gematik GmbH
@@ -28,10 +36,22 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - editorial changes, clarifications and examples
+  #   - implicit device verification in sendAuthCodeFdV
+  #   - implicit device registration moved to device management
+  #   - introduce parameter x-authorize-representative
+  #   - removed tokenid, state, clientid parameters for FdV authentication
+  #   - added getChallengeForBearerToken for erp backend authorization
+  #   - reworked SC authentication
+  #   - added client attest jwt for sendAuthCodeSC
+  #   - error mapping details added
+  #   - orphaned types removed, types reworked
+  #   - reworked searc access-token type (vzdtoken)
   # version 1.0.0
   #   - first release version
   # version 0.0.3
@@ -42,33 +62,138 @@ servers:
 
 tags:
 - name: Authorization FdV
-  description: This interface method enables the authentication of the insured or representative with the insured's device through sectoral IDP of the health insurance
+  description: |
+   Authorization with an ePA-FdV client for insurants and representatives and login to a health 
+   record system.
+   
+   This authorization method addresses a sectoral IDP of the federation associated
+   to the health insurance providing the health record. The authentication of a user towards the 
+   IDP is itself a task of the Authenticator associated to 
+   the IDP and available on client side. Each client shall maintain the address of its associated IDP 
+   (idp-iss) for operations of this interface.
+
+   A successful login provides an IDToken and causes an authorized epa user session allowing access to the 
+   associated health record as insurant (health record owner) or representative.
+  
+   A client shall perform an explicite logout operation after use to release the user session and its resources.
+   
+   All operations mandate an established VAU-channel.
+
+   **ePA Device Binding**</br>
+   The last (internal) action of the Authorization Service after successful (internal) receiption of an IDToken
+   is the epa device binding check:</br>
+   
+   Registered devices:</br>
+   Clients shall provide device identification parameters from a (previous) device registration with each login 
+   attempt (in _sendAuthCodeFdV_).
+   A login for health record access only succeeds in case the device is registered in the device management 
+   service for the user of the device.
+
+   New or unknown device:</br>
+   In case a new (not yet registered) device is used, no device paramteres shall be provided for login. Th elogin succeeds
+   but access is limited to the operations of the device management, allowing to register and confirm the new device. 
+
+   Suppressed device registration:</br>
+   Insurants may temporary use an unregistered device to access the health record for entitlement of representatives.
+   This is a typical case for insurants not using ePA-FdVs in general and delegating ePA access to one or more representatives.<br>
+   A registration of the used device for the acting insurant is not intended and the device registration process is suppressed
+   (skipped) before login completion.
+   This special case is signaled by a specific parameter _authorize_representative_ in a _sendAuthorizationRequestFdV_ call.
+   The login succeeds but access is limited to the entitlement management of the health record of the user.
+
 - name: Authorization SMC-B
-  description: This interface method enables the authentication of other client systems through the central IDP
+  description: |
+   Authorization with a smartcard (SMC-B) equipped client of a health care institution and login to a health 
+   record system.
+   
+   This authorization method addresses the central smartcard IDP.
+   A successful login provides an IDToken and causes an authorized epa user session for the health care
+   institution allowing access to several health records on demand.
+
+   **Client Attestation**</br>
+   The authorization flow uses client attestation to guarantee a match of IDP issued IDToken and
+   the user's identity of the authenticated clients.
+
+   A client first retrieves a nonce value from the authorization service. The nonce is signed with the 
+   clients SMC-B and becomes the client attestation.</br>
+   In a final sendAuthCodeSC operation the client attestion is compared by the authorization service 
+   with the issued nonce value and attestation telematik-id matching ID-Token telematik-id is verified.    
+
+   **Allowed usergroups for Authorization SMC-B**
+   Authorization with SMC-B is limited to certain user roles: 
+   The following list of allowed roles (professionOid) is for information only and may be incomplete, 
+   the normative requirement is defined in A_23941-* (excluding oid_versicherter and oid_erp-vau).
+
+   Allowed roles [professionOID] 
+   - oid_praxis_arzt
+   - oid_krankenhaus
+   - oid_institution-vorsorge-reha
+   - oid_zahnarztpraxis
+   - oid_öffentliche_apotheke
+   - oid_praxis_psychotherapeut
+   - oid_institution-pflege
+   - oid_institution-geburtshilfe
+   - oid_praxis-physiotherapeut
+   - oid_institution-oegd
+   - oid_institution-arbeitsmedizin
+   - oid_kostentraeger
+   - oid_ombudsstelle
+   - oid_diga
+
+
 - name: Authorization BearerToken
-  description: This interface method enables the authorization of applications through a BearerToken
-- name: FHIRVZDtoken
-  description: Interface to receive FHIR VZD search access-token from health record system for clients
+  description: |
+   This interface method enables the authorization by a signed BearerToken only (no IDP interaction).
+   This method is restricted for use by the ePrescription backend only.
+
+- name: Search access-token for FHIR VZD
+  description: | 
+   A search access-token is required by clients to submit search queries to the directory service (FHIR VZD).
+   Each health record system is registered as a client with the directory service and provides the associazted search 
+   access-token for clients, thereby avoiding the individual registration of each client towards the directory service. 
+
+externalDocs:
+  description: 'Specification: gemSpec_Aktensystem_ePAfueralle, chapter "Zusätzliche Anforderungen an den Authorization Service"'
+  url: https://gemspec.gematik.de/docs/gemSpec/
 
 paths:
   /epa/vzd/v1/vzdToken:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
     get:
       tags:
-      - FHIRVZDtoken
-      summary:  Get FHIR VZD search access-token
-      description: Clients shall use this interface to receive the FHIR VZD search access-token provided by the 
-       health record system for their clients to access the FHIR VZD directory-
+        - Search access-token for FHIR VZD
       operationId: getFHIRVZDtoken
+      summary:  (getFHIRVZDtoken) Get the FHIR VZD search access-token
+      description: |
+        Get the directory service (FHIR VZD) search-token of the health record system.
+
+        **Client**:</br>
+        A client shall use the provided search access-token for directory service queries instead of an own, individual
+        registration.
+
+        **Provider**:
+        The authorization service shall return the search access-token as received from the FHIR Directory.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
       responses:
         '200':
           description: OK
           content: 
              application/json: 
               schema:
-                $ref: '#/components/schemas/SearchAccessToken'
-
+                $ref: '#/components/schemas/SearchAccessTokenType'
         '500':
-          $ref: '#/components/responses/NonceError500InternalError'
+          $ref: '#/components/responses/Error500InternalError'
 
   /epa/authz/v1/getNonce:
     parameters:
@@ -77,24 +202,49 @@ paths:
       tags:
         - Authorization SMC-B
       operationId: getNonce
-      summary: Generation of random value
-      description: Nonce is a generated random cases-sensitive string value of max 512 bit length. The authorization service stores the generated nonce to the client_id.
-        The applicant must sign the nonce. The signed nonce is then used as a parameter of the requester's authorization request.
-      parameters:
-        - $ref: '#/components/parameters/client_id'
+      summary: (getNonce) Generate nonce (random value) for an authorization request
+      description: | 
+        A nonce is a generated unique random value. This operation provides the nonce
+        for the client (attestation).</br> 
+        Remark: This is NOT the nonce used by the authorization
+        service towards the IDP in an IDP flow! 
+       
+        **Client**:</br>
+        A client shall sign the received nonce. The signed nonce shall be used as client 
+        attestation for the authorization requests finalization (_sendAuthCodeSC_).
+
+        **Provider**:</br>
+        The nonce shall be stored for later comparison in a subsequent _sendAuthCodeSc_ operation.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The nonce is kept for subsequent _sendAuthCodeSC_ operation ||
+
       responses:
         '200':
-          $ref: '#/components/responses/Nonce200'
-          description: "OK"
+          description: Ok.
           content:
-            parameters:
+            application/json:
               schema:
-                type: string
-                example: aff157
+                description: A new nonce
+                type: object
+                properties:
+                  nonce:
+                    $ref: '#/components/schemas/NonceType'
+              example:
+                nonce: '7721435277f5d0137b17ef8b835ca03cf09dc23926aa1766e4f8132433ff37d6'
         '400':
-          $ref: '#/components/responses/NonceError400BadRequest'
+          $ref: '#/components/responses/Error400BadRequest'
         '500':
-          $ref: '#/components/responses/NonceError500InternalError'
+          $ref: '#/components/responses/Error500InternalError'
+
 
   /epa/authz/v1/send_authorization_request_sc:
     parameters:
@@ -103,19 +253,46 @@ paths:
       tags:
         - Authorization SMC-B
       operationId: sendAuthorizationRequestSC
-      summary: user authorization
-      description: sends an authorization request from the system client of a SMC-B user to the IDP-Dienst, that triggers the authenticator, which returns an authorization code grant for a user of this SMC-B. The authorization code can then be exchanged for an ID token.
-      parameters:
-        - $ref: '#/components/parameters/client_id'
-        - $ref: '#/components/parameters/state'
+      summary: (sendAuthorizationRequestSC) Send authorization request
+      externalDocs:
+        description: 'IDP-Dienst: gemSpec_IDP_FD, chapter "5.5 IDP-Dienst als OIDC IDP"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: | 
+        Request authorization for a smartcard (SMC-B) based client.
+
+        **Client**:</br>
+        A client will receive a well prepared redirection uri and parameters for the authoriation request
+        towards the authenticator. A client shall invoke the authenticator and IDP flow to revceive an 
+        authorization code for the subsequent _sendAuthCodeSC_ operation.
+
+        **Provider**:</br>
+        The authorization server shall prepare a complete redirection uri and authorization request parameters 
+        (PAR-URI) for the central smartcard IDP  
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 302 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service which are not mapped to 500 internal Server error |
+        | No or outdated nonce | 409 | statusMismatch | No preceding _getNonce_ call or stored nonce outdated/invalid |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
       responses:
         '302':
           $ref: '#/components/responses/AuthorizationResponseSC302'
         '400':
-          $ref: '#/components/responses/ARSCError400BadRequest'
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-        #todo: include the deferred authenticator response with the auth_code
 
   /epa/authz/v1/send_authcode_sc:
     parameters:
@@ -124,93 +301,116 @@ paths:
       tags:
         - Authorization SMC-B
       operationId: sendAuthCodeSC
-      summary: send AUTH_CODE
-      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
+      summary: (sendAuthCodeSC) Send authorization code
+      externalDocs:
+        description: 'IDP-Dienst: gemSpec_IDP_FD, chapter "5.5 IDP-Dienst als OIDC IDP"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: | 
+        After successful user authentication the authorization code grant was returned to the authorization 
+        service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
+        This operation is limited to users of the "Allowed usergroups for Authorization SMC-B"
+
+        **Client**:</br>
+        A client shall submit the authorization code received from the authenticator and the client attestation
+        (signed nonce)
+
+        **Provider**:</br>
+        The authorization service shall use the authorization code to prepare a token request for the IDP and receive
+        the encrypted ID-Token in return. 
+        The received ID-Token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
+
+        The authorization service shall further validate the ID-token against the stored nonce (from a preceding _getNonce_ operation)
+        and the client attestation:
+        - _clientAttest_ is valid if
+          - signature is valid
+          - "iat" is a timestamp in the interval 'current time - 20 min' and 'current time'.
+          - user has role as in "Allowed usergroups for Authorization SMC-B" (from signature cert)
+        - stored nonce shall not be outdated
+        - stored nonce shall match client attestation nonce
+        - Telematik-Id of client attestation (from signature cert) shall match the telematik-id claim of the ID-Token 
+
+        The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
+
+        The nonce shall be discarded, i.e. reuse of a client attestation for user session establishment shall be rejected. 
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service which are not mapped to 500 internal Server error |
+        | No or outdated nonce | 409 | statusMismatch | No preceding _getNonce_ call or stored nonce outdated/invalid |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The nonce is discarded ||
+        | User session has valid HSM-ID-Token for requesting client (telematik-id) | successful operation only |
+        | User session and temporary data is deleted | failed operation only |
+
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
-              type: object
-              properties:
-                client_id:
-                  type: string
-                  example: ePAfa
-                  maxLength: 32
-                state:
-                  type: string
-                  example: af0ifjsldkj
-                  maxLength: 255
+              $ref: '#/components/schemas/SendAuthCodeSCtype'
 
       responses:
         '200':
-          $ref: '#/components/responses/AuthCodeRequest200'
+          description: Ok.
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: '#/components/responses/AuthCodeRequest403'
-          example:
-            errorCode: unknownDevice
-            errorDetail:
+          $ref: '#/components/responses/Error403Forbidden'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
 
-  /epa/authz/v1/send_authorization_request_fdv:
+  /epa/authz/v1/getChallenge:
     parameters:
       - $ref: '#/components/parameters/useragent'
     get:
       tags:
-        - Authorization FdV
-      operationId: sendAuthorizationRequestFdV
-      summary: user authorization
-      description: sends an authorization request from the FdV client to the authorization service, which in turn requests a user authentication from the Identity Provider determined by the input parameter idpiss. After successful user authentication a reference to the Pushed Authorization Request (URI-PAR) is returned to the ePA-FdV, which processes it as specified in chapter 6.2.3.1 in gemSpec_ePA_FdV. In order to construct the response, the authorization service forms a request URL and return it in a redirect response to the caller. The request URL consists of the authorization endpoint if the involved IDP and a query string with the two parameters client_id and request_uri and their respective values.
-      parameters:
-        - $ref: '#/components/parameters/client_id'
-        - $ref: '#/components/parameters/idp_iss'
-        - $ref: '#/components/parameters/deviceId'
-        - $ref: '#/components/parameters/deviceToken'
-        - $ref: '#/components/parameters/state'
-      responses:
-        '302':
-          $ref: '#/components/responses/AuthorizationResponseFdV302'
-        '400':
-          $ref: '#/components/responses/ARFdVError400BadRequest'
-        '500':
-          $ref: '#/components/responses/Error500InternalError'
+        - Authorization BearerToken
+      operationId: getChallengeForBearerToken
+      summary: (getChallengeForBearerToken) Get freshness parameter for a bearer token
+      externalDocs:
+        description: 'eRP backend authentication: gemSpec_Krypt, chapter "7.4 Authentisierung des E-Rezept-FD als ePA-Client"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: |-
+       Get a new challenge (freshness parameter) for a new bearer token for the authorization by bearer token.
 
-  /epa/authz/v1/send_authcode_fdv:
-    parameters:
-      - $ref: '#/components/parameters/useragent'
-      - $ref: '#/components/parameters/deviceId'
-      - $ref: '#/components/parameters/deviceToken'
-    post:
-      tags:
-        - Authorization FdV
-      operationId: sendAuthCodeFdV
-      summary: send AUTH_CODE
-      description: After successful user authentication the authorization code grant was returned to the authorization service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-                  example: 2435623452hkjlk34t
-                  maxLength: 2000
-                state:
-                  type: string
-                  example: af0ifjsldkj
-                  maxLength: 512
+       **Client**</br>
+       The ePrescription backend shall use the challenge for a signed JWT (bearer token) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
+
+       **Provider**</br>
+       The returned challenge shall follow the requirements in gemSpec_Krypt, A_24658* and be verifiable by HSM rule 'rr0'. 
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Any other error | 500 | internalError ||
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
       responses:
         '200':
-          $ref: '#/components/responses/AuthCodeRequest200'
-        '403':
-          $ref: '#/components/responses/AuthCodeRequest403'
-          example:
-            errorCode: unknownDevice
-            errorDetail:
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: 
+                  callenge:
+                    description: A base64 encoded challenge for a bearer token (health record system specific content)
+                    type: string
+                    format: byte
+                    example: YSBiYXNlNjQgZW5jb2RlZCBjaGFsbGVuZ2UgKGhlYWx0aCByZWNvcmQgc3lzdGVtIHNwZWNpZmljIGNvbnRlbnQp
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
@@ -221,60 +421,282 @@ paths:
       tags:
         - Authorization BearerToken
       operationId: sendAuthorizationRequestBearerToken
-      summary: client authorization based on JWT authorization grant (see RFC 7523)
-      description: sends an authorization request from the ePrescription service (E-Rezept-Fachdienst) to the authorization service in order to be allowed to put prescription data into the ePA system. returns appropriate ACCESS token / REFRESH token for the authenticated client.
+      summary: (sendAuthorizationRequestBearerToken) Client authorization based on JWT authorization grant.
+      externalDocs:
+        description: 'BearerToken: gemSpec_Aktensystem_ePAfuerAlle, chapter "3.15.3 Anforderungen an den Authorization Service für die Authentisierung des E-Rezept-Fachdienstes"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: |-
+       Authorization of the ePrescription backend (E-Rezept-Fachdienst).
+
+       **Client**</br>
+       The ePrescription backend shall send a signed JWT (bearerToken) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
+       The token shall contain a fresh challenge (see: _getChallengeForBearerToken_).
+
+       **Provider**</br>
+       The received token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
+       The received token shall have a claim "sub", this claim shall state the telematik-id of the ePrescription backend. 
+
+       The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest | also for _bearerToken_ does not match token schema |
+        | Invalid request | 403 | invalAuth | _bearerToken_ is invalid by measn of HSm rule 'rr0' |
+        | Any other error | 500 | internalError ||
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | authorized user session with HSM-ID-Token for ePrescription backend exists | successful operation only |
+        | user session and temporary data is deleted | failed operation only |
+
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
-              type: object
-              properties:
-                grant_type:
-                  enum: ["urn:ietf:params:oauth:grant-type:jwt-bearer"]
-                  type: string
-                assertion:
-                  type: string
-                  example: single JWT, e.g.  eyJhbGciOiJFUzI1NiIsImtpZCI6IjE2In0.eyJpc3Mi[...omitted for brevity...].J9l-ZhwP[...omitted for brevity...]
-                    #to be replaced with a real JWT example
+              $ref: '#/components/schemas/BearerTokenType'
+            example:
+              bearerToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuYXV0In0.eyJ0eXBlIjoiZVBBLUF1dGhlbnRpc2llcnVuZyDDvGJlciBQS0kiLCJpYXQiOjE3MDY1MzIwNDgsImNoYWxsZW5nZSI6IllTQmlZWE5sTmpRZ1pXNWpiMlJsWkNCamFHRnNiR1Z1WjJVZ0tHaGxZV3gwYUNCeVpXTnZjbVFnYzNsemRHVnRJSE53WldOcFptbGpJR052Ym5SbGJuUXAiLCJzdWIiOiI5LTg4MzExMDAwMDAxMTExMSIsIm9pZCI6IjEuMi4yNzYuMC43Ni40LjI1OCJ9.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+
       responses:
         '200':
           description: "OK"
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/authz/v1/send_authorization_request_fdv:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/idp-iss'
+        - $ref: '#/components/parameters/authorize_representative'
+      tags:
+        - Authorization FdV
+      operationId: sendAuthorizationRequestFdV
+      summary: (sendAuthorizationRequestFdV) Send authorization request
+      externalDocs:
+        description: 'Request to IDP: gemSpec_IDP_FD, chapter "Anfrage von "ID_TOKEN" beim sektoralen Identity Provider"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: | 
+        Sends an authorization request to the authorization service.
+       
+        **Client**:</br>
+        A client shall use parameter _x-authorize_representative_ for the "Authorize Represenstative" use case,
+         a login of a user on not owned device for represenative entitlement only.
+        The _x-authorize_representative_ parameter will force an authentication of the user with egK + pin or 
+        npa + pin only and limit the possible operations to entitlement management only.
+        A client shall use the returned redirect url to invoke the authenticator. 
+       
+        **Provider**:</br>
+        The authorization service shall send a pushed authorization request (PAR) to the IDP (see: find more details).
+
+        The authorize representative situation (_x-authorize_representative_ == _true_) shall be kept for the subsequent
+        _sendAuthCodeFdV_ and device management operations. For this case the PAR for the IDP shall include:
+        - amr = urn:telematik:auth:eGK or urn:telematik:auth:eID
+
+        The authorization service' state value and clientid used for the PAR shall occur in the URI-PAR response of the IDP.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 302 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which are not mapped to 500 internal Server error |
+        | state or clientid value mismatch | 403 | invalData | returned URI-PAR does not contain expected state or clientid value |
+        | Invalid URI (x-idp-iss) | 404 | noResource | |
+        | Any other error | 500 | internalError ||
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | authorize_representative kept for subsequent _sendAuthCodeFdV_ evaluation | if applicable |
+
+      responses:
+        '302':
+          $ref: '#/components/responses/AuthorizationResponseFdV302'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/authz/v1/send_authcode_fdv:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+    post:
+      parameters:
+        - $ref: '#/components/parameters/deviceidentifier'
+        - $ref: '#/components/parameters/devicetoken'
+      tags:
+        - Authorization FdV
+      operationId: sendAuthCodeFdV
+      summary: (sendAuthCodeFdV) Send authorization code
+      externalDocs:
+        description: 'Device verification: src/openapi/I_DeviceManagement_Insurant.yaml'
+        url: https://github.com/gematik/ePA-Basic
+      description: |
+        Send the authorization code to the authorization service to complete the login and (optional)
+        verify the device registration.
+
+        **Client**:</br>
+        A client shall always send the authorization code received from the authenticator / IDP. 
+
+        A client shall send _x-device-identifier_ and _x-device-token_ if device used is already registered..
+
+        A client shall not send _x-device-identifier_ and _x-device-token_ (suppress parameters at all) if the
+        device is not yet registered and confirmed or if the preceding _sendAuthorizationRequestFdV_ call 
+        includes the parameter _x-authorize_representative_ == _true_.
+
+        (For registration of a new device, including confirmation of the registration, see Device Management 
+        Service operations _registerDevice_ and _confirmDevice_). 
+        
+
+        **Provider**:</br>
+        The provided authorization code shall be exchanged for an IDToken with the IDP. The IDToken shall be converted
+        into a HSM-ID-Token with an extended validity period.
+        
+        Device verification:</br>
+        If _x-device-identifier_ and _x-device-token_ are both submitted the device verification starts immediately after
+        the authorization completion.
+        Device identifier and -token shall be verified with the registered values.
+        The x-device-identifier / x-device-token check shall only consider device registrations for the authorized user.
+
+        On success (IDToken / HSM-ID-Token reveived and device binding check successful) a new user session shall be instantiated, 
+        associated to the HSM-ID-Token.
+
+        If device verification succeeds, access to all services of a health record shall be possible for the associated
+        user session.
+        if x-authorize-representative is set, access to the user's health record entitlement management only shall be
+        possible for the user session.
+        In all other (success cases) access of the user session shall be limited to the device management service.
+
+        The user session of a client shall be closed and all session related data shall be deleted in case operation is not successful.
+        
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Only _x-device-identifier_ or _x-device-token_ provided | 400 | paramExcpected | both parameters required or none |
+        | _authorize_representative_ is set and _x-device-identifier_ and/or _x-device-token_ provided | 400 | authorizeRep | _x-authorize_representative_ from preceding sendAuthorizationRequestFdV |
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | _authorizationCode_ not valid | 403 | invalAuth | includes any error of Authorization Service and IDP which are not mapped to 500 internal Server error |
+        | Wrong _x-device-token_  | 403 | invalidToken | if both parameters avaiable and allowed|
+        | Device registration does not exist (_x-device-identifier_)| 404| noResource | also if device is not associated to requestor kvnr |
+        | Device registration not confirmed (_status_ == _pending_) | 409 | statusMismatch | confirm pending device registration before retry |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | user session has valid HSM-ID-Token | successful operation only |
+        | user session contains device verification result | successful operation with device parameters only |
+        | _lastUse_ of device registration is updated to current time | successful operation with device parameters only |
+        | user session and temporary data is deleted | failed operation only |
+          
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendAuthCodeFdVtype'
+
+      responses:
+        '200':
+          description: OK, successful login
+        '400':
+          description: Bad Request.
           content:
             application/json:
+              examples:
+                MalformedRequest:
+                  summary: The request does not match the schema
+                  value:
+                    errorCode: malformedRequest
+                AuthorizeRep_tooManyParams:
+                  summary: x-device-identifier and x-device-token are not allowed in an authorize representative situation
+                  value:
+                    errorCode: authorizeRep
+                Missing_parameters:
+                  summary: x-device-identifier and x-device-token shall both be present or absent
+                  value:
+                    errorCode: paramExcpected
               schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                  expires_in:
-                    type: number
-                  refresh_token:
-                    type: string
-        '400':
-          $ref: '#/components/responses/ARBEARERError400BadRequest'
+                $ref: '#/components/schemas/ErrorType'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              examples:
+                AuthCode_invalid:
+                  summary: The authorization code is invalid
+                  value:
+                    errorCode: invalAuth
+                User_role:
+                  summary: User role is not oid_versicherter
+                  value:
+                    errorCode: invalOid
+                DeviceToken_invalid:
+                  summary: device token is invalid (wrong)
+                  value:
+                    errorCode: invalToken
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
 
 
-
-  /epa/authz/v1/logoutFdV/{tokenid}:
+  /epa/authz/v1/logoutFdV:
     parameters:
       - $ref: '#/components/parameters/useragent'
     get:
       tags:
         - Authorization FdV
       operationId: logoutFdV
-      summary: active logout.
-      description: an active logout triggered by the FdV user revokes the ACCESS token and REFRESH token at the authorization service. After that the user has to authenticate again for any service usage.
-      parameters:
-        - $ref: '#/components/parameters/tokenid'
+      summary: (logoutFdV) Logout from user session.
+      description: | 
+       A logout terminates the associated user session. For any further service usage a new 
+       authentication of the user is required. 
+
+       **Client**:</br>
+       A client shall perform this explicite logout to close the user session and all 
+       health record related activities. For further access a client shall perform a new login, including
+       negotiation of a new VAU-channel.
+
+        **Provider**:</br>
+        The user session of a client shall be closed and all session related 
+        data shall be deleted. Associated health record contexts shall be released / closed.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful logout | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Any other error | 500 | internalError ||
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The user session and all related transient data is terminated / deleted ||
+       
       responses:
         '200':
           description: "OK"
-        '404':
-          $ref: '#/components/responses/Error404NotFound'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
         '500':
           $ref: '#/components/responses/Error500InternalError'
-
 
 components:
   parameters:
@@ -285,176 +707,76 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
-    client_id:
-      name: x-clientid
+    idp-iss:
+      name: x-idp-iss
+      description: The issuer Identifier (URL) of the IDP to be used for user authentication
       in: header
-      description: ID of the registered client.
       required: true
       schema:
         type: string
-        format: uuid
-        example: 11466127-7149-4808-926b-34cf37b2d568
-    idp_iss:
-      name: x-idp_iss
+        example: https://idp_kk.de
+    deviceidentifier:
+      name: x-device-identifier
       in: header
-      required: true
-      schema:
-        $ref: '#/components/schemas/IdpIssType'
-    deviceId:
-      name: x-device-id
-      in: header
-      description: The device Identifier should be set in the header. When this is combined with the 'x-device token' header, it results in a unique authorization for the device
+      description: The deviceidentifier of a device registration
       required: false
       schema:
-        type: string
-        example: 4ab42e19-7d33-40fa-949f-3499135b910b
-    deviceToken:
+        $ref: '#/components/schemas/DeviceIdentifierType'
+    devicetoken:
       name: x-device-token
       in: header
-      description: The device Token should be set in the header. When this is combined with the 'x-device-id' header, it results in a unique authorization for the device
+      description: The devicetoken of a device registration
       required: false
       schema:
-        type: string
-        example: sdthsdrndtrhmsyetsbrts        
-    clientAttest:
-      name: x-client-attestation
+        $ref: '#/components/schemas/DeviceTokenType'
+    authorize_representative:
+      name: x-authorize-representative
       in: header
-      description: signed nonce
+      description: This parameter shall be absent or set to _true_ to indicate an authorization request without epa device management registration checks. 
       required: false
       schema:
-        $ref: '#/components/schemas/clientAttestType'
-    state:
-      name: x-state
-      in: header
-      description: state
-      required: false
-      schema:
-        type: string
-        format: uuid
-        example: af0ifjsldkj
-    authcode:
-      name: x-authcode
-      in: header
-      description: authcode
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: dfkldfsnflarnflerjfarlelagl
-    tokenid:
-      name: tokenid
-      in: path
-      description: JWT identifier jti of the access_token to revoke
-      required: true
-      schema:
-        type: string
-        maxLength: 256
-        example: dfkldfsnAAarnflerjfarlelagl
+        type: boolean
+        enum: [true]
+        example: true
 
   responses:
-    Nonce200:
-      description: "OK"
-      content:
-        application/json:
-          example:
-            nonce: aff157
+    AuthorizationResponseSC302:
+      description: "Found"
+      headers:
+        Location:
           schema:
-            description: generated nonce
-            type: string
+            description: Authz EndpointURL of the Smartcard IDP and query parameters of the authorization request (clientid, response_type, 
+             redirect_uri, state, code_challenge, code_challenge_method, scope and nonce). 
+            type: "string"
+          example: "https://idp-dienst.de/authz?clientid=ePA-Aktensystem007&response_type=code&redirect_uri=http%3A%2F%2Ftest-ps.gematik.de%2Ferezept&state=ABCVDFGHT564&code_challenge=asdrtgasdfdf...5ssdfgaydfg&code_challenge_method=S256&scope=openid+ePA&nonce=BUJ0lOI_YBXxI0wa4YIs8mTlY67lgktQ"
 
     AuthorizationResponseFdV302:
       description: "Found"
       headers:
         Location:
-          description: Authz EndpointURL of the IDP chosen and query parameters client_id, request_uri; e.g. "https://idp-sek.de/authz?client_id=https://epa_fachdienst.de&request_uri=urn:ePAAktensystem007:bwc4JK-ESC0w8acc191e-Y1LTC2"
+          description: Redirect EndpointURL of the RelyingParty (IDP) and query parameters clientid, request_uri and state.
           schema:
             type: "string"
-          example: "https://idp-sek.de/authz?client_id=https://epa_fachdienst.de&request_uri=urn:ePAAktensystem007:bwc4JK-ESC0w8acc191e-Y1LTC2"
+          example: "https://idp-sek.de/authz?clientid=https://epa_fachdienst.de&request_uri=urn:ePAAktensystem007:bwc4JK-ESC0w8acc191e-Y1LTC2&state=abcdgsdfh1234"
 
-    AuthorizationResponseSC302:
-      description: "Found"
-      headers:
-        Location:
-          description: Authz EndpointURL of the Smartcard IDP and query parameters of the authorization request (client_id, response_type, request_uri, state, code_challenge, code_challenge_method, scope and nonce); e.g. "https://idp-dienst.de/authz?client_id=ePA-Aktensystem007&response_type=code&redirect_uri=http%3A%2F%2Ftest-ps.gematik.de%2Ferezept&state=ABCVDFGHT564&code_challenge=asdrtgasdfdf...5ssdfgaydfg&code_challenge_method=S256&scope=openid+ePA&nonce=BUJ0lOI_YBXxI0wa4YIs8mTlY67lgktQ"
-          schema:
-            type: "string"
-          example: "https://idp-dienst.de/authz?client_id=ePA-Aktensystem007&response_type=code&redirect_uri=http%3A%2F%2Ftest-ps.gematik.de%2Ferezept&state=ABCVDFGHT564&code_challenge=asdrtgasdfdf...5ssdfgaydfg&code_challenge_method=S256&scope=openid+ePA&nonce=BUJ0lOI_YBXxI0wa4YIs8mTlY67lgktQ"
-
-    AuthCodeRequest200:
-      description: "OK"
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthCodeResponse'
-
-    AuthCodeRequest403:
-      description: "Forbidden"
+    Error400BadRequest:
+      description: Bad Request
       content:
         application/json:
           example:
-            errorCode: unknownDevice | pendingDevice
-            errorDetail: deviceIdentifier=XYZ; deviceToken=ABC
+            errorCode: malformedRequest
           schema:
             $ref: '#/components/schemas/ErrorType'
 
-    NonceError400BadRequest:
-      description: Bad Request.
+    Error403Forbidden:
+      description: Forbidden.
       content:
         application/json:
           example:
-            errorCode: 'invalid x-clientid'
-            errorDetail: 'The client id sent in the request header is unknown. Please register your client at first.'
+            errorCode: invalAuth
           schema:
             $ref: '#/components/schemas/ErrorType'
-
-    NonceError500InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          example:
-            errorCode: internalError
-          schema:
-            $ref: '#/components/schemas/ErrorType'
-
-    Error500InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          example:
-            errorCode: internalError
-          schema:
-            $ref: '#/components/schemas/ErrorType'
-
-    ARFdVError400BadRequest:
-      description: Bad Request.
-      content:
-        application/json:
-          example:
-            errorCode: 'input parameters invalid'
-            errorDetail: 'check the registered client_id or the Issuer URL of the IDP to use.'
-          schema:
-            $ref: '#/components/schemas/ErrorType'
-
-    ARSCError400BadRequest:
-      description: Bad Request.
-      content:
-        application/json:
-          example:
-            errorCode: 'input parameters invalid'
-            errorDetail: 'check the registered client_id and redirect_uri at the IDP.'
-          schema:
-            $ref: '#/components/schemas/ErrorType'
-
-    ARBEARERError400BadRequest:
-      description: Bad Request.
-      content:
-        application/json:
-          example:
-            errorCode: 'invalid_grant'
-            errorDetail: 'audience validation failed'
-          schema:
-            $ref: '#/components/schemas/ErrorType'
-
+    
     Error404NotFound:
       description: Not found.
       content:
@@ -464,104 +786,126 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorType'
 
+    Error409Conflict:
+      description: Conflict.
+      content:
+        application/json:
+          example:
+            errorCode: statusMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
   schemas:
     UserAgentType:
       description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
       pattern: '^[a-zA-Z0-9]{20}\/[a-zA-Z0-9\-\.]{1,15}$'
       example: CLIENTID1234567890AB/2.1.12-45
-    ClientType:
+    DeviceIdentifierType:
+      description: A device identifier
       type: string
-      description: TODO
-      pattern: '^[A-Z]{1}\d{9}$'
-      example: Z123456789
-    IdpIssType:
+      format: uuid
+      example: 4ab42e19-7d33-40fa-949f-3499135b910b
+    DeviceTokenType:
       type: string
-      description: TODO
-      example: https://idp_kk.de
-    clientAttestType:
+      description: "Device tokens are strings with 64 hexadecimal symbols."
+      example: "fe6b98ac23a3df214612fd089494eb2946589012a94e91ba6ed57f9213ba520a"
+    NonceType:
       type: string
+      description: "A random nonce with 64 hexadecimal symbols "
+      example: "7721435277f5d0137b17ef8b835ca03cf09dc23926aa1766e4f8132433ff37d6"
+    AuthorizationCodeType:
+      description: Authorization code as received from authenticator / IDP
+      type: string
+      maxLength: 2000
+      example: 2435623452hkjlk34t
+    SendAuthCodeSCtype:
+      description: Authorization code and client attestation
+      type: object
+      properties:
+        authorizationCode: 
+          $ref: '#/components/schemas/AuthorizationCodeType' 
+        clientAttest: 
+          $ref: '#/components/schemas/ClientAttestationType'
+      required: 
+        - authorizationCode
+        - clienatAttest
+    SendAuthCodeFdVtype:
+      description: Authorization code
+      type: object
+      properties:
+        authorizationCode: 
+          $ref: '#/components/schemas/AuthorizationCodeType' 
+      required: 
+        - authorizationCode
+      example:
+        authorizationCode: 2435623452hkjlk34t
+    SearchAccessTokenType:
+      description: Search access-token as received from FHIR Directory
+      type: object
+      properties:
+        access_token: 
+          type: string
+          format: application/jwt
+        token_type:
+          type: string
+        expires_in: 
+          type: integer
+      example: 
+        access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.e2lzcyI6Imh0dHBzOi8vZmhpci1kaXJlY3RvcnktdGVzdC52emQudGktZGllbnN0ZS5kZS90aW0tYXV0aGVudGljYXRlIiwiYXVkIjoiaHR0cHM6Ly9maGlyLWRpcmVjdG9yeS10ZXN0LnZ6ZC50aS1kaWVuc3RlLmRlL3NlYWNoIiwic3ViIjoiQGFiY2RlOm1hdHJpeC5kZXYuc2VydmljZS10aS5kZSIsImlhdCI6MTY2NDEyMjY3MywiZXhwIjoxNjY0MjA5MDczfQ.CoTwrZmZJyfVYVJFD068QJNFo0YLemhfPVER_lW5h3MU2hgoiSj1lkD6yDHPDQAs4JJ6PlBWIUHtoGoYAwVOVw"
+        token_type: Bearer
+        expires_in: 86400
+    ClientAttestationType:
+      description: |
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        Content of client attestation</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256" or "PS256"
+          - "x5c": signature certificate c.hci.aut
+        - payload claims:
+          - "iat": issued at timestamp
+          - "nonce": nonce value
+        - signature: contains token signature
+      type: string
+      format: application/jwt
+      pattern: ^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-\+\/=]+)$
+      example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuaGNpLmF1dCJ9.eyJpYXQiOjE3MDY1MzIwNDgsIm5vbmNlIjoiNzcyMTQzNTI3N2Y1ZDAxMzdiMTdlZjhiODM1Y2EwM2NmMDlkYzIzOTI2YWExNzY2ZTRmODEzMjQzM2ZmMzdkNiJ9.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+    BearerTokenType:
+      description: |
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        Content for ePrescription backend bearerToken</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256" 
+          - "x5c": signature certificate c.fd.aut
+        - payload claims:
+          - "type": "ePA-Authentisierung über PKI" (fixed value)
+          - "iat": issued at timestamp
+          - "challenge": freshness parameter (base64 encoded)
+          - "sub": Telematik-ID ePrescription backend
+          - "oid": Role of ePrescription backend (oid_erp-vau)
+        - signature: contains token signature
+      type: object
+      properties:
+        bearerToken:
+          type: string
+          format: application/jwt
+          pattern: ^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-\+\/=]+)$
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuYXV0In0.eyJ0eXBlIjoiZVBBLUF1dGhlbnRpc2llcnVuZyDDvGJlciBQS0kiLCJpYXQiOjE3MDY1MzIwNDgsImNoYWxsZW5nZSI6IllTQmlZWE5sTmpRZ1pXNWpiMlJsWkNCamFHRnNiR1Z1WjJVZ0tHaGxZV3gwYUNCeVpXTnZjbVFnYzNsemRHVnRJSE53WldOcFptbGpJR052Ym5SbGJuUXAiLCJzdWIiOiI5LTg4MzExMDAwMDAxMTExMSIsIm9pZCI6IjEuMi4yNzYuMC43Ni40LjI1OCJ9.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
     ErrorType:
       description: Error object with additional information about the occurred error
-      type: object
-      properties:
-        errorCode:
-          description: Error condition specifier
-          type: string
-        errorDetail:
-          description: Additional details regarding the error condition (if applicable)
-          type: string
-      required:
-        - errorCode
-
-    SearchAccessToken:
-      type: string
-      example: 
-        {
-        "access_token":"MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3",
-        "token_type":"Bearer",
-        "expires_in":86400
-          }
-
-    AuthorizationResponseFdV:
-      description: AuthorizationResponse
-      type: object
-      properties:
-        request_uri:
-          readOnly: true
-          type: string
-          example: urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY22c
-        expires_in:
-          readOnly: true
-          type: number
-          example: 300
-
-    AuthorizationResponse:
-      description: AuthorizationResponse
-      type: object
-      properties:
-        clientid:
-          readOnly: true
-          type: string
-          format: uuid
-        request_uri:
-          readOnly: true
-          type: string
-        state:
-          readOnly: true
-          type: string
-          format: uuid
-        redirectUri:
-          type: string
-          example: https://idpdienst.de/auth
-        codeChallenge:
-          readOnly: true
-          type: string
-          format: uuid
-        codeChallengeMethod:
-          readOnly: true
-          type: string
-          example: S256
-        responseType:
-          readOnly: true
-          type: string
-          format: code
-        nonce:
-          type: string
-          format: uuid
-        scope:
-          type: string
-          example: openid+ePA
-
-    AuthCodeResponse:
-      type: object
-      properties:
-        state:
-          readOnly: true
-          type: string
-          format: uuid
-
-    AuthCodeResponse403:
       type: object
       properties:
         errorCode:

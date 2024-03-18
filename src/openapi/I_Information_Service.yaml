@@ -29,6 +29,9 @@ info:
 
   # version history:
   # ----------------
+  # version 1.0.1
+  #   - Changed statuscode in setUserExperienceResult for missing parameter x-useragent to '400'
+  #   - bugfixes
   # version 1.0.0
   #   - first release version
   # version 0.0.1
@@ -188,7 +191,6 @@ paths:
        |------------|-------------|------------|---------|
        | Successful operation | 200 |||
        | Request does not match schema | 400 | malformedRequest ||
-       | _useragent_ not available | 409 | requestMismatch | parameter _useragent_ is mandatory |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -209,8 +211,6 @@ paths:
           description: Ok. Data collected
         '400':
           $ref: '#/components/responses/Error400BadRequest'
-        '409':
-          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: "#/components/responses/Error500InternalError"
 components:
@@ -278,7 +278,7 @@ components:
           enum: ["permit", "deny"]
           description: "Decision"
       required:
-        - functionid
+        - functionId
         - decision
       example:
         functionId: "medication"
@@ -318,7 +318,6 @@ components:
       required:
         - useCase
         - measurement
-        - userAgent
     ErrorType:
       description: "Error object with additional information about the occurred error"
       type: object

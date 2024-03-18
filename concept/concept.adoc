@@ -35,7 +35,7 @@ endif::[]
 :sectnums:
 
 // :revdate: 30.01.2024
-:revnumber: 3.0
+:revnumber: 3.0.1 RC
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -83,6 +83,18 @@ endif::[]
 |
 |Veröffentlichung
 |gematik
+
+|3.0.1 RC
+|18.03.2024
+|5.6, 8
+|E-Mail-Mgmt über ePA-FdV; Anpassung Legal Policy zwecks Einstellen von Dokumenten durch Kostenträger; Veröffentlichung zur Kommentierung
+|gematik
+
+// |3.0.1
+// |28.03.2024
+// |
+// |Veröffentlichung
+// |gematik
 
 |===
 
@@ -253,7 +265,8 @@ Der Zugang zu einer Akte darf nur erfolgen, wenn der authentifizierte Nutzer bef
 [#_devicemanagement]
 ==== Zugangssteuerung über Geräte
 
-Der Zugang des Versicherten zum ePA-Aktensystem über das ePA-FdV setzt voraus, dass das Gerät des Versicherten durch den *Device Management* Service registriert und verifiziert ist. Wird versucht, mit einem nicht registrierten oder unverifizierten Gerät auf das System zuzugreifen, informiert der Device Management Service, dass die User Session aufgrund der fehlenden Registrierung oder Verifizierung des Geräts geschlossen werden muss. Der *Device Unlock Service* regelt die Verifizierung der Geräte, indem er dem Versicherten einen Aktivierungs-Link per E-Mail zusendet.
+Der Zugang des Versicherten zu einer Akte über das ePA-FdV setzt voraus, dass das Gerät des Versicherten durch den *Device Management* Service registriert und verifiziert ist. Nicht registrierte Geräte können vom *Device Management* Service eine Registrierung erhalten. Die Bestätigung der Registrierung durch den Versicherten erfolgt mittels eines Geräteregistrierungscodes. Dieser wird dem Versicherten per E-Mail zugesendet. Die Verifikation der Geräteregistrierung erfolgt dann jeweils nach jedem Login in das ePA-Aktensystem.
+
 
 [#_zugriffssteuerung]
 === Zugriffssteuerung
@@ -331,6 +344,7 @@ include::chapters/VAU.adoc[]
 include::chapters/entitlement_management.adoc[]
 include::chapters/consent_management.adoc[]
 include::chapters/device_management.adoc[]
+include::chapters/email_management.adoc[]
 include::chapters/audit_event_service.adoc[]
 include::chapters/relocation_service.adoc[]
 endif::[]
@@ -358,7 +372,7 @@ In diesem Kapitel werden technische Konzepte zu verschiedenen Medical Services d
 
 In den folgenden Links werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
 
-link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.0/concept[Dokumentenmanagement (XDS Document Service)]
+link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.0.1/concept[Dokumentenmanagement (XDS Document Service)]
 
 
 [#_versorgungsprozesse]
@@ -366,7 +380,7 @@ link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.0/concept[Dokumenten
 
 Die ePA unterstützt verschiedene Versorgungsprozesse mittels dedizierter Medical Services. Initial unterstützt die Fachanwendung ePA den *digital gestützten Medikationsprozess* (dgMP) durch die Bereitstellung einer Elektronischen Medikationsliste (eML) über einen FHIR Data Service.
 
-link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0/concept[Medikationsprozess (Medication Service)]
+link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0.1/concept[Medikationsprozess (Medication Service)]
 
 
 [#_glossar]

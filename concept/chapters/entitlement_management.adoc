@@ -69,7 +69,7 @@ Die Befugnisse für den Kostenträger, für den E-Rezept-Fachdienst und den Vers
 
 Unter Verwendung der Suche von Leistungserbringerinstitutionen (LEI) über den Verzeichnisdienst *VZD FHIR-Directory* sucht der Versicherte oder ein berechtigter Vertreter zunächst den neu zu befugenden Nutzer (d.h. eine Leistungserbringerinstitution, Institution des Öffentlicher Gesundheitsdienstes oder eine Institution der Arbeits- und Betriebsmedizin). Das *ePA-FdV* erzeugt dann eine neue Befugnis mit der Telematik-ID aus dem *VZD FHIR-Directory* mit der gewünschten Laufzeit und signiert diese mit Hilfe des Signaturdienstes (SigD). Nach erfolgreicher Anmeldung am Aktensystem wird die Befugnis im *Entitlement Management* registriert.
 
-Der Versicherte bzw. ein berechtigter Vertreter kann die Laufzeit der neuen Befugnis flexibel festlegen oder aber eine dauerhafte Gültigkeit wählen. Die Befugnis für eine DiGA gilt immer bis zu deren Entzug.
+Der Versicherte bzw. ein berechtigter Vertreter kann die Laufzeit der neuen Befugnis flexibel festlegen oder aber eine dauerhafte Gültigkeit wählen. Die Befugnis für eine DiGA gilt immer bis zu deren Entzug. Die Laufzeit für Befugnisse der Institutionen des Öffentlichen Gesundheitsdienstes und der Institutionen der Arbeits- und Betriebsmedizin ist auf drei Tage begrenzt und kann vom Versicherten nicht verändert werden.
 
 Fügt ein Vertreter einen Eintrag zum Befugniskontext des Versicherten hinzu, ist für den Namen des Ausstellers im Eintrag des Befugniskontexts der Name des Vertreters anzugeben.
 

@@ -180,14 +180,14 @@ h|Versicherter/ Vertreter
 
 |6
 |patient
-|Gesundheitsdaten, die durch den Versicherten bereit gestellt werden
+|Gesundheitsdaten, die durch den Versicherten bereit gestellt werden oder vom Kostenträger übermittelte, digitalisierte medizinische Informationen in Papierform gemäß § 350a SGB V 
 ^|RD
 ^|R
 ^|R
 ^|R
 ^|R
 ^|R
-^|-
+^|C
 ^|-
 ^|-
 ^|-

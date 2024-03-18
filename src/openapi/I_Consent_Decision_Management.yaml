@@ -39,10 +39,14 @@ info:
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - correction in effect of consent decision 'medication' for oid_versicherter
+  #   - correction of depending consent decision change 'medication' and 'erp-submission'
+  #   - bugfixes
   # version 1.0.0
   #   - first release version
   # version 0.0.1
@@ -92,7 +96,8 @@ paths:
         _functionid_ == _medication_:</br> 
         The change of this decision alters the medication process participation and shall cause special impact 
         for the XDS document service and the Fhir data service. If set to _deny_, no client (any oid) - except 
-        the ePrescription backend (oid_erp-vau) - shall be able to read or write medication related data (locked). 
+        the ePrescription backend, the insurant and representatives (oid_erp-vau, oid_versicherter) - shall be 
+        able to read or write medication related data (locked). 
         Vice versa these clients are unlocked for intented use if decision is set to _permit_. </br>        
           - (a) lock the following data categories if _functionid_ = _medication_ is 
             set to _deny_: 
@@ -102,11 +107,13 @@ paths:
             set to _permit_: 
             - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
             - fhir data service "medication"
+          - (h) set the decision for _erp-submission_ to _permit_ if _functionid_ = _medication_ is 
+            set to _permit_.
 
         _functionid_ == _erp-submission_:</br> 
         The change of this decision shall cause special impact for the XDS document service and the Fhir data service
         and disable the data collection related to the medication process if set to _deny_. 
-        A decision _deny_ also sets the decision for _medication_ to _deny_ implicitly.</br> 
+        A decision change also sets the corresponding decision for _medication_ implicitly.</br> 
           - (c) remove all data from following data category (folder/service) if _functionid_ = _erp-submission_ is 
             set to _deny_:
             - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
@@ -117,6 +124,8 @@ paths:
             set to _permit_.
           - (f) set the decision for _medication_ to _deny_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
             set to _deny_.
+          - (g) set the decision for _medication_ to _permit_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
+            set to _permit_.
 
         If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
 
@@ -141,13 +150,15 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The updated consent decision is stored in SecureDataStorage |in case of (f): both decisions |
-        | Associated data categories are read and write protected for clients | conditional, see (a) |
-        | Associated data categories are read and write enabled for clients | conditional, see (b) |
+        | The updated consent decision is stored in SecureDataStorage |in case of (f), (g), (h): both decisions |
+        | Associated data categories are read and write protected for clients | conditional, see (a), (f) |
+        | Associated data categories are read and write enabled for clients | conditional, see (b), (g) |
         | Associated data categories are empty (all content deleted) | conditional, see (c) |
         | Operations for ePrescription backend (oid_erp-vau) are locked | conditional, see (d) |
-        | Operations for ePrescription backend (oid_erp-vau) are unlocked | conditional, see (e) |
-        | Decision for _medication_ is set to o_deny_| conditional, see (f) |
+        | Operations for ePrescription backend (oid_erp-vau) are unlocked | conditional, see (e), (h) |
+        | Decision for _medication_ is set to _deny_| conditional, see (f) |
+        | Decision for _medication_ is set to _permit_| conditional, see (g) |
+        | Decision for _erp-submission_ is set to _permit_| conditional, see (h) |
         | The Information Service has updated consent decisions | conditional, if functions of class "healthCareProcess" are changed |
         | An email is sent to the insurant | success case with change of consent only |
         | A log-entry for the operation exists | all operation results |
@@ -251,7 +262,7 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
-  /epa/basic/api/v1/consents/:
+  /epa/basic/api/v1/consents:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
@@ -387,9 +398,7 @@ components:
       required:
         - decision
       example:
-          summary: Deny decision
-          value:
-            decision: "deny"
+        decision: "deny"
     ConsentDecisionsResponseType:
       description: "Consent Decisions Response"
       type: object

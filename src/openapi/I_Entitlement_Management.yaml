@@ -41,10 +41,14 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - deleteEntitlement: representative allowed to delete own entitlement
+  #   - validTo changed from date to date-time
+  #   - removed orphaned components
   # version 1.0.0
   #   - first release version
   # version 0.0.1
@@ -95,6 +99,15 @@ tags:
      - ombuds office (actorId == registered telematik-id of ombuds office)
      - insurance (actorId == registered telematik-id of health insurance)
 
+     The _validTo_ attribute:</br>
+     _validTo_ shall be set to the end of the last day of the desired validity referring the
+     german timezone./br>
+     example: _validTo_ of an entitlement with end of validity equal the next but one day issued at 2025-01-01 (any point in time)
+     shall be 2025-01-03T22:59:59Z or 2025-01-03T23:59:59+01:00 (MEZ) and if issued at 2025-07-01 (any point in time)
+     2025-07-03T21:59:59Z or 2025-07-03T23:59:59+02:00 (MESZ)
+
+     _validTo_ for temporary unlimited entitlements shall be 9999-12-31T00:00:00Z 
+
   - name: Entitlements
     description: |
      **for clients of health care institutions (all non-ePA-FdV)**
@@ -129,7 +142,11 @@ tags:
 
      Calculating the _validTo_ attribute:</br>
      _validTo_ = currentDate + default validity -1</br>
-     example: _validTo_ for oid_öffentliche_apotheke of an entitlement issued at 2025-01-01 is 2025-01-03.
+     The _validTo_ point in time is intended as 'end of day' of the resulting date referring the
+     german timezone.</br>
+     example: _validTo_ for oid_öffentliche_apotheke of an entitlement issued at 2025-01-01 (any point in time)
+     is 2025-01-03T22:59:59Z or 2025-01-03T23:59:59+01:00 (MEZ) and if issued at 2025-07-01 (any point in time)
+     2025-07-03T21:59:59Z or 2025-07-03T23:59:59+02:00 (MESZ)
 
   - name: UserBlocking
     description: |
@@ -272,11 +289,11 @@ paths:
        This operation is limited to entitled users of role oid_versicherter.
 
        **Client**:</br>
-       A client shall apply a date of 9999-21-31 to the _validTo_ claim of a request for unlimited 
+       A client shall apply a date-time of 9999-12-31T00:00:00.000Z to the _validTo_ claim of a request for unlimited 
        entitlements.</br>
-       A client shall (mandatory) apply a date of 9999-21-12 to the _validTo_ claim of a request if the 
+       A client shall (mandatory) apply a date-time of 9999-12-31T00:00:00Z to the _validTo_ claim of a request if the 
        entitlement addresses a user identified by a kvnr (representative).</br>
-       A client shall (mandatory) apply a date of 9999-21-12 to the _validTo_ claim of a request if the 
+       A client shall (mandatory) apply a date-time of 9999-12-31T00:00:00Z to the _validTo_ claim of a request if the 
        entitlement addresses a DiGA (oid_diga).</br>
        A client shall (mandatory) apply an email address for notification and device registration if the 
        entitlement addresses a user identified by a kvnr (representative).</br>
@@ -303,8 +320,8 @@ paths:
 
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - request claims _actorId_ which is _actorId_ of a static entitlement
-       - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-31-12
-       - request claims _oid_ == oid_diga and _validTo_ is not equal 9999-31-12
+       - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-12-31T00:00:00Z
+       - request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z
        - request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request
@@ -331,8 +348,8 @@ paths:
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | invalidActorId ||
-       | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-31-12| 409 | requestMismatch ||
-       | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-31-12| 409 | requestMismatch ||
+       | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
+       | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | blockedActorId ||
        | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant| 409 | requestMismatch ||
        | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request| 409 | noMail ||
@@ -462,14 +479,15 @@ paths:
         This operation is limited to entitled users of role oid_versicherter.        
 
         **Client**:</br>
-        The client shall not delete its own entitlement.
+        The client shall not delete static entilements. The client of a representative shall not delete 
+        entitlements of other representatives.
 
         **Provider**:</br>
         The addressed entitlement shall be finally removed from the SecureAdminStorage.</br>
-        The requestor shall not delete its own entitlement.</br>
         Deletion of entitlements addressing a kvnr (actorId = kvnr, oid = oid_versicherter) shall only be
-        successful if requestor is the insurant (kvnr == health record identifier), i.e.
-        a representative shall not delete entitlements of representatives.</br>
+        successful if requestor is the insurant (kvnr == health record identifier) or the entitled 
+        representative (actorid == kvnr of requestor), i.e. a representative shall not delete entitlements 
+        of other representatives.</br>
         Deletion of static entitlements shall not be successful.
 
         Deleting an entitlement of a representative:</br>
@@ -482,8 +500,7 @@ paths:
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
-        | Requestor is representative deleting a representative entitlement | 403 | accessDenied ||
-        | Requestor is deleting requestor's entitlement | 403 | accessDenied ||
+        | Requestor is representative deleting an entitlement of another representative  | 403 | accessDenied ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
         | Entitlement to delete does not exist | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
@@ -898,14 +915,6 @@ components:
             errorCode: malformedRequest
           schema:
             $ref: '#/components/schemas/ErrorType'
-    Error401Unauthorized:
-      description: Unauthorized.
-      content:
-        application/json:
-          example:
-            errorCode: invalSignature
-          schema:
-            $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
       content:
@@ -1050,7 +1059,7 @@ components:
           - "actorId": Telematik-Id or KVNR
           - "oid": value of professionOID
           - "displayName": name according to actorId
-          - "validTo": Expiry date of entitlement in format YYYY-MM-DD
+          - "validTo": Expiry date-time of entitlement in format according to rfc3339
         - signature contains token signature
         Content for PS originated entitlements:</br>
         - protected_header contains:
@@ -1094,10 +1103,10 @@ components:
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
         validTo:
-          description: Last day of validity
+          description: End of validity
           type: string
-          format: date
-          example: 2025-12-31
+          format: date-time
+          example: 2025-12-31T23:59:59+01:00
         issued:
           type: object
           required:
@@ -1179,7 +1188,7 @@ components:
           - actorId: 2-883110000092419
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Hillary Gräfin Münchhausen'
-            validTo: 2025-12-07
+            validTo: 2025-12-07T22:59:59Z
             issued:
               at: 2025-10-01T14:00:00Z
               actorId: X999999999
@@ -1187,7 +1196,7 @@ components:
           - actorId: 1-883110000092404
             oid: 1.2.276.0.76.4.53
             displayName: 'Krankenhaus St. Johannes'
-            validTo: 2025-12-07
+            validTo: 2025-12-07T22:59:59Z
             issued:
               at: 2025-10-02T14:01:00Z
               actorId: X999999999
@@ -1195,7 +1204,7 @@ components:
           - actorId: 2-883110000092417
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
-            validTo: 2025-11-01
+            validTo: 2025-11-01T22:59:59Z
             issued:
               at: 2025-10-03T14:02:00Z
               actorId: X999999999
@@ -1203,7 +1212,7 @@ components:
           - actorId: 3-883110000092471
             oid: 1.2.276.0.76.4.54
             displayName: 'Arminius Apotheke'
-            validTo: 2025-10-06
+            validTo: 2025-10-06T22:59:59Z
             issued:
               at: 2025-10-04T14:03:00Z
               actorId: X999999999
@@ -1211,7 +1220,7 @@ components:
           - actorId: 4-883110000094346
             oid: 1.2.276.0.76.4.52
             displayName: 'Psychotherapeutische Praxis Swantje Freifrau Dômbrowski'
-            validTo: 2025-11-11
+            validTo: 2025-11-11T22:59:59Z
             issued:
               at: 2025-10-05T14:04:00Z
               actorId: X110434370
@@ -1219,7 +1228,7 @@ components:
           - actorId: 3-88311000009248
             oid: 1.2.276.0.76.4.54
             displayName: 'Paracelsius Apotheke'
-            validTo: 2025-10-08
+            validTo: 2025-10-08T22:59:59Z
             issued:
               at: 2025-10-06T14:05:00Z
               actorId: X110434370
@@ -1227,7 +1236,7 @@ components:
           - actorId: X110434370
             oid: 1.2.276.0.76.4.49
             displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-            validTo: 9999-12-31
+            validTo: 9999-12-31T00:00:00Z
             issued:
               at: 2025-01-01T23:00:00Z
               actorId: X999999999
@@ -1243,7 +1252,7 @@ components:
           - actorId: 2-883110000092417
             oid: 1.2.276.0.76.4.51
             displayName: 'Zahnarztpraxis Dr. Marie-Ella Blankenbergç'
-            validTo: 2025-11-01
+            validTo: 2025-11-01T22:59:59Z
             issued:
               at: 2025-10-03T14:02:00Z
               actorId: X999999999
@@ -1251,7 +1260,7 @@ components:
           - actorId: 3-883110000092471
             oid: 1.2.276.0.76.4.54
             displayName: 'Arminius Apotheke'
-            validTo: 2025-10-06
+            validTo: 2025-10-06T22:59:59Z
             issued:
               at: 2025-10-04T14:03:00Z
               actorId: X999999999
@@ -1267,7 +1276,7 @@ components:
           - actorId: 3-883110000092471
             oid: 1.2.276.0.76.4.54
             displayName: 'Arminius Apotheke'
-            validTo: 2025-10-06
+            validTo: 2025-10-06T22:59:59Z
             issued:
               at: 2025-10-04T14:03:00Z
               actorId: X999999999
@@ -1283,7 +1292,7 @@ components:
           - actorId: 3-883110000092471
             oid: 1.2.276.0.76.4.54
             displayName: 'Arminius Apotheke'
-            validTo: 2025-10-06
+            validTo: 2025-10-06T22:59:59Z
             issued:
               at: 2025-10-04T14:03:00Z
               actorId: X999999999
@@ -1291,7 +1300,7 @@ components:
           - actorId: 3-88311000009248
             oid: 1.2.276.0.76.4.54
             displayName: 'Paracelsius Apotheke'
-            validTo: 2025-10-08
+            validTo: 2025-10-08T22:59:59Z
             issued:
               at: 2025-10-06T14:05:00Z
               actorId: X110434370
@@ -1299,19 +1308,19 @@ components:
     Set_SingleEntitlementRepresentative:
       summary: Entitlement representative.
       value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IlgxMTA0MzQzNzAiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC40OSIsImRpc3BsYXlOYW1lIjoiU2ltb24gdm9uIETDvHN0ZXJiZWhuLUhhcmRlbmJlcmdzaGF1c2VuIiwidmFsaWRUbyI6Ijk5OTktMTItMzEifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IlgxMTA0MzQzNzAiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC40OSIsImRpc3BsYXlOYW1lIjoiU2ltb24gdm9uIETDvHN0ZXJiZWhuLUhhcmRlbmJlcmdzaGF1c2VuIiwidmFsaWRUbyI6Ijk5OTktMTItMzFUMDA6MDA6MDBaIn0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
         email: simon@example.com
     Set_SingleEntitlementPharmacy:
       summary: Entitlement pharmacy.
       value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IjMtODgzMTEwMDAwMDkyNDcxIiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuNTQiLCJkaXNwbGF5TmFtZSI6IkFybWluaXVzIEFwb3RoZWtlIiwidmFsaWRUbyI6IjIwMjUtMTAtMDYifQ==.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=='
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJYOTk5OTk5OTk5IiwiYWN0b3JpZCI6IjMtODgzMTEwMDAwMDkyNDcxIiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuNTQiLCJkaXNwbGF5TmFtZSI6IkFybWluaXVzIEFwb3RoZWtlIiwidmFsaWRUbyI6IjIwMjUtMTAtMDZUMjI6NTk6NTlaIn0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
     Response_SingleEntitlementRepresentative:
       summary: Entitlement representative.
       value:
           actorId: X110434370
           oid: 1.2.276.0.76.4.49
           displayName: 'Simon von Düsterbehn-Hardenbergshausen'
-          validTo: 9999-12-31
+          validTo: 9999-12-31T00:00:00Z
           issued:
             at: 2025-01-01T23:00:00Z
             actorId: X999999999
@@ -1322,7 +1331,7 @@ components:
         actorId: 3-883110000092471
         oid: 1.2.276.0.76.4.54
         displayName: 'Arminius Apotheke'
-        validTo: 2025-10-06
+        validTo: 2025-10-06T22:59:59Z
         issued:
           at: 2025-10-04T14:03:00Z
           actorId: X999999999

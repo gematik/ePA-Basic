@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.0.3
 info:
   title: I_Test_Driver_FdV
   description: REST Test Interface for the Insurant´s User Frontend (FdV)
@@ -19,30 +19,32 @@ servers:
           - https
         default: https
       host:
-        default: 'localhost'
+        default: localhost
       port:
         default: '443'
       api:
-        default: 'fdv-testdriver'
+        default: fdv-testdriver
 tags:
   - name: Login / Logout
-    description:  starts or ends a user session
+    description: 'starts or ends a user session'
   - name: Entitle Management
-    description:  list, update, add or remove entitlements, list or configure the blocked user policy
+    description: 'list, update, add or remove entitlements, list or configure the blocked user policy'
   - name: Consent Decision Management
-    description: list or update entries the consent decision management
+    description: 'list or update entries the consent decision management'
   - name: Constraint Management
-    description: list, add or remove the general deny policy and the user-specific deny policy resp.
+    description: 'list, add or remove the general deny policy and the user-specific deny policy resp.'
   - name: Device Management
-    description: list, add or remove devices registered for a user
+    description: 'list, add or remove devices registered for a user'
   - name: Medication
-    description: list medications
+    description: 'list medications'
   - name: Audit Event
-    description: list audit events
+    description: 'list audit events'
   - name: XDS Document
-    description: list, retrieve, add or remove documents, folders, update metadata
+    description: 'list, retrieve, add or remove documents, folders, update metadata'
   - name: Directory
-    description: search for LEI or DIGA at FHIR-VZD
+    description: 'search for LEI or DIGA at FHIR-VZD'
+  - name: Email Address Management
+    description: 'list, add or remove email addresses of an insurant'
 paths:
   /epa/testdriver/api/v1/login:
     get:
@@ -66,7 +68,7 @@ paths:
       tags:
         - Login / Logout
       summary: Logout user session
-      description: 'The currently established user session is stopped.'
+      description: The currently established user session is stopped.
       operationId: logout
       parameters:
         - $ref: '#/components/parameters/fqdn'
@@ -81,7 +83,7 @@ paths:
     post:
       tags:
         - XDS Document
-      summary: 'Store documents in health record'
+      summary: Store documents in health record
       description: 'This operation executes the use case "Store Documents" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: storeDocuments
       requestBody:
@@ -111,7 +113,7 @@ paths:
             examples:
               example-1:
                 value:
-                  recordId: 'Z123456789'
+                  recordId: Z123456789
                   queryMetadata:
                     XDSSubmissionSetEntryUUID:
                       - string
@@ -255,12 +257,12 @@ paths:
     get:
       tags:
         - XDS Document
-      summary: 'Download documents from health record'
+      summary: Download documents from health record
       description: 'This operation executes the use case "Download documents" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId. The documents to download are referenced by their id, found before by finddocuments.'
       operationId: retrieveDocuments
       parameters:
         - $ref: '#/components/parameters/_recordId'
-        - $ref: '#/components/parameters/objectSelector'
+        - $ref: '#/components/parameters/objectSelectorList'
       responses:
         default:
           description: default response
@@ -268,17 +270,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RetrieveDocumentsResponseDTO'
+  /epa/testdriver/api/v1/replaceDocument:
+    post:
+      tags:
+        - XDS Document
+      summary: Replace document
+      description: 'This operation executes the use case "Replace document" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
+      operationId: replaceDocument
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceDocumentRequestDTO'
+      responses:
+        default:
+          description: default response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDTO'
+  /epa/testdriver/api/v1/updateMetadata:
+    post:
+      tags:
+        - XDS Document
+      summary: Updates the meta data of documents
+      description: 'This operation executes the use case "Update meta data" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
+      operationId: updateMetadata_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMetadataRequestDTO'
+      responses:
+        default:
+          description: default response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDTO'
   /epa/testdriver/api/v1/objects:
     delete:
       tags:
         - XDS Document
-      summary: 'Delete documents or folders in the health record'
+      summary: Delete documents or folders in the health record
       description: 'This operation executes the use case "Delete documents" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId. The documents to delete are referenced by their id, found before by finddocuments.'
       operationId: deleteObjects
       parameters:
         - $ref: '#/components/parameters/_recordId'
         - $ref: '#/components/parameters/objectType'
-        - $ref: '#/components/parameters/objectSelector'
+        - $ref: '#/components/parameters/objectSelectorList'
       responses:
         default:
           description: default response
@@ -291,30 +331,30 @@ paths:
       tags:
         - Directory
       summary: Search for organization at FHIR-VZD
-      description: 'This operation executes a search for an organization at the FHIR-VZD in an existing user session.'
+      description: This operation executes a search for an organization at the FHIR-VZD in an existing user session.
       operationId: find
       parameters:
         - $ref: '#/components/parameters/vzdOrgType'
         - $ref: '#/components/parameters/vzdOrgName'
         - $ref: '#/components/parameters/vzdOrgAlias'
       responses:
-        200:
+        '200':
           description: A list of resources
           content:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OrganizationList'
         default:
-          description: 'NOK'
+          description: NOK
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
-  /epa/testdriver/api/v1/entitlementmanagement:
+  /epa/testdriver/api/v1/entitlements:
     get:
       tags:
         - Entitle Management
-      summary: Get a list of all granted entitlements, their related user and validity period
+      summary: 'Get a list of all granted entitlements, their related user and validity period'
       description: 'This operation executes the use case "List all Entitlements" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getEntitlementList
       parameters:
@@ -329,7 +369,7 @@ paths:
     post:
       tags:
         - Entitle Management
-      summary: Add a new entitlement for an institution or a representative
+      summary: 'Add a new or update an existing entitlement for an institution or a representative identified by displayname, telematikId or insurantId'
       description: 'This operation executes the use case "Add a new entitlement" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId.'
       operationId: postEntitlement
       requestBody:
@@ -347,6 +387,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PostEntitlementResponseDTO'
+  '/epa/testdriver/api/v1/entitlements/{actorId}':
+    parameters:
+      - in: path
+        name: actorId
+        schema:
+          $ref: '#/components/schemas/ActorIdType'
+        required: true
     delete:
       tags:
         - Entitle Management
@@ -354,7 +401,6 @@ paths:
       description: 'This operation executes the use case "Delete an Entitlement" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId.'
       parameters:
         - $ref: '#/components/parameters/_recordId'
-        - $ref: '#/components/parameters/actorId'
       responses:
         default:
           description: default response
@@ -362,11 +408,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
-  /epa/testdriver/api/v1/entitlementmanagement/blockedUser:
+  /epa/testdriver/api/v1/blockedUsers:
     get:
       tags:
         - Entitle Management
-      summary: Get a list of all blocked users and institutions, their related user and validity period
+      summary: 'Get a list of all blocked users and institutions, their related user and validity period'
       description: 'This operation executes the use case "List all blocked users" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getBlockedUserList
       parameters:
@@ -378,10 +424,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetBlockedUserListResponseDTO'
-    post:
+  '/epa/testdriver/api/v1/blockedUsers/{telematikId}':
+    parameters:
+      - in: path
+        name: telematikId
+        schema:
+          $ref: '#/components/schemas/TelematikIdType'
+        required: true
+    put:
       tags:
         - Entitle Management
-      summary: 'Add a new blocked user'
+      summary: Add a new or update an existing blocked user identified by telematikId
       description: 'This operation executes the use case "Add a new blocked user" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId.'
       operationId: postBlockedUser
       requestBody:
@@ -389,7 +442,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostBlockedUserRequestDTO'
+              $ref: '#/components/schemas/PutBlockedUserRequestDTO'
       responses:
         default:
           description: default response
@@ -404,7 +457,6 @@ paths:
       description: 'This operation executes the use case "Delete an existing entry for a blocked user" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId.'
       parameters:
         - $ref: '#/components/parameters/_recordId'
-        - $ref: '#/components/parameters/telematikId'
       responses:
         default:
           description: default response
@@ -416,7 +468,7 @@ paths:
     get:
       tags:
         - Consent Decision Management
-      summary: 'Get a list of all user decision regarding a particular consent related function of a personal health record.'
+      summary: Get a list of all user decision regarding a particular consent related function of a personal health record.
       description: 'This operation executes the use case "List all current consent decisions" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getConsentDecisionList
       parameters:
@@ -428,11 +480,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetConsentDecisionListResponseDTO'
-  /epa/testdriver/api/v1/consentDecision/{functionid}:
+  '/epa/testdriver/api/v1/consentDecision/{functionid}':
     put:
       tags:
         - Consent Decision Management
-      summary: 'Update an entry of an user decision regarding a particular consent related function of a personal health record.'
+      summary: Update an entry of an user decision regarding a particular consent related function of a personal health record.
       description: 'This operation executes the use case "Update a consent decisions" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: putConsentDecision
       parameters:
@@ -454,11 +506,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
-  /epa/testdriver/api/v1/constraintManagement:
+  /epa/testdriver/api/v1/constraints:
     get:
       tags:
         - Constraint Management
-      summary: 'Get a combined list of actual set assignments of the general deny policy and the user-specific deny policy of a personal health record.'
+      summary: Get a combined list of actual set assignments of the general deny policy and the user-specific deny policy of a personal health record.
       description: 'This operation executes the use case "List all current constraints" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getConstraints
       parameters:
@@ -473,7 +525,7 @@ paths:
     post:
       tags:
         - Constraint Management
-      summary: 'Set a new assignment for a deny policy (general or user-specific) for a personal health record.'
+      summary: Set a new assignment for a deny policy (general or user-specific) for a personal health record.
       description: 'This operation executes the use case "Add a new deny policy" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: postConstraints
       requestBody:
@@ -489,6 +541,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseDTO'
+  '/epa/testdriver/api/v1/constraints/{assignmentId}':
+    parameters:
+      - in: path
+        name: assignmentId
+        schema:
+          $ref: '#/components/schemas/AssignmentIdType'
+        required: true
     delete:
       tags:
         - Constraint Management
@@ -497,7 +556,6 @@ paths:
       operationId: deleteConstraint
       parameters:
         - $ref: '#/components/parameters/_recordId'
-        - $ref: '#/components/parameters/assignmentId'
       responses:
         default:
           description: default response
@@ -509,8 +567,8 @@ paths:
     get:
       tags:
         - Device Management
-      summary: 'Get a list of all devices registered for a user (associated to kvnr of requestor).'
-      description: 'This operation executes the use case "List all registered devices" in an existing user session.'
+      summary: Get a list of all devices registered for a user (associated to kvnr of requestor).
+      description: This operation executes the use case "List all registered devices" in an existing user session.
       operationId: getRegisteredDevices
       responses:
         default:
@@ -519,11 +577,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetRegisteredDevicesResponseDTO'
-  /epa/testdriver/api/v1/devicemanagement/{deviceidentifier}:
+  '/epa/testdriver/api/v1/devicemanagement/{deviceidentifier}':
     put:
       tags:
         - Device Management
-      summary: 'Add a new device as registered devices for a user (associated to kvnr of requestor).'
+      summary: Add a new device as registered devices for a user (associated to kvnr of requestor).
       description: 'This operation executes the use case "Add a registered device" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: putRegisteredDevice
       parameters:
@@ -548,7 +606,7 @@ paths:
     delete:
       tags:
         - Device Management
-      summary: 'Delete a registered devices for a user (associated to kvnr of requestor).'
+      summary: Delete a registered devices for a user (associated to kvnr of requestor).
       description: 'This operation executes the use case "Delete a registered device" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: deleteRegisteredDevice
       parameters:
@@ -568,7 +626,7 @@ paths:
     get:
       tags:
         - Medication
-      summary: 'Get a medication list of a personal health record as FHIR objects. Implementation is optional as explained in A_24947*.'
+      summary: Get a medication list of a personal health record as FHIR objects. Implementation is optional as explained in A_24947*.
       description: 'This operation executes the use case "List all medications" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getMedicationListAsFHIRJson
       parameters:
@@ -582,68 +640,49 @@ paths:
         - $ref: '#/components/parameters/_code'
         - $ref: '#/components/parameters/_status'
       responses:
-        200:
+        default:
           description: A list of resources
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/MedicationList'
-        default:
-          description: 'NOK'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
+                $ref: '#/components/schemas/GetMedicationResponseDTO'
   /epa/testdriver/api/v1/medication/render/eml/xhtml:
     get:
       tags:
         - Medication
-      summary: 'Get a medication list (eML) rendered in xHTML of a personal health record.'
+      summary: Get a medication list (eML) rendered in xHTML of a personal health record.
       description: 'This operation executes the use case "List all medications" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getMedicationListAsXhtml
       parameters:
         - $ref: '#/components/parameters/_recordId'
       responses:
-        200:
-          description: 'OK'
-          content:
-            text/html:
-              schema:
-                type: string
         default:
-          description: 'NOK'
+          description: eML as XHTML
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseDTO'
+                $ref: '#/components/schemas/GetMedicationListAsXhtmlResponseDTO'
   /epa/testdriver/api/v1/medication/render/eml/pdf:
     get:
       tags:
         - Medication
-      summary: 'Get a medication list (eML) rendered as PDF of a personal health record.'
+      summary: Get a medication list (eML) rendered as PDF/A of a personal health record.
       description: 'This operation executes the use case "List all medications" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getMedicationListAsPdf
       parameters:
         - $ref: '#/components/parameters/_recordId'
       responses:
-        200:
-          description: 'OK'
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
         default:
-          description: 'NOK'
+          description: eML as PDF/A
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseDTO'
+                $ref: '#/components/schemas/GetMedicationListAsPdfResponseDTO'
   /epa/testdriver/api/v1/audit:
     get:
       tags:
         - Audit Event
-      summary: 'Get an audit event list of a personal health record as FHIR objects.'
+      summary: Get an audit event list of a personal health record as FHIR objects.
       description: 'This operation executes the use case "List Audit Events" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId". The Audit Events provided by the health record system are delivered.'
       operationId: getAuditEventListAsFHIRJson
       parameters:
@@ -652,59 +691,97 @@ paths:
         - $ref: '#/components/parameters/auditSince'
         - $ref: '#/components/parameters/auditUntil'
       responses:
-        200:
+        default:
           description: A list of resources
           content:
             application/fhir+json:
               schema:
-                $ref: '#/components/schemas/AuditEventList'
-        default:
-          description: 'NOK'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
+                $ref: '#/components/schemas/GetAuditEventResponseDTO'
   /epa/testdriver/api/v1/audit/render/eml/xhtml:
     get:
       tags:
         - Audit Event
-      summary: 'Get an audit event rendered in xHTML of a personal health record.'
+      summary: Get an audit event rendered in xHTML of a personal health record.
       description: 'This operation executes the use case "List all medications" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getAuditEventListAsXhtml
       parameters:
         - $ref: '#/components/parameters/_recordId'
       responses:
-        200:
-          description: 'OK'
-          content:
-            text/html:
-              schema:
-                type: string
         default:
-          description: 'NOK'
+          description: audit event list as XHTML
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseDTO'
+                $ref: '#/components/schemas/GetAuditEventListAsXhtmlResponseDTO'
   /epa/testdriver/api/v1/audit/render/eml/pdf:
     get:
       tags:
         - Audit Event
-      summary: 'Get an audit event list rendered as PDF of a personal health record.'
+      summary: Get an audit event list rendered as PDF/A of a personal health record.
       description: 'This operation executes the use case "List all audit events" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
       operationId: getAuditEventListAsPdf
       parameters:
         - $ref: '#/components/parameters/_recordId'
       responses:
-        200:
-          description: 'OK'
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
         default:
-          description: 'NOK'
+          description: audit event list as PDF/A
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAuditEventListAsPdfResponseDTO'
+  /epa/testdriver/api/v1/emails:
+    get:
+      tags:
+        - Email Address Management
+      summary: Get a list of all email addresses
+      description: Get a list of actual email addresses of an insurant
+      operationId: getEmailAddresses
+      parameters:
+        - $ref: '#/components/parameters/_recordId'
+      responses:
+        default:
+          description: list of email addresses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEmailResponseDTO'
+    post:
+      tags:
+        - Email Address Management
+      summary: Set a single email address
+      operationId: setEmailAddress
+      parameters:
+        - $ref: '#/components/parameters/_recordId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostEmailRequestDTO'
+      responses:
+        default:
+          description: response with an email address identifier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostEmailResponseDTO'
+  /epa/testdriver/api/v1/emails/{identifier}:
+    parameters:
+      - in: path
+        name: identifier
+        schema:
+          $ref: '#/components/schemas/EmailIdentifierType'
+        required: true
+    delete:
+      tags:
+        - Email Address Management
+      summary: Delete an email address
+      operationId: deleteEmailAddress
+      parameters:
+        - $ref: '#/components/parameters/_recordId'
+      responses:
+        default:
+          description: default response
           content:
             application/json:
               schema:
@@ -712,7 +789,7 @@ paths:
   /epa/testdriver/api/v1/productinformation:
     get:
       summary: Get Product Information
-      description: 'The Operation provides a list of product information.'
+      description: The Operation provides a list of product information.
       operationId: getProductInformation
       responses:
         default:
@@ -721,51 +798,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductInformationResponseDTO'
-  /epa/testdriver/api/v1/updateMetadata:
-    post:
-      tags:
-        - XDS Document
-      summary: 'Updates the meta data of documents'
-      description: 'This operation executes the use case "Update meta data" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
-      operationId: updateMetadata_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMetadataRequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
-  /epa/testdriver/api/v1/replaceDocument:
-    post:
-      tags:
-        - XDS Document
-      summary: Replace document
-      description: 'This operation executes the use case "Replace document" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
-      operationId: replaceDocument
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReplaceDocumentRequestDTO'
-      responses:
-        default:
-          description: default response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseDTO'
 components:
-
   parameters:
     _recordId:
       name: recordId
       in: query
-      description: 'Determines optionally the health record for the operation'
+      description: Determines optionally the health record for the operation
       schema:
         $ref: '#/components/schemas/KvnrType'
     _count:
@@ -847,7 +885,7 @@ components:
     vzdOrgAlias:
       name: alias
       in: query
-      description: Alternate name that the organization is known as, or was known as in the past
+      description: 'Alternate name that the organization is known as, or was known as in the past'
       schema:
         type: string
     auditSinceLastLogin:
@@ -859,94 +897,94 @@ components:
     auditSince:
       name: since
       in: query
-      description: 'Audit events since the specific date. Can be used in combination with "until" query parameter'
+      description: Audit events since the specific date. Can be used in combination with "until" query parameter
       schema:
         type: string
         format: date-time
     auditUntil:
       name: until
       in: query
-      description: 'Audit events until the specific date. Can be used in combination with "since" query parameter'
+      description: Audit events until the specific date. Can be used in combination with "since" query parameter
       schema:
         type: string
         format: date-time
     objectType:
       name: objectType
       in: query
-      description: 'What type of values to filter on'
+      description: What type of values to filter on
       required: true
       schema:
         type: string
-        enum: [ document, staticFolder, dynamicFolder ]
+        enum:
+          - document
+          - folder
         default: document
-    objectSelector:
+    objectSelectorList:
       name: object
       in: query
-      description: 'Select objects identified by title or unique entry uuid'
+      description: 'Select a list of objects identified by title, entry uuid or unique id'
       required: true
       schema:
         type: array
         minItems: 1
         uniqueItems: true
         items:
-          type: string
+          $ref: '#/components/schemas/ObjectSelectorItem'
     insurantId:
       name: insurantId
       in: query
-      description: 'Determines optionally the user used to establish the user session'
+      description: Determines optionally the user used to establish the user session
       schema:
         $ref: '#/components/schemas/KvnrType'
     fqdn:
       name: fqdn
       in: query
-      description: 'Determines optionally the FQDN of Access Gateway'
+      description: Determines optionally the FQDN of Access Gateway
       schema:
         type: string
     actorId:
       name: actorId
       in: query
       required: true
-      description: 'Selected actor id to execute the operation'
+      description: Selected actor id to execute the operation
       schema:
         $ref: '#/components/schemas/ActorIdType'
     telematikId:
       name: telematikId
       in: query
       required: true
-      description: 'Selected telematik id to execute the operation'
+      description: Selected telematik id to execute the operation
       schema:
         $ref: '#/components/schemas/TelematikIdType'
     assignmentId:
       name: assignmentId
       in: query
       required: true
-      description: 'Selected assignment id to execute the operation'
+      description: Selected assignment id to execute the operation
       schema:
         $ref: '#/components/schemas/AssignmentIdType'
-
   schemas:
-  #requestBodies:
     RequestDTO:
-      description: 'Determines optionally the health record for the operation'
+      description: Determines optionally the health record for the operation
       type: object
       properties:
         recordId:
           $ref: '#/components/schemas/KvnrType'
     PostEntitlementRequestDTO:
-      description: 'In case of ambiguous display names the telematikId is given'
+      description: In case of ambiguous display names the telematikId is given
       allOf:
-      - $ref: '#/components/schemas/RequestDTO'
-      - type: object
-        required:
-          - hci
-          - validTo
-        properties:
-          hci:
-            anyOf:
-              - $ref: '#/components/schemas/DisplayNameType'
-              - $ref: '#/components/schemas/TelematikIdType'
-          validTo:
-            $ref: '#/components/schemas/DateType'
+        - $ref: '#/components/schemas/RequestDTO'
+        - type: object
+          required:
+            - hci
+            - validTo
+          properties:
+            hci:
+              anyOf:
+                - $ref: '#/components/schemas/DisplayNameType'
+                - $ref: '#/components/schemas/TelematikIdType'
+            validTo:
+              $ref: '#/components/schemas/DateTimeType'
     PostEntitlementRequestRepDTO:
       allOf:
         - $ref: '#/components/schemas/RequestDTO'
@@ -960,14 +998,11 @@ components:
             email:
               type: string
               format: email
-              example: "name@example.com"
-    PostBlockedUserRequestDTO:
+              example: name@example.com
+    PutBlockedUserRequestDTO:
       allOf:
         - $ref: '#/components/schemas/RequestDTO'
-        - type: object
-          properties:
-            assignment:
-              $ref: '#/components/schemas/Assignment'
+        - $ref: '#/components/schemas/OidAndDisplayname'
     PutConsentDecisionRequestDTO:
       allOf:
         - $ref: '#/components/schemas/RequestDTO'
@@ -985,7 +1020,7 @@ components:
             - denyPolicy
           properties:
             denyPolicy:
-              $ref: '#/components/schemas/DenyPolicy'
+              $ref: '#/components/schemas/DenyPolicyAssignmentType'
     PutRegisteredDeviceRequestDTO:
       allOf:
         - type: object
@@ -1027,7 +1062,7 @@ components:
                 - GetSubmissionSetAndContents
                 - GetFoldersForDocument
                 - GetFolderAndContents
-              description: 'optional; if no stored query is set, the FdV has to choose an appropiate one according to the given search parameters.'
+              description: 'optional; if no stored query is set, the FdV has to choose an appropriate one according to the given search parameters.'
             returnType:
               type: string
               enum:
@@ -1039,29 +1074,34 @@ components:
         - $ref: '#/components/schemas/RequestDTO'
         - type: object
           properties:
+            object:
+              $ref: '#/components/schemas/ObjectSelectorItem'
             documentMetadata:
               $ref: '#/components/schemas/DocumentMetadata'
-            newConfidentialityCode:
-              type: string
-              description: Neue ConfidentialityCode eines Dokumentes oder Folder. Ersetzt die alten Codes.
           required:
-            - newConfidentialityCode
+            - object
+            - documentMetadata
     ReplaceDocumentRequestDTO:
       allOf:
         - $ref: '#/components/schemas/RequestDTO'
         - type: object
           properties:
-            documentTitle:
-              type: string
-              description: Titel eines zu ersetzenden Dokumentes
+            object:
+              $ref: '#/components/schemas/ObjectSelectorItem'
             documentWithMetadata:
               $ref: '#/components/schemas/DocumentWithMetadata'
           required:
-            - documentTitle
+            - object
             - documentWithMetadata
-  #responses:
+    PostEmailRequestDTO:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/EmailAddressType'
+      required:
+        - email
     ResponseDTO:
-      description: Return of the success status, whether the login/logout was successful or not. In any error case the status message is given.
+      description: 'Return of the success status, whether the login/logout was successful or not. In any error case the status message is given.'
       type: object
       properties:
         success:
@@ -1071,7 +1111,7 @@ components:
       required:
         - success
     LoginResponseDTO:
-      description: 'Returns the insurant id of the user that has logged in'
+      description: Returns the insurant id of the user that has logged in
       allOf:
         - $ref: '#/components/schemas/ResponseDTO'
         - type: object
@@ -1145,7 +1185,7 @@ components:
             denyPolicies:
               type: array
               items:
-                $ref: '#/components/schemas/DenyPolicy'
+                $ref: '#/components/schemas/DenyPolicyAssignmentResponseType'
     GetRegisteredDevicesResponseDTO:
       description: Returns a list of all registered devices
       allOf:
@@ -1159,16 +1199,64 @@ components:
               items:
                 $ref: '#/components/schemas/DeviceType'
     GetMedicationResponseDTO:
-      description: Returns a list of all medications using the FHIR representation as byte array
+      description: Returns a list of all medications using the FHIR representation as string array where the content is JSON
       allOf:
         - $ref: '#/components/schemas/ResponseDTO'
         - type: object
-          required:
-            - medications
+          oneOf:
+            - $ref: '#/components/schemas/SearchSet_Bundle'
+            - type: object
+              properties:
+                medications:
+                  description: 'https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication'
+                  x-examples:
+                    Example 1: '--> https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication'
+                  type: array
+                  items:
+                    type: string
+    GetMedicationListAsPdfResponseDTO:
+      description: Response including the eML as PDF/A.
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - type: object
           properties:
-            medications:
+            eml:
+              description: The eML as PDF/A as an array of bytes.
               type: string
               format: byte
+    GetMedicationListAsXhtmlResponseDTO:
+      description: Response including the eML as XHTML.
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - type: object
+          properties:
+            eml:
+              description: The eML as XHTML as string.
+              type: string
+    GetAuditEventResponseDTO:
+      description: Returns a list of all audit events using the FHIR representation as string array where the content is JSON
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - $ref: '#/components/schemas/AuditEventList'
+    GetAuditEventListAsPdfResponseDTO:
+      description: Response including the audit event list as PDF/A.
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - type: object
+          properties:
+            events:
+              description: The audit event list as PDF/A as an array of bytes.
+              type: string
+              format: byte
+    GetAuditEventListAsXhtmlResponseDTO:
+      description: Response including the audit event list as XHTML.
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - type: object
+          properties:
+            events:
+              description: The audit event list as XHTML as string.
+              type: string
     RetrieveDocumentsResponseDTO:
       allOf:
         - $ref: '#/components/schemas/ResponseDTO'
@@ -1278,6 +1366,19 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/DirectoryEntryWithCertificates'
+    GetEmailResponseDTO:
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - type: object
+          properties:
+            emailAddresses:
+              type: array
+              items:
+                $ref: '#/components/schemas/EmailResponseType'
+    PostEmailResponseDTO:
+      allOf:
+        - $ref: '#/components/schemas/ResponseDTO'
+        - $ref: '#/components/schemas/EmailIdentifierType'
     ProductInformationResponseDTO:
       type: object
       description: product information
@@ -1299,7 +1400,6 @@ components:
         - producerId
         - code
         - version
-  #schemas:
     AuthorInstitution:
       type: object
       description: 'Institution, which is related to the author'
@@ -1344,12 +1444,12 @@ components:
           type: array
           items:
             type: string
-            description: 'Rule of Author; a code of Value Sets for documentEntry.authorRole.'
+            description: Rule of Author; a code of Value Sets for documentEntry.authorRole.
         authorSpecialty:
           type: array
           items:
             type: string
-            description: 'A code of Value Sets for DocumentEntry.authorSpecialty'
+            description: A code of Value Sets for DocumentEntry.authorSpecialty
         authorTelecommunication:
           type: array
           items:
@@ -1396,7 +1496,7 @@ components:
           example: '2017-07-21T17:32:28Z'
         entryUUID:
           type: string
-          description: 'Unique ID of the Submission Set, intern'
+          description: 'Entry UUID of the Submission Set, intern'
         uniqueId:
           type: string
           description: 'Unique ID of the Submission Set, extern'
@@ -1409,8 +1509,8 @@ components:
         document:
           $ref: '#/components/schemas/Document'
       required:
-      - metadata
-      - document
+        - metadata
+        - document
       x-examples: {}
     Document:
       type: object
@@ -1436,10 +1536,10 @@ components:
           type: array
           items:
             type: string
-            description: 'Code out of Value Set for DocumentEntry.confidentialityCode'
+            description: Code out of Value Set for DocumentEntry.confidentialityCode
         classCode:
           type: string
-          description: 'Code out of Value Set for DocumentEntry.classCode'
+          description: Code out of Value Set for DocumentEntry.classCode
         comments:
           type: string
           description: additional notes in free text
@@ -1448,6 +1548,9 @@ components:
           format: date-time
           description: 'Creation time; date-time notation as defined by RFC 3339, section 5.6'
           example: '2017-07-21T17:32:28Z'
+        entryUUID:
+          type: string
+          description: EntryUUID of a document
         eventCodeList:
           type: array
           description: 'Events, which lead to creation of the document, Code out of Value Set for DocumentEntry.eventCodeList or table in A_17540-XX'
@@ -1455,15 +1558,15 @@ components:
             type: string
         formatCode:
           type: string
-          description: 'Code out of Value Set for DocumentEntry.formatCode or table in A_14761-XX'
+          description: Code out of Value Set for DocumentEntry.formatCode or table in A_14761-XX
         hash:
           type: string
         healthcareFacilityTypeCode:
           type: string
-          description: 'Code out of Value Set for DocumentEntry.healthcareFacilityTypeCode'
+          description: Code out of Value Set for DocumentEntry.healthcareFacilityTypeCode
         languageCode:
           type: string
-          description: 'Code out of Value Set for DocumentEntry.languageCode'
+          description: Code out of Value Set for DocumentEntry.languageCode
         legalAuthenticator:
           type: string
           description: legally responsible party
@@ -1484,10 +1587,10 @@ components:
           description: MIME-Type des Dokuments
         practiceSettingCode:
           type: string
-          description: 'Code out of Value Set for DocumentEntry.practiceSettingCode or table in A_16944-XX'
+          description: Code out of Value Set for DocumentEntry.practiceSettingCode or table in A_16944-XX
         referenceIdList:
           type: array
-          description: 'List of id associated with the document'
+          description: List of id associated with the document
           items:
             type: string
         serviceStartTime:
@@ -1508,7 +1611,10 @@ components:
           description: Title of document
         typeCode:
           type: string
-          description: 'Sort of document; Code out of Value Set for DocumentEntry.typeCode'
+          description: Sort of document; Code out of Value Set for DocumentEntry.typeCode
+        uniqueId:
+          type: string
+          description: Unique identification of document
         uri:
           type: string
           description: File name
@@ -1579,7 +1685,6 @@ components:
             uniqueId: f9802a8d5a8d4cb0b1b38610305e12f4
             entryUUID: Folder-fa72d10d91
             status: Approved
-      title: ''
       properties:
         comments:
           type: string
@@ -1608,13 +1713,6 @@ components:
           type: string
           example: 'urn:oasis:names:tc:ebxml-regrep:StatusType:Approved, Approved'
           description: Status der Ordner
-      required:
-        - codeList
-        - lastUpdateTime
-        - title
-        - uniqueId
-        - entryUUID
-        - availabilityStatus
     Association:
       type: object
       description: Association
@@ -1961,35 +2059,37 @@ components:
       description: A professionOID
       type: string
       pattern: '([0-2])((\.0)|(\.[1-9][0-9]*))*$'
-      example: '1.2.276.0.76.4.50'
+      example: 1.2.276.0.76.4.50
     DisplayNameType:
       description: A readable name
       type: string
-      example: 'Praxis Dr. Annamaria Heckhausén'
+      example: Praxis Dr. Annamaria Heckhausén
     DateType:
       type: string
       format: date
-      example: 2025-12-31
+      example: '2025-12-31'
     DateTimeType:
       type: string
       format: date-time
-      example: 2025-01-01T18:00:00Z
+      example: '2025-01-01T18:00:00Z'
     FunctionIdType:
       type: string
       description: function id of consent related functions of a health record.
     DecisionType:
       type: string
-      enum: [ 'permit', 'deny' ]
-      description: 'Decision'
+      enum:
+        - permit
+        - deny
+      description: Decision
     UuidType:
       description: An urn-encoded UUID
       type: string
-      example: urn:uuid:4fa70820-2384-4001-80a9-7bbd5e085efb
+      example: 'urn:uuid:4fa70820-2384-4001-80a9-7bbd5e085efb'
     RootDocumentIdType:
       description: |
         A CXi style identifier with schema 'uniqueID^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId' with symbolic UUID as uniqueId
       type: string
-      example: 4fa70820-2384-4001-80a9-7bbd5e085efb^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId
+      example: '4fa70820-2384-4001-80a9-7bbd5e085efb^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId'
     AssignmentIdType:
       description: Server-assigned unique uuid of a particular deny policy assignment
       type: string
@@ -2003,8 +2103,8 @@ components:
         - emp
         - nfd
         - eab
-        - dentalrecord
-        - childsrecord
+        - dental
+        - child
         - pregnancy_childbirth
         - vaccination
         - patient
@@ -2028,9 +2128,9 @@ components:
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
         validTo:
-          description: Last day of validity
+          description: end of the validity
           allOf:
-            - $ref: '#/components/schemas/DateType'
+            - $ref: '#/components/schemas/DateTimeType'
         issued:
           type: object
           required:
@@ -2049,19 +2149,27 @@ components:
     Assignment:
       description: Properties of one blocked user
       type: object
+      allOf:
+        - $ref: '#/components/schemas/OidAndDisplayname'
+        - type: object
+          properties:
+            telematikId:
+              $ref: '#/components/schemas/TelematikIdType'
+          required:
+            - telematikId
+    OidAndDisplayname:
+      description: Properties to block one user
+      type: object
       required:
-        - telematikId
         - oid
         - displayName
       properties:
-        telematikId:
-          $ref: '#/components/schemas/TelematikIdType'
         oid:
           $ref: '#/components/schemas/OidType'
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
     ConsentDecision:
-      description: 'Consent Decisions Response'
+      description: Consent Decisions Response
       type: object
       required:
         - functionId
@@ -2071,49 +2179,86 @@ components:
           $ref: '#/components/schemas/FunctionIdType'
         decision:
           $ref: '#/components/schemas/DecisionType'
-    DenyPolicy:
+    DenyPolicyAssignmentType:
+      description: Basic type for a deny policy assignments.
+      oneOf:
+        - $ref: '#/components/schemas/GDPolicyAssignmentForDocumentType'
+        - $ref: '#/components/schemas/GDPolicyAssignmentForFolderType'
+        - $ref: '#/components/schemas/GDPolicyAssignmentForCategoryType'
+    DenyPolicyAssignmentResponseType:
+      description: Basic type for a deny policy response.
+      allOf:
+        - type: object
+          properties:
+            assignmentId:
+              allOf:
+                - $ref: '#/components/schemas/AssignmentIdType'
+        - oneOf:
+            - $ref: '#/components/schemas/GDPolicyAssignmentForDocumentType'
+            - $ref: '#/components/schemas/GDPolicyAssignmentForFolderType'
+            - $ref: '#/components/schemas/GDPolicyAssignmentForCategoryType'
+    GDPolicyAssignmentForCategoryType:
+      description: Global deny policy assigment for a single category.
       type: object
-      required:
-        - assignmentId
-        - policyType
-        - for
       properties:
-        assignmentId:
-          $ref: '#/components/schemas/AssignmentIdType'
-        policyType:
-          type: string
-          enum:
-            - gdp
-            - usdp
         for:
           type: string
           enum:
             - category
+        parameters:
+          type: object
+          required:
+            - categoryId
+          properties:
+            categoryId:
+              allOf:
+                - $ref: '#/components/schemas/CategoryIdType'
+              description: technical identifier of category
+          additionalProperties: false
+      additionalProperties: false
+    GDPolicyAssignmentForDocumentType:
+      description: Global deny policy assigment for a single document.
+      type: object
+      properties:
+        for:
+          type: string
+          enum:
             - document
+        parameters:
+          type: object
+          required:
+            - rootDocumentId
+          properties:
+            rootDocumentId:
+              allOf:
+                - $ref: '#/components/schemas/RootDocumentIdType'
+              description: rootDocumentUniqueId from DocumentEntry.referenceIdList
+          additionalProperties: false
+      additionalProperties: false
+    GDPolicyAssignmentForFolderType:
+      description: Global deny policy assigment for a single folder.
+      type: object
+      properties:
+        for:
+          type: string
+          enum:
             - folder
-        categoryId:
-          $ref: '#/components/schemas/CategoryIdType'
-        rootDocumentId:
-          description: rootDocumentUniqueId from DocumentEntry.referenceIdList
-          allOf:
-            - $ref: '#/components/schemas/RootDocumentIdType'
-        folderUUID:
-          $ref: '#/components/schemas/UuidType'
-        telematikId:
-          description: Telematik-Id of related user
-          allOf:
-            - $ref: '#/components/schemas/TelematikIdType'
-        oid:
-          description: profession-oid of related user
-          allOf:
-            - $ref: '#/components/schemas/OidType'
-        displayName:
-          $ref: '#/components/schemas/DisplayNameType'
+        parameters:
+          type: object
+          required:
+            - folderUUID
+          properties:
+            folderUUID:
+              allOf:
+                - $ref: '#/components/schemas/UuidType'
+              description: Folder.entryUUID
+          additionalProperties: false
+      additionalProperties: false
     DeviceIdentifierType:
       type: string
       format: uuid
-      description: 'Unique identifier of a device registration'
-      example: '74f09dbc-9268-411f-81e7-f1e4f3fb1b4f'
+      description: Unique identifier of a device registration
+      example: 74f09dbc-9268-411f-81e7-f1e4f3fb1b4f
     DeviceStatusType:
       description: current status of device registration
       type: string
@@ -2145,11 +2290,8 @@ components:
               description: timestamp of last login associated to the registered device
               type: string
               format: date-time
-
-    # FHIR Structures
-
     SearchSet_Bundle:
-      description: "Contains a collection of resources + Rule: entry.search only when a search"
+      description: 'Contains a collection of resources + Rule: entry.search only when a search'
       type: object
       properties:
         resourceType:
@@ -2157,11 +2299,10 @@ components:
           enum:
             - Bundle
         id:
-          description: The logical id of the resource, as used in the URL for the
-            resource. Once assigned, this value never changes.
+          description: 'The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.'
           type: string
-          pattern: "[A-Za-z0-9\\-\\.]{1,64}"
-          example: "86604fc1-b356-57e3-8738-8ef36c8d608c"
+          pattern: '[A-Za-z0-9\-\.]{1,64}'
+          example: 86604fc1-b356-57e3-8738-8ef36c8d608c
         meta:
           type: object
           properties:
@@ -2192,8 +2333,7 @@ components:
                   - last
               url:
                 type: string
-                description: Reference details for the link, A Uniform Resource Locator (RFC 1738 ).
-                  Note URLs are accessed directly using the specified protocol. Common URL protocols are http{s}.
+                description: 'Reference details for the link, A Uniform Resource Locator (RFC 1738 ). Note URLs are accessed directly using the specified protocol. Common URL protocols are http{s}.'
         entry:
           type: array
           items:
@@ -2201,7 +2341,7 @@ components:
             properties:
               fullUrl:
                 type: string
-                description: "URI for resource (Absolute URL server address or URI for UUID/OID)"
+                description: URI for resource (Absolute URL server address or URI for UUID/OID)
               search:
                 type: object
                 description: Search related information
@@ -2214,17 +2354,14 @@ components:
                       - include
                       - outcome
                     example: match
-              #resource: defined by specific definition
-
     Organization:
       type: object
       description: 'https://gematik.de/fhir/directory/StructureDefinition/OrganizationDirectory'
       x-examples:
-        Example 1: --> https://gematik.de/fhir/directory/StructureDefinition/OrganizationDirectory
-
+        Example 1: '--> https://gematik.de/fhir/directory/StructureDefinition/OrganizationDirectory'
     OrganizationList:
       allOf:
-        - $ref: "#/components/schemas/SearchSet_Bundle"
+        - $ref: '#/components/schemas/SearchSet_Bundle'
         - type: object
           properties:
             entry:
@@ -2234,16 +2371,14 @@ components:
                 properties:
                   resource:
                     $ref: '#/components/schemas/Organization'
-
     Medication:
       type: object
       description: 'https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication'
       x-examples:
-        Example 1: --> https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication
-
+        Example 1: '--> https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication'
     MedicationList:
       allOf:
-        - $ref: "#/components/schemas/SearchSet_Bundle"
+        - $ref: '#/components/schemas/SearchSet_Bundle'
         - type: object
           properties:
             entry:
@@ -2253,16 +2388,14 @@ components:
                 properties:
                   resource:
                     $ref: '#/components/schemas/Medication'
-
     AuditEvent:
       type: object
       description: 'https://gematik.de/fhir/epa/StructureDefinition/audit-event'
       x-examples:
-        Example 1: --> https://gematik.de/fhir/epa/StructureDefinition/audit-event
-
+        Example 1: '--> https://gematik.de/fhir/epa/StructureDefinition/audit-event'
     AuditEventList:
       allOf:
-        - $ref: "#/components/schemas/SearchSet_Bundle"
+        - $ref: '#/components/schemas/SearchSet_Bundle'
         - type: object
           properties:
             entry:
@@ -2272,3 +2405,74 @@ components:
                 properties:
                   resource:
                     $ref: '#/components/schemas/AuditEvent'
+    ObjectSelectorItem:
+      oneOf:
+        - $ref: '#/components/schemas/Title'
+        - $ref: '#/components/schemas/EntryUUID'
+        - $ref: '#/components/schemas/UniqueId'
+      x-examples:
+        Example 1:
+          title: string
+    Title:
+      type: object
+      properties:
+        title:
+          type: string
+      x-examples:
+        Example 1:
+          title: string
+    EntryUUID:
+      type: object
+      properties:
+        entryUUID:
+          type: string
+      x-examples:
+        Example 2:
+          entryUUID: string
+    UniqueId:
+      type: object
+      x-examples:
+        Example 1:
+          uniqueId: string
+      properties:
+        uniqueId:
+          type: string
+
+    EmailAddressType:
+      type: string
+      description: "email address"
+      format: email
+      example: "name@example.com"
+    EmailIdentifierType:
+      type: string
+      description: "Unique identifier of an email"
+      example: "0815"
+    EmailType:
+      type: object
+      properties:
+        email:
+          $ref: '#/components/schemas/EmailAddressType'
+        actor:
+          description: "creator of the email address - name of user session"
+          type: string
+          example: "Betriebskrankenkasse ABC"
+        createdAt:
+          description: timestamp of email registration
+          type: string
+          format: date-time
+          example: "2025-04-22T14:23:01Z"
+      required:
+        - email
+        - actor
+        - createdAt
+    EmailResponseType:
+      type: object
+      properties:
+        identifier:
+          $ref: '#/components/schemas/EmailIdentifierType'
+        emailType:
+          $ref: '#/components/schemas/EmailType'
+      required:
+        - identifier
+        - emailType
+
