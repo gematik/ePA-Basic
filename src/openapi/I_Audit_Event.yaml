@@ -45,10 +45,14 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.0
+  version: 1.0.1
 
   # version history:
   # ----------------
+  # version 1.0.1
+  #   - corrected examples
+  #   - correction of 'Coding' schema
+  #   - change parameter format to date-time
   # version 1.0.0
   #   - first release version
   # version 0.0.1
@@ -208,11 +212,11 @@ paths:
         #### Examples:
         ##### *All AuditEvents updated before January 15, 2025.*
         ```
-        GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=lt2025-15-01 
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=lt2025-15-01T00:00:00Z 
         ```
         ##### *All AuditEvents after January 15, 2025.*
         ```
-        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=gt2025-15-01 
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=gt2025-15-01T00:00:00Z
         ```
 
         ### **AuditEvent Search Parameters**
@@ -224,15 +228,15 @@ paths:
 
         ***_lastUpdated***: Can be used to select audit events on the last time they were changed.
         ##### Example
-        ``GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=2025-15-01``
+        `GET [base]/epa/audit/api/v1/fhir/AuditEvent?_lastUpdated=2025-15-01T12:00:00Z`
 
         | Name | Type | Description | Expression |
         |------|------|-------------|------------|
         | _id | [token](https://hl7.org/fhir/R4/search.html#token) | The logical id of the resource | AuditEvent.id |
-        | _lastUpdated | | Can be used to select resources based on the</br>last time they were changed | |
+        | _lastUpdated | [date-time](https://hl7.org/fhir/R4/search.html#date) | Can be used to select resources based on the</br>last time they were changed | |
         | action | [token](https://hl7.org/fhir/R4/search.html#token) | Type of action performed during the event | AuditEvent.action |
         | altid | [string](https://hl7.org/fhir/R4/search.html#string) | Alternative User identity (e.g. Telematik-ID or the KVNR) | AuditEvent.agent.altId |
-        | date | [date](https://hl7.org/fhir/R4/search.html#date) | Time when the event was recorded | AuditEvent.recorded	 |
+        | date | [date-time](https://hl7.org/fhir/R4/search.html#date) | Time when the event was recorded | AuditEvent.recorded	 |
         | outcome | [token](https://hl7.org/fhir/R4/search.html#token) | Whether the event succeeded (0) or failed (4) | AuditEvent.outcome |
         | type | [token](https://hl7.org/fhir/R4/search.html#token) | Type/identifier of event | AuditEvent.type |
         | entity-name | [string](https://hl7.org/fhir/R4/search.html#string) | Descriptor for entity | AuditEvent.entity.name |
@@ -240,11 +244,11 @@ paths:
         #### **Example**:
         ##### *All AuditEvents since January 15, 2025 and from the general medical practice "Praxis Dr. John Doe"*
         ```
-        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=ge2025-15-01&altid=1-883110000092404
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=ge2025-15-01T11:00:00Z&altid=1-883110000092404
         ```
         ##### *All AuditEvents from January 15, 2025 and all AuditEvents that have been created*
         ```
-        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=2025-15-01&action=C
+        GET [base]/epa/audit/api/v1/fhir/AuditEvent?date=2025-15-01T11:00:00Z&action=C
         ```
         ##### *All AuditEvents for the XDS Document Arztbrief4711*
         ```
@@ -307,13 +311,13 @@ paths:
           description: Can be used to select resources based on the last time they were changed
           schema:
             type: string
-            format: date
+            format: date-time
         - name: date
           in: query
           description: Time when the event was recorded
           schema:
             type: string
-            format: date
+            format: date-time
         - name: altid
           in: query
           description: Alternative User identity (e.g. Telematik-ID or the KVNR)
@@ -733,6 +737,9 @@ components:
             a predefined code or an expression in a syntax defined by the coding system
             (e.g. post-coordination).
           type: string
+        display:
+          description: A representation of the meaning of the code in the system.
+          type: string
 
     CodeableConcept:
       type: object
@@ -762,10 +769,11 @@ components:
           meta:
             $ref: "#/components/schemas/Meta"
           type:
-            description: Identifier for a family of the event.  For example, a menu
-              item, program, rule, policy, function code, application name or URL. It
-              identifies the performed function.
-            $ref: '#/components/schemas/Coding'
+            allOf:
+              - description: Identifier for a family of the event.  For example, a menu
+                 item, program, rule, policy, function code, application name or URL. It
+                 identifies the performed function.
+              - $ref: '#/components/schemas/Coding'
           action:
             description: Indicator for type of action performed during the event that
               generated the audit.
@@ -795,8 +803,9 @@ components:
             items:
               $ref: '#/components/schemas/AuditEvent_Agent'
           source:
-            description: The system that is reporting the event.
-            $ref: '#/components/schemas/AuditEvent_Source'
+            allOf:
+              - description: The system that is reporting the event.
+              - $ref: '#/components/schemas/AuditEvent_Source'
           entity:
             description: Specific instances of data or objects that have been accessed.
             type: array
@@ -810,9 +819,9 @@ components:
         inappropriate usage.
       properties:
         type:
-          description: Specification of the participation type the user plays when performing the event.
-          $ref: '#/components/schemas/CodeableConcept'
-
+          allOf:
+            - description: Specification of the participation type the user plays when performing the event.
+            - $ref: '#/components/schemas/CodeableConcept'
         who:
           description: Identifies the agent. Identifier of who
           type: object
@@ -856,13 +865,9 @@ components:
               type: string
               example: Elektronische Patientenakte Fachdienst
         type:
-          description: "Code specifying the type of source where event originated. CDMGMT | ENTITMGMT | DEVICEMGMT | HRRSVC | XDSSVC | MEDICATIONSVC | CONMGMT"
-          type: object
-          properties:
-            code:
-              type: string
-            display:
-              type: string
+          allOf:
+            - description: "Code specifying the type of source where event originated. CDMGMT | ENTITMGMT | DEVICEMGMT | HRRSVC | XDSSVC | MEDICATIONSVC | CONMGMT"
+            - $ref: '#/components/schemas/Coding'
 
     AuditEvent_Entity:
       type: object
@@ -901,7 +906,7 @@ components:
       value:
         id: 86604fc1-b356-57e3-8738-8ef36c8d608c
         meta:
-          versionId: 1
+          versionId: "1"
           lastUpdated: '2025-01-15T14:43:33.244Z'
           profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
@@ -911,19 +916,19 @@ components:
           code: document
         action: U
         recorded: "2025-01-15T14:52:04.928Z"
-        outcome: 0
+        outcome: "0"
         agent:
-          type:
-            coding:
-              - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
-                code: PROV
-                display: healthcare provider
-          who:
-            identifier:
-              system: https://gematik.de/fhir/sid/telematik-id
-              value: 1-883110000092404
-          altId: 1-883110000092404
-          name: Praxis Dr. John Doe
+          - type:
+              coding:
+                - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
+                  code: PROV
+                  display: healthcare provider
+            who:
+              identifier:
+                system: https://gematik.de/fhir/sid/telematik-id
+                value: 1-883110000092404
+            altId: 1-883110000092404
+            name: Praxis Dr. John Doe
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
@@ -943,7 +948,7 @@ components:
       value:
         id: 669699b2-f131-4097-b13d-71413a58aa92
         meta:
-          versionId: 1
+          versionId: "1"
           lastUpdated: '2025-01-15T14:43:33.244Z'
           profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
@@ -953,19 +958,19 @@ components:
           code: rest
         action: U
         recorded: "2025-01-15T14:52:04.928Z"
-        outcome: 0
+        outcome: "0"
         agent:
-          type:
-            coding:
-              - system: http://dicom.nema.org/resources/ontology/DCM
-                code: 110150
-                display: Application
-          who:
-            identifier:
-              system: https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
-              value: ERP
-          altId: ERP
-          name: E-Rezept-Fachdienst
+          - type:
+              coding:
+                - system: http://dicom.nema.org/resources/ontology/DCM
+                  code: "110150"
+                  display: Application
+            who:
+              identifier:
+                system: https://gematik.de/fhir/epa/sid/epa-telematikservice-identifier
+                value: ERP
+            altId: ERP
+            name: E-Rezept-Fachdienst
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
@@ -982,7 +987,7 @@ components:
       value:
         id: 669699b2-f131-4097-b13d-71413a58aa92
         meta:
-          versionId: 1
+          versionId: "1"
           lastUpdated: '2025-01-15T14:43:33.244Z'
           profile:
             - https://gematik.de/fhir/epa/StructureDefinition/audit-event|1.0
@@ -992,19 +997,19 @@ components:
           code: rest
         action: R
         recorded: "2025-01-15T14:52:04.928Z"
-        outcome: 0
+        outcome: "0"
         agent:
-          type:
-            coding:
-              - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
-                code: PROV
-                display: healthcare provider
-          who:
-            identifier:
-              system: https://gematik.de/fhir/sid/telematik-id
-              value: 1-883110000092404
-          altId: 1-883110000092404
-          name: Praxis Dr. John Doe
+          - type:
+              coding:
+                - system: http://terminology.hl7.org/CodeSystem/v3-RoleClass
+                  code: PROV
+                  display: healthcare provider
+            who:
+              identifier:
+                system: https://gematik.de/fhir/sid/telematik-id
+                value: 1-883110000092404
+            altId: 1-883110000092404
+            name: Praxis Dr. John Doe
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
