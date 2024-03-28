@@ -1,6 +1,9 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.0-1
+### editorial
+- updated link to follow-up branch
 ## Release 3.0.0
 - release ePA-3.0
 ### changes
