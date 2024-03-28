@@ -41,10 +41,11 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0
-
+  version: 1.1.1
   # version history:
   # ----------------
+  # version 1.1.1
+  #   - deleteEntitlement: requirement to delete representatives email address removed
   # version 1.1.0
   #   - deleteEntitlement: representative allowed to delete own entitlement
   #   - validTo changed from date to date-time
@@ -489,10 +490,6 @@ paths:
         representative (actorid == kvnr of requestor), i.e. a representative shall not delete entitlements 
         of other representatives.</br>
         Deletion of static entitlements shall not be successful.
-
-        Deleting an entitlement of a representative:</br>
-        If an entitlement for a representative is deleted, also the notification mail address associated to 
-        this representative shall be deleted (the mail address provided in context of a _setEntitlement_ operation).
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|

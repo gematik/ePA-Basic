@@ -40,21 +40,21 @@ ktr_n -> info_n : Please create health record KVNRx
 activate info_n
 
 ' request export of health record
-info_n -> info_c : Does health record KVNRx exist? \nIf yes, please relocate it to my side. \n(ENC-Certificate  of provider)
+info_n -> info_c : Does health record KVNRx exist? \nIf yes, please relocate it to my side.
 activate info_c
 alt Health record does not exist
 info_c --> info_n : This record is not known to me.
 end
 
-info_c -> ktr_c : Please relocate KVNRx (ENC-Certificate of provider)
-ktr_c -> hrrl_c : Create export package (ENC-Certificate of provider)
+info_c -> ktr_c : Please relocate KVNRx
+ktr_c -> hrrl_c : Create export package
 activate hrrl_c
 
 hrrl_c -> hrrl_c : Create Download-URL and set state to SUPSENDED
 hrrl_c --> ktr_c : Download-URL
 
 hrrl_c -> hrrl_c : Fetch all data from \ninternal services and \nform export package
-hrrl_c -> hrrl_c : Encrypt export package with \nENC-Certificate of provider
+hrrl_c -> hrrl_c : Encrypt export package with \nENC-Certificate of new health record system
 hrrl_c -> dl_c : Store export package
 deactivate hrrl_c
 

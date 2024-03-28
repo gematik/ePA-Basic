@@ -317,7 +317,6 @@ paths:
       operationId: deleteObjects
       parameters:
         - $ref: '#/components/parameters/_recordId'
-        - $ref: '#/components/parameters/objectType'
         - $ref: '#/components/parameters/objectSelectorList'
       responses:
         default:
@@ -582,7 +581,7 @@ paths:
       tags:
         - Device Management
       summary: Add a new device as registered devices for a user (associated to kvnr of requestor).
-      description: 'This operation executes the use case "Add a registered device" in an existing user session. By default, the health record of the user is addressed, otherwise the health record is identified by "recordId".'
+      description: 'This operation executes the use case "Add a registered device" in an existing user session.'
       operationId: putRegisteredDevice
       parameters:
         - in: path
@@ -736,8 +735,6 @@ paths:
       summary: Get a list of all email addresses
       description: Get a list of actual email addresses of an insurant
       operationId: getEmailAddresses
-      parameters:
-        - $ref: '#/components/parameters/_recordId'
       responses:
         default:
           description: list of email addresses
@@ -750,8 +747,6 @@ paths:
         - Email Address Management
       summary: Set a single email address
       operationId: setEmailAddress
-      parameters:
-        - $ref: '#/components/parameters/_recordId'
       requestBody:
         required: true
         content:
@@ -777,8 +772,6 @@ paths:
         - Email Address Management
       summary: Delete an email address
       operationId: deleteEmailAddress
-      parameters:
-        - $ref: '#/components/parameters/_recordId'
       responses:
         default:
           description: default response
@@ -1701,7 +1694,7 @@ components:
           example: '2017-07-21T17:32:28Z'
         title:
           type: string
-          description: Titel des Ornder
+          description: Titel des Ordner
         uniqueId:
           type: string
           description: Eindeutige Kennung des Ordner (von Client erzeugt)

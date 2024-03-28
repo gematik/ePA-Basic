@@ -38,10 +38,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0
+  version: 1.1.1
 
   # version history:
   # ----------------
+  # version 1.1.1
+  #   - changed format for PDF response
   # version 1.1.0
   #   - rename Api
   #   - add option to receive signed or unsigned PDF
@@ -101,7 +103,7 @@ paths:
             application/pdf:
               schema:
                 type: string
-                format: byte
+                format: binary
               example: Signed PDF/A file
         '403':
           $ref: '#/components/responses/Error403Forbidden'

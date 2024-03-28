@@ -19,12 +19,17 @@ This repository provides technical information for the Electronic Health Record 
 This branch relates to a particular release in context of **ePA version 3** ('ePA für alle') 
 The provided content comprises normative and supplementary resources for the **Basic Services** Entitlement, Constraints and Consent Decision Management, Device Registration, and the Audit Event Service.
 
-For resources related to ePA data management see further associated repositories:
+For resources related to ePA data management see further associated repositories:</br>
 (follow links in [Branchinformation.md](./Branchinformation.md))
 - **ePA-Medication** medication related resources</br>
 - **ePA-XDS-Document** xds document related resources</br>
 - **Simplifier** all FHIR profiles for ePA 
 
+For details about health record relocation see:</br>
+(follow link in [Branchinformation.md](./Branchinformation.md))
+- **ref-ePA-HealthRecordMigration** encryption and content of export package for relocation 
+
+</br>
 The current branch accompanies a particular release of specification documents of ePA version 3 (a set of normative specification documents for components, product types and vendor types) published on the [gematik Fachportal](https://fachportal.gematik.de/) (see [Branchinformation.md](./Branchinformation.md) for specific version information and links).
 The content in /src is normative in context of requirements defined by those specification documents and is essential for product approvals. Any other content is for information. Normative content here, the associated repositories and the documents together form a single product release of the Electronic Health Record system for an approval process.
 The affected and covered product types are **ePA-Aktensystem** and **ePA-Frontend des Versicherten**. 
