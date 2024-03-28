@@ -1,6 +1,21 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.1
+- release ePA-3.0.1
+- (all changes from changelist 'ePAfueralle_3.0.1' and final review)
+### changes
+- added 'exp' to JWT 'bearerToken' and 'clientAttestation' in I_Authorization_Service.yaml (C_11759)
+- changed enc-certificate handling for health record relocation (C_11697) 
+- changes in legal policy (concept) for KTR and new category added
+- correction of several typos
+- added link to 'ref-ePA-HealthRecordMigration' repo for information
+- changed amr for the x-authorize-representative situation in I_Authorization_Service.yaml
+- reworked correction of depending consent decisions 'medication' and 'erp-submission' (C_11720) after review
+- added handling of export package in I_Health_Record_Relocation_Service.yaml (C_11763)
+- removed requirement to delete email address of representative if entitlement is deleted
+- removed fixed validTo for entitlements via ePA-FdV (OEGD, AM) (concept)
+- added vau user pseudonym (VAU-NP) to authorization operation responses in I_Authorization_Service.yaml
 ## Release 3.0.1 RC
 - release candidate ePA-3.0.1
 ### changes

@@ -39,10 +39,12 @@ info:
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
 
-  version: 1.1.0
+  version: 1.1.1
 
   # version history:
   # ----------------
+  # version 1.1.1
+  #   - reworked the correction of depending consent decision change 'medication' and 'erp-submission' 
   # version 1.1.0
   #   - correction in effect of consent decision 'medication' for oid_versicherter
   #   - correction of depending consent decision change 'medication' and 'erp-submission'
@@ -124,8 +126,6 @@ paths:
             set to _permit_.
           - (f) set the decision for _medication_ to _deny_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
             set to _deny_.
-          - (g) set the decision for _medication_ to _permit_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
-            set to _permit_.
 
         If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
 
@@ -152,7 +152,7 @@ paths:
         |---------------------------------------|---------|
         | The updated consent decision is stored in SecureDataStorage |in case of (f), (g), (h): both decisions |
         | Associated data categories are read and write protected for clients | conditional, see (a), (f) |
-        | Associated data categories are read and write enabled for clients | conditional, see (b), (g) |
+        | Associated data categories are read and write enabled for clients | conditional, see (b) |
         | Associated data categories are empty (all content deleted) | conditional, see (c) |
         | Operations for ePrescription backend (oid_erp-vau) are locked | conditional, see (d) |
         | Operations for ePrescription backend (oid_erp-vau) are unlocked | conditional, see (e), (h) |

@@ -37,11 +37,11 @@ Der Versicherte kann der Akte insgesamt widersprechen, diesen Widerspruch aber a
 
 Der Widerspruch gegen das Einstellen von Abrechnungsdaten durch den Kostenträger wird durch die Systeme des Kostenträgers verwaltet und durchgesetzt.
 
-Die Wahrnehmung - auch das Zurücknehmen - von Widersprüchen sind für den Versicherten grundsätzlich möglich. Er kann dies einerseits durch die Nutzung des ePA-FdV selbst durchführen oder andererseits die Ombudsstelle beauftragen, dass dies durchgeführt wird.
+Die Wahrnehmung - auch das Zurücknehmen - von Widersprüchen sind für den Versicherten möglich. Er kann dies einerseits durch die Nutzung des ePA-FdV selbst durchführen oder andererseits die Ombudsstelle beauftragen, dass dies durchgeführt wird.
 
-Die im Aktensystem hinterlegten Widerspruchsinformationen können mit dem ePA-FdV durch den Versicherten bzw. den berechtigten Vertreters geändert werden.
+Die im Aktensystem hinterlegten Widerspruchsinformationen können mit dem ePA-FdV durch den Versicherten bzw. den berechtigten Vertreter geändert werden.
 
-Die Widerspruchsinformationen teilen sich auf in Widersprüche gegen Versorgungsprozesse (derzeit ausschließlich Medikationsprozess) und in sonstige Widersprüche. Nur Widersprüche gegen Versorgungsprozesse werden in den *Information Service* gespiegelt.
+Die Widerspruchsinformationen teilen sich auf in Widersprüche gegen Versorgungsprozesse (derzeit ausschließlich Teilnahme am digital gestützten Medikationsprozess sowie Einstellung Daten E-Rezept-Fachdienst) und in sonstige Widersprüche. Nur Widersprüche gegen Versorgungsprozesse werden in den *Information Service* gespiegelt.
 
 
 [discrete]
@@ -55,22 +55,21 @@ Das ePA-Aktensystem reagiert bei Widersprüchen wie folgt:
 
 [caption="Tabelle {counter:table-number}: "]
 .Auswirkungen von Widersprüchen auf bestehende Daten
-[cols="3,10",options="header"]
+[cols="4,9",options="header"]
 |===
 | Funktion | Auswirkung
 | Akte gesamt | Löschen der gesamten Akte inklusive Dokumente und Daten
-| Medikationsprozess | Sperren des Zugriffs auf den Medication Service und den Medikationsplan
-| Einstellung Daten E-Rezept-Fachdienst | Löschen aller bisher gesammelten Daten zum Medikationsprozess sowie des Medikationsplans sowie Aktivierung des Widerspruchs zum Medikationsprozess
-| Abrechnungsdaten | Abrechnungsdaten bleiben in der Akte erhalten
+| Teilnahme am digital gestützten Medikationsprozess | Sperren des Zugriffs durch Leistungserbringer auf die elektronische Medikationsliste und den eMP. Alle bisher gesammelten Daten zum digital gestützten Medikationsprozess und dem eMP bleiben erhalten. Versicherte und deren Vertreter können weiter auf die elektronische Medikationsliste und den eMP zugreifen.
+| Einstellung Daten E-Rezept-Fachdienst | Es werden vom E-Rezept-Fachdienst keine Verordnungsdaten oder Dispensierinformationen mehr in die Akte übermittelt. Löschen aller bisher gesammelten Daten zum digital gestützten Medikationsprozess sowie automatische Aktivierung des Widerspruchs zur Teilnahme am digital gestützten Medikationsprozess.
+| Abrechnungsdaten | Der Kostenträger stellt keine Abrechnungsdaten mehr in die Akte ein. Die bisher eingestellten Abrechnungsdaten bleiben in der Akte erhalten.
 |===
 
-Beim Zurücknehmen des Widerspruchs zur Akte insgesamt wird eine neue Akte durch den Kostenträger angelegt. Beim Zurücknehmen der anderen Widersprüche werden die entsprechenden Funktionen wieder ausgeführt. Wird der Widerspruch zum Medikationsprozess oder zur Einstellung von Daten durch den E-Rezept-Fachdienst zurückgenommen, werden beide Funktionen gesamthaft aktiviert.
-
+Beim Zurücknehmen des Widerspruchs zur Akte insgesamt wird eine neue Akte durch den Kostenträger angelegt. Beim Zurücknehmen der anderen Widersprüche werden die entsprechenden Funktionen wieder ausgeführt. Wird der Widerspruch zur Teilnahme am digital gestützten Medikationsprozess zurückgenommen, wird ein ggf. vorhandener Widerspruch zur Einstellung von Daten durch den E-Rezept-Fachdienst automatisch zurückgenommen. 
 
 [discrete]
 ===== Ändern von Widerspruchsinformationen über die Ombudsstelle
 
-Versicherte, die über kein ePA-FdV verfügen, können Widersprüche gegen einzelne Versorgungsprozesse (derzeit nur der Medikationsprozess) sowie das Einstellen von Verordnungsdaten und Dispensierinformationen durch den E-Rezept-Fachdienst gegenüber der Ombudsstelle ihres Kostenträgers erklären. Diese setzt den entsprechenden Widerspruch nach erfolgreicher Authentifizierung durch das *Consent Management* in der Akte des Versicherten. Die Wirkung ist dabei dieselbe, wie bei der Verwaltung der Widersprüche über das ePA-FdV.
+Versicherte, die über kein ePA-FdV verfügen, können Widersprüche gegen einzelne Versorgungsprozesse (derzeit nur der Medikationsprozess sowie Einstellung Daten E-Rezept-Fachdienst) gegenüber der Ombudsstelle ihres Kostenträgers erklären. Diese setzt den entsprechenden Widerspruch nach erfolgreicher Authentifizierung durch das *Consent Management* in der Akte des Versicherten. Die Wirkung ist dabei dieselbe, wie bei der Verwaltung der Widersprüche über das ePA-FdV.
 
 
 [discrete]

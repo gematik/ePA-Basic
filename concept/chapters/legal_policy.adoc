@@ -67,7 +67,7 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|R
-^|CU
+^|-
 ^|-
 ^|-
 ^|-
@@ -112,7 +112,7 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|R
-^|CU
+^|-
 ^|-
 ^|-
 ^|-
@@ -270,8 +270,22 @@ h|Versicherter/ Vertreter
 
 |14
 |rehab
-|Daten der Heilbehandlung und Rehabilitation gemäß § 27 Abs. 1 des
-Siebten Buches
+|Daten der Heilbehandlung und Rehabilitation gemäß § 27 Abs. 1 des Siebten Buches
+^|CRUD
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|RD
+
+|15
+|transcripts
+|Elektronische Abschriften von der Patientenakte eines Primärsystems gemäß § 630g Abs. 2 BGB
 ^|CRUD
 ^|-
 ^|-

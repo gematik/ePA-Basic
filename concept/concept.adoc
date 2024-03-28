@@ -35,7 +35,7 @@ endif::[]
 :sectnums:
 
 // :revdate: 30.01.2024
-:revnumber: 3.0.1 RC
+:revnumber: 3.0.1
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -90,11 +90,11 @@ endif::[]
 |E-Mail-Mgmt über ePA-FdV; Anpassung Legal Policy zwecks Einstellen von Dokumenten durch Kostenträger; Veröffentlichung zur Kommentierung
 |gematik
 
-// |3.0.1
-// |28.03.2024
-// |
-// |Veröffentlichung
-// |gematik
+|3.0.1
+|28.03.2024
+|5.3.2, 8
+|Anpassung Legal Policy zwecks Einstellen elektronischer Abschriften; Anpassung Befugnisdauer für ÖGD; Veröffentlichung
+|gematik
 
 |===
 
@@ -107,7 +107,7 @@ Die "ePA für alle" realisiert technisch einen souveränen, sicheren und möglic
 
 Dieses Dokument beschreibt wesentliche Kernmechanismen, Basisfunktionalitäten sowie technische Konzepte zu den Diensten des ePA-Aktensystems und den beteiligten Client-Systemen der Fachanwendung ePA.
 
-Eine wesentliche Neuausrichtung der aktuellen ePA-Architektur ist die Unterstütztung von digital gestützten Versorgungsprozessen – initial unterstützt die "ePA für alle" den digital gestützten Medikationsprozess. Weiterhin basiert die ePA-Architektur auf eine stringente Serviceorientierung innerhalb des ePA-Aktensystems und einer weiterentwickelten, modernen Sicherheitsarchitektur.
+Eine wesentliche Neuausrichtung der aktuellen ePA-Architektur ist die Unterstützung von digital gestützten Versorgungsprozessen – initial unterstützt die "ePA für alle" den digital gestützten Medikationsprozess. Weiterhin basiert die ePA-Architektur auf eine stringente Serviceorientierung innerhalb des ePA-Aktensystems und einer weiterentwickelten, modernen Sicherheitsarchitektur.
 
 
 === Zielgruppe
@@ -286,7 +286,7 @@ Der *Information Service* stellt weiterhin lesend die Konfigurationseinstellunge
 === Protokollierung für den Versicherten
 
 Zum Zwecke der Datenschutzkontrolle werden alle versuchten und getätigten Zugriffe auf die Daten des Versicherten im ePA-Aktensystem protokolliert.
-Die Protokolleinträge können durch den Versicherten oder durch einen befugten Vertreter über das ePA-FdV eingesehen werden. Versicherte ohne ein ePA-FdV können bei ihrer zuständigen Ombudsstelle beantragen, die Protokolldaten zur Verfügung gestellt zu bekommen. Der Zugriff auf die Protokoldaten durch andere Akteure ist technisch ausgeschlossen.
+Die Protokolleinträge können durch den Versicherten oder durch einen befugten Vertreter über das ePA-FdV eingesehen werden. Versicherte ohne ein ePA-FdV können bei ihrer zuständigen Ombudsstelle beantragen, die Protokolldaten zur Verfügung gestellt zu bekommen. Der Zugriff auf die Protokolldaten durch andere Akteure ist technisch ausgeschlossen.
 
 
 [#_services]
@@ -440,7 +440,9 @@ link:https://github.com/gematik/ePA-Medication/tree/ePA-3.0.1/concept[Medikation
 
 //*N*
 
-//*O*
+*O*
+
+* ÖGD – Öffentlicher Gesundheitsdienst
 
 //*P*
 

@@ -13,7 +13,7 @@ info:
     For all operations if applicable:
     - error responses may be extended by helpful information about the error condition in _errorDetail_
 
-    **Prereqisites**:</br>
+    **Prerequisites**:</br>
     For insurant and representatives
     - The sectoral IDP of Health insurance is registered with the TI-Federation
     - The authorization service of a Health Record System is registered with the TI-Federation (clientid)
@@ -36,10 +36,16 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0
+  version: 1.1.2
 
   # version history:
   # ----------------
+  # version 1.1.2
+  #   - correction of typos in descriptions
+  #   - changed amr for representative authentication via ePA-FdV
+  #   - bugfix: added vau-np attribute to http 200 responses
+  # version 1.1.1
+  #   - added 'exp' claim to bearerToken and clientAttestation
   # version 1.1.0
   #   - editorial changes, clarifications and examples
   #   - implicit device verification in sendAuthCodeFdV
@@ -72,15 +78,15 @@ tags:
    the IDP and available on client side. Each client shall maintain the address of its associated IDP 
    (idp-iss) for operations of this interface.
 
-   A successful login provides an IDToken and causes an authorized epa user session allowing access to the 
+   A successful login provides an ID-Token and causes an authorized epa user session allowing access to the 
    associated health record as insurant (health record owner) or representative.
   
-   A client shall perform an explicite logout operation after use to release the user session and its resources.
+   A client shall perform an explicit logout operation after use to release the user session and its resources.
    
    All operations mandate an established VAU-channel.
 
    **ePA Device Binding**</br>
-   The last (internal) action of the Authorization Service after successful (internal) receiption of an IDToken
+   The last (internal) action of the Authorization Service after successful (internal) reception of an ID-Token
    is the epa device binding check:</br>
    
    Registered devices:</br>
@@ -90,7 +96,7 @@ tags:
    service for the user of the device.
 
    New or unknown device:</br>
-   In case a new (not yet registered) device is used, no device paramteres shall be provided for login. Th elogin succeeds
+   In case a new (not yet registered) device is used, no device parameters shall be provided for login. The login succeeds
    but access is limited to the operations of the device management, allowing to register and confirm the new device. 
 
    Suppressed device registration:</br>
@@ -107,16 +113,16 @@ tags:
    record system.
    
    This authorization method addresses the central smartcard IDP.
-   A successful login provides an IDToken and causes an authorized epa user session for the health care
+   A successful login provides an ID-Token and causes an authorized epa user session for the health care
    institution allowing access to several health records on demand.
 
    **Client Attestation**</br>
-   The authorization flow uses client attestation to guarantee a match of IDP issued IDToken and
+   The authorization flow uses client attestation to guarantee a match of IDP issued ID-Token and
    the user's identity of the authenticated clients.
 
    A client first retrieves a nonce value from the authorization service. The nonce is signed with the 
    clients SMC-B and becomes the client attestation.</br>
-   In a final sendAuthCodeSC operation the client attestion is compared by the authorization service 
+   In a final sendAuthCodeSC operation the client attestation is compared by the authorization service 
    with the issued nonce value and attestation telematik-id matching ID-Token telematik-id is verified.    
 
    **Allowed usergroups for Authorization SMC-B**
@@ -149,7 +155,7 @@ tags:
 - name: Search access-token for FHIR VZD
   description: | 
    A search access-token is required by clients to submit search queries to the directory service (FHIR VZD).
-   Each health record system is registered as a client with the directory service and provides the associazted search 
+   Each health record system is registered as a client with the directory service and provides the associated search 
    access-token for clients, thereby avoiding the individual registration of each client towards the directory service. 
 
 externalDocs:
@@ -273,8 +279,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 302 |||
         | Request does not match schema | 400 | malformedRequest ||
-        | Invalid request | 403 | invalAuth | includes any error of Authorization Service which are not mapped to 500 internal Server error |
-        | No or outdated nonce | 409 | statusMismatch | No preceding _getNonce_ call or stored nonce outdated/invalid |
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service which is not mapped to 500 internal Server error |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -289,8 +294,6 @@ paths:
           $ref: '#/components/responses/Error400BadRequest'
         '403':
           $ref: '#/components/responses/Error403Forbidden'
-        '409':
-          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
@@ -323,7 +326,8 @@ paths:
         and the client attestation:
         - _clientAttest_ is valid if
           - signature is valid
-          - "iat" is a timestamp in the interval 'current time - 20 min' and 'current time'.
+          - "iat" is a timestamp in the past of "exp".
+          - "exp" is a timestamp in the future of 'current time'.
           - user has role as in "Allowed usergroups for Authorization SMC-B" (from signature cert)
         - stored nonce shall not be outdated
         - stored nonce shall match client attestation nonce
@@ -332,6 +336,8 @@ paths:
         The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
 
         The nonce shall be discarded, i.e. reuse of a client attestation for user session establishment shall be rejected. 
+
+        The VAU user preudonym as generated for the vau-channel (see: vau protocol) shall be returned in a successful operation response.
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
@@ -357,7 +363,7 @@ paths:
 
       responses:
         '200':
-          description: Ok.
+          $ref: '#/components/responses/AuthorizationResponse200'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -406,7 +412,7 @@ paths:
               schema:
                 type: object
                 properties: 
-                  callenge:
+                  challenge:
                     description: A base64 encoded challenge for a bearer token (health record system specific content)
                     type: string
                     format: byte
@@ -426,23 +432,26 @@ paths:
         description: 'BearerToken: gemSpec_Aktensystem_ePAfuerAlle, chapter "3.15.3 Anforderungen an den Authorization Service für die Authentisierung des E-Rezept-Fachdienstes"'
         url: https://gemspec.gematik.de/docs/gemSpec/
       description: |-
-       Authorization of the ePrescription backend (E-Rezept-Fachdienst).
+        Authorization of the ePrescription backend (E-Rezept-Fachdienst).
 
-       **Client**</br>
-       The ePrescription backend shall send a signed JWT (bearerToken) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
-       The token shall contain a fresh challenge (see: _getChallengeForBearerToken_).
+        **Client**</br>
+        The ePrescription backend shall send a signed JWT (bearerToken) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
+        The token shall contain a fresh challenge (see: _getChallengeForBearerToken_).
 
-       **Provider**</br>
-       The received token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
-       The received token shall have a claim "sub", this claim shall state the telematik-id of the ePrescription backend. 
+        **Provider**</br>
+        The received token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
+        The received token shall have a claim "sub", this claim shall state the telematik-id of the ePrescription backend. 
+        The received token shall have a claim 'exp' indicating a point in time in the future of 'current time'. 
 
-       The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
+        The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
+
+        The VAU user preudonym as generated for the vau-channel (see: vau protocol) shall be returned in a successful operation response.
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest | also for _bearerToken_ does not match token schema |
-        | Invalid request | 403 | invalAuth | _bearerToken_ is invalid by measn of HSm rule 'rr0' |
+        | Invalid request | 403 | invalAuth | _bearerToken_ is invalid by means of HSM rule 'rr0' or timestamp |
         | Any other error | 500 | internalError ||
 
          </br>
@@ -462,7 +471,7 @@ paths:
 
       responses:
         '200':
-          description: "OK"
+          $ref: '#/components/responses/AuthorizationResponse200'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -488,8 +497,8 @@ paths:
         Sends an authorization request to the authorization service.
        
         **Client**:</br>
-        A client shall use parameter _x-authorize_representative_ for the "Authorize Represenstative" use case,
-         a login of a user on not owned device for represenative entitlement only.
+        A client shall use parameter _x-authorize_representative_ for the "Authorize Representative" use case,
+         a login of a user on not owned device for representative entitlement only.
         The _x-authorize_representative_ parameter will force an authentication of the user with egK + pin or 
         npa + pin only and limit the possible operations to entitlement management only.
         A client shall use the returned redirect url to invoke the authenticator. 
@@ -499,7 +508,7 @@ paths:
 
         The authorize representative situation (_x-authorize_representative_ == _true_) shall be kept for the subsequent
         _sendAuthCodeFdV_ and device management operations. For this case the PAR for the IDP shall include:
-        - amr = urn:telematik:auth:eGK or urn:telematik:auth:eID
+        - amr = urn:telematik:auth:guest:eGK
 
         The authorization service' state value and clientid used for the PAR shall occur in the URI-PAR response of the IDP.
 
@@ -507,7 +516,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 302 |||
         | Request does not match schema | 400 | malformedRequest ||
-        | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which are not mapped to 500 internal Server error |
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
         | state or clientid value mismatch | 403 | invalData | returned URI-PAR does not contain expected state or clientid value |
         | Invalid URI (x-idp-iss) | 404 | noResource | |
         | Any other error | 500 | internalError ||
@@ -515,7 +524,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | authorize_representative kept for subsequent _sendAuthCodeFdV_ evaluation | if applicable |
+        | _authorize_representative_ kept for subsequent _sendAuthCodeFdV_ evaluation | if applicable |
 
       responses:
         '302':
@@ -561,7 +570,7 @@ paths:
         
 
         **Provider**:</br>
-        The provided authorization code shall be exchanged for an IDToken with the IDP. The IDToken shall be converted
+        The provided authorization code shall be exchanged for an ID-Token with the IDP. The ID-Token shall be converted
         into a HSM-ID-Token with an extended validity period.
         
         Device verification:</br>
@@ -570,7 +579,7 @@ paths:
         Device identifier and -token shall be verified with the registered values.
         The x-device-identifier / x-device-token check shall only consider device registrations for the authorized user.
 
-        On success (IDToken / HSM-ID-Token reveived and device binding check successful) a new user session shall be instantiated, 
+        On success (ID-Token / HSM-ID-Token received and device binding check successful) a new user session shall be instantiated, 
         associated to the HSM-ID-Token.
 
         If device verification succeeds, access to all services of a health record shall be possible for the associated
@@ -580,6 +589,8 @@ paths:
         In all other (success cases) access of the user session shall be limited to the device management service.
 
         The user session of a client shall be closed and all session related data shall be deleted in case operation is not successful.
+
+        The VAU user preudonym as generated for the vau-channel (see: vau protocol) shall be returned in a successful operation response.
         
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
@@ -588,7 +599,7 @@ paths:
         | Only _x-device-identifier_ or _x-device-token_ provided | 400 | paramExcpected | both parameters required or none |
         | _authorize_representative_ is set and _x-device-identifier_ and/or _x-device-token_ provided | 400 | authorizeRep | _x-authorize_representative_ from preceding sendAuthorizationRequestFdV |
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
-        | _authorizationCode_ not valid | 403 | invalAuth | includes any error of Authorization Service and IDP which are not mapped to 500 internal Server error |
+        | _authorizationCode_ not valid | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
         | Wrong _x-device-token_  | 403 | invalidToken | if both parameters avaiable and allowed|
         | Device registration does not exist (_x-device-identifier_)| 404| noResource | also if device is not associated to requestor kvnr |
         | Device registration not confirmed (_status_ == _pending_) | 409 | statusMismatch | confirm pending device registration before retry |
@@ -611,7 +622,7 @@ paths:
 
       responses:
         '200':
-          description: OK, successful login
+          $ref: '#/components/responses/AuthorizationResponse200'
         '400':
           description: Bad Request.
           content:
@@ -671,7 +682,7 @@ paths:
        authentication of the user is required. 
 
        **Client**:</br>
-       A client shall perform this explicite logout to close the user session and all 
+       A client shall perform this explicit logout to close the user session and all 
        health record related activities. For further access a client shall perform a new login, including
        negotiation of a new VAU-channel.
 
@@ -688,7 +699,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The user session and all related transient data is terminated / deleted ||
+        | The user session and all related temporary data is terminated / deleted ||
        
       responses:
         '200':
@@ -740,6 +751,20 @@ components:
         example: true
 
   responses:
+    AuthorizationResponse200:
+      description: "OK, Successful login"
+      content:
+        application/json:
+          example:
+            vau-np: c9a7289e763616d449886acdeb8b83d115881c5d078b8643d112190bc7516584
+          schema:
+            type: object
+            properties:
+              vau-np:
+                $ref: '#/components/schemas/VauUserPreudonymType'
+            required:
+              - vau-np
+
     AuthorizationResponseSC302:
       description: "Found"
       headers:
@@ -849,6 +874,10 @@ components:
         - authorizationCode
       example:
         authorizationCode: 2435623452hkjlk34t
+    VauUserPreudonymType:
+      description: The VAU user pseudonym (VAU-NP), a string of hexadecimal digits (e.g. 64 digits)
+      type: string
+      example: "4aadc671bf058fb6df5f181ad94f4130b3d3e86f3a7ffd53e6ea6a3f01e65608"
     SearchAccessTokenType:
       description: Search access-token as received from FHIR Directory
       type: object
@@ -875,12 +904,13 @@ components:
           - "x5c": signature certificate c.hci.aut
         - payload claims:
           - "iat": issued at timestamp
+          - "exp": expiration timestamp
           - "nonce": nonce value
         - signature: contains token signature
       type: string
       format: application/jwt
       pattern: ^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-\+\/=]+)$
-      example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuaGNpLmF1dCJ9.eyJpYXQiOjE3MDY1MzIwNDgsIm5vbmNlIjoiNzcyMTQzNTI3N2Y1ZDAxMzdiMTdlZjhiODM1Y2EwM2NmMDlkYzIzOTI2YWExNzY2ZTRmODEzMjQzM2ZmMzdkNiJ9.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+      example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuaGNpLmF1dCJ9.eyJpYXQiOjE3MDU2NzQ1NDQsImV4cCI6MTcwNTY3NTc0NCwibm9uY2UiOiI3NzIxNDM1Mjc3ZjVkMDEzN2IxN2VmOGI4MzVjYTAzY2YwOWRjMjM5MjZhYTE3NjZlNGY4MTMyNDMzZmYzN2Q2In0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
     BearerTokenType:
       description: |
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
@@ -893,6 +923,7 @@ components:
         - payload claims:
           - "type": "ePA-Authentisierung über PKI" (fixed value)
           - "iat": issued at timestamp
+          - "exp": expiration timestamp
           - "challenge": freshness parameter (base64 encoded)
           - "sub": Telematik-ID ePrescription backend
           - "oid": Role of ePrescription backend (oid_erp-vau)
@@ -903,7 +934,7 @@ components:
           type: string
           format: application/jwt
           pattern: ^([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_=]+)\.([a-zA-Z0-9_\-\+\/=]+)$
-          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuYXV0In0.eyJ0eXBlIjoiZVBBLUF1dGhlbnRpc2llcnVuZyDDvGJlciBQS0kiLCJpYXQiOjE3MDY1MzIwNDgsImNoYWxsZW5nZSI6IllTQmlZWE5sTmpRZ1pXNWpiMlJsWkNCamFHRnNiR1Z1WjJVZ0tHaGxZV3gwYUNCeVpXTnZjbVFnYzNsemRHVnRJSE53WldOcFptbGpJR052Ym5SbGJuUXAiLCJzdWIiOiI5LTg4MzExMDAwMDAxMTExMSIsIm9pZCI6IjEuMi4yNzYuMC43Ni40LjI1OCJ9.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuYXV0In0.eyJ0eXBlIjoiZVBBLUF1dGhlbnRpc2llcnVuZyDDvGJlciBQS0kiLCJpYXQiOjE3MDU2NzQ1NDQsImV4cCI6MTcwNTY3NTc0NCwiY2hhbGxlbmdlIjoiWVNCaVlYTmxOalFnWlc1amIyUmxaQ0JqYUdGc2JHVnVaMlVnS0dobFlXeDBhQ0J5WldOdmNtUWdjM2x6ZEdWdElITndaV05wWm1saklHTnZiblJsYm5RcCIsInN1YiI6IjktODgzMTEwMDAwMDExMTExIiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuMjU4In0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object

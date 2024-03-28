@@ -85,16 +85,18 @@ paths:
         - Relocation (exporting provider)
       operationId: startPackageCreation
       summary: (startPackageCreation) Cause creation of export package of health record for download
+      externalDocs:
+        description: 'Reference implemenation for Health Record Migaration ePA-3.0'
+        url: https://github.com/gematik/ref-ePA-HealthRecordMigration/tree/ePA-3.0
       description: |
        This operation shall initiate the creation of an export package including all data of 
        the health record for relocation to another health record provider.</br>
        This operation is limited to entitled users of role oid_kostentraeger.
        
        **Client**:</br>
-       A client shall use this operation only if a relocation of a health record is requested
-       and an encryption certificate and a requestId is available. A client receives those required
-       items by **proprietary** means from the _Information Service Account_ as consequence of a _startRelocation_
-       request.
+       A client shall use this operation only if a relocation of a health record is requested. 
+       A client receives required items (i.e. the _requestId_) by **proprietary** means from the 
+       _Information Service Account_ as consequence of a _startRelocation_ request.
 
        **Provider**:</br>
        The export package shall contain all transferable data of the health record services:
@@ -105,19 +107,23 @@ paths:
        - Constraint Management 
        - Entitlement Management
 
-       and finally be encrypted by means of the provided _certificate_ and stored for later
+       and finally be encrypted and stored for later
        retrieval by the requesting health record provider. An export package download url shall 
        be returned in the response.  
+
+       The certificate (of the receiving health record system) for encryption is a preinstalled
+       certificate and shall be retrieved from HSM by rule 'hsm-r7'. This certifcate shall be 
+       validated before use.
+
+       The format and encryption requirements are stated in an additional repository (see: 'find more details' below)
 
        The health record status shall be set to SUSPENDED to prevent from further usage.</br>
        _requestId_ in response shall equal _requestId_ in request.
        The response may be sent prior to export package finalization. 
+       The state change to SUSPENDED shall be logged. This log-entry shall be part of the export package. 
 
        The export package preparation may be aborted/ not started in case an incident (from _Information Service Account_) with
-       reference to _requestId_ was received prior to a call of this operation:
-       - relocationAbortedNoConsent: 
-         - The insurant has revoked his consent for ePA against the requesting provider. The 
-        health record data shall not be relocated and the health record shall be deleted.
+       reference to _requestId_ was received:
        - relocationAborted:
          - The requesting provider has discovered issues preventing from relocation. The health record
         shall stay in ACTIVATED state for furter usage. The requesting provider may repeat the
@@ -130,6 +136,7 @@ paths:
        | Request does not match schema | 400 | malformedRequest ||       
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
+       | Invalid certificate provided | 403 | invalCert | the certificate from HSM (hsm-r7) |       
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED or SUSPENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
        | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
@@ -140,7 +147,7 @@ paths:
        |---------------------------------------|---------|
        | Export package generation is started | if not aborted by requesting provider |
        | The health record is in state SUSPENDED | if not aborted by requesting provider |
-       | A log-entry for the operation exists | for any operation result, shall be contained in export package |
+       | A log-entry for the operation exists | health record status change only, shall be contained in export package |
 
       requestBody:
         required: true
@@ -150,17 +157,13 @@ paths:
               Package generation request:
                 value:
                   requestId: '82d466e7-1125-4997-9de2-e4e8390c68a4'
-                  certificate: 'base64encodedCertificate'
             schema:
               type: object
               properties:
                 requestId:
                   $ref: '#/components/schemas/RequestIdType'
-                certificate:
-                  $ref: '#/components/schemas/CertificateType'
               required:
                 - requestId
-                - certificate
       responses:
         '200':
           description: Ok.
@@ -211,9 +214,21 @@ paths:
        from the _Information Service Account_ as consequence of a _putDownloadUrlForExportPackage_ operation.
 
        **Provider**:</br>
-       Download the complete export package from the download point. Decrypt and migrate the content
-       to the health record.
-       
+       Download the complete export package from the download point. Decrypt the package (rule 'hsm-r5') and 
+       migrate the content to the health record.
+
+       Entitlements contained in the export package combine a jwt and additional data. The jwt shall be converted
+       to a CMAC secured entitlement using HSM rule 'rr5'.
+
+       The CMAC secured result shall be completed with the additional data from the export package entitlement element:
+       - _oid_ of the entitled user
+       - _displayName_ of the entitled user
+       - _issued-at_ original point in time
+       - _issued-actorId_ of requestor
+       - _issued-displayName_ of requestor
+
+       The completed entitlement shall be stored, encrypted by SecureAdminStorageKey of the health record.</br>
+
        The response may be sent prior to export package migration finalization. 
 
        The export package provider shall be notified about problems by sending an incident
