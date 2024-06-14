@@ -831,7 +831,7 @@ components:
             identifier:
               type: object
               properties:
-                code:
+                type:
                   $ref: '#/components/schemas/CodeableConcept'
                 system:
                   type: string
