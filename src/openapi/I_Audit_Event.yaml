@@ -867,9 +867,10 @@ components:
               type: string
               example: Elektronische Patientenakte Fachdienst
         type:
-          allOf:
-            - description: "Code specifying the type of source where event originated. CDMGMT | ENTITMGMT | DEVICEMGMT | HRRSVC | XDSSVC | MEDICATIONSVC | CONMGMT"
-            - $ref: '#/components/schemas/Coding'
+          description: "Code specifying the type of source where event originated. CDMGMT | ENTITMGMT | DEVICEMGMT | HRRSVC | XDSSVC | MEDICATIONSVC | CONMGMT"
+          type: array
+          items:
+            $ref: '#/components/schemas/CodeableConcept'
 
     AuditEvent_Entity:
       type: object
@@ -935,9 +936,10 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
-            code: XDSSVC
-            display: XDS Document Service
+            - coding:
+                - system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
+                  code: XDSSVC
+                  display: XDS Document Service
         entity:
           - name: Arztbrief4711
             description: operation:provide-and-register-document-set-b
@@ -977,9 +979,10 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
-            code: MEDICATIONSVC
-            display: Medication Service
+            - coding:
+                - system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
+                  code: MEDICATIONSVC
+                  display: Medication Service
         entity:
           - name: MedicationDispense
             description: operation:cancel-dispensation
@@ -1016,9 +1019,10 @@ components:
           observer:
             display: Elektronische Patientenakte Fachdienst
           type:
-            system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
-            code: MEDICATIONSVC
-            display: Medication Service
+            - coding:
+                - system: https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs
+                  code: MEDICATIONSVC
+                  display: Medication Service
         entity:
           - name: MedicationRequest
             description: Bundle:searchset
