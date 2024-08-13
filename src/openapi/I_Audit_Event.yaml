@@ -45,10 +45,15 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0
+  version: 1.3.0
 
   # version history:
   # ----------------
+  # version 1.3.0
+  #   - corrections in examples
+  #   - replacement of OperationOutcome responses   
+  # version 1.2.0
+  #   - update version of referenced fhir profiles
   # version 1.1.0
   #   - bugfix UserAgentType
   # version 1.0.1
@@ -73,7 +78,7 @@ paths:
       tags:
       - AuditEvent
       operationId: listAuditEvents
-      summary: "search-type: Search for AuditEvent instances"
+      summary: (listAuditEvents) Search for AuditEvent instances
       description: |
         
         ## **Allowed user groups [professionOID]**
@@ -263,10 +268,8 @@ paths:
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
-        | Unknown search parameter | 400 | | OperationOutcome | 
-        | Invalid query parameter(s) | 400 | | OperationOutcome | 
-        | Invalid request | 400 | | OperationOutcome | 
-        | Unknown resource type | 404 | | OperationOutcome |
+        | Unknown search or query parameter(s) | 400 | malformedRequest || 
+        | Invalid request | 400 | malformedRequest || 
         | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -275,11 +278,6 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | A log-entry for the operation exists | representative and ombuds office only, all operation results |
-
-        #### **OperationOutcome**
-        ##### Profile: 
-        [https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2](https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2)
-
 
       parameters:
         - $ref: '#/components/parameters/insurantid'
@@ -355,11 +353,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuditEvent_SearchSet_Bundle'
         '400':
-          $ref: '#/components/responses/OperationOutcome400BadRequest'
+          $ref: "#/components/responses/Error400BadRequest"
         '403':
           $ref: '#/components/responses/Error403Forbidden'
-        '404':
-          $ref: '#/components/responses/OperationOutcome404NotFound'
         '409':
           $ref: '#/components/responses/Error409Conflict'
         '500':
@@ -370,7 +366,7 @@ paths:
       tags:
       - AuditEvent
       operationId: getAuditEventById
-      summary: "read-instance: Read AuditEvent instance"
+      summary: (getAuditEventById) Read AuditEvent instance
       description: |
         ## **Allowed user groups [professionOID]**
         - oid_versicherter
@@ -380,10 +376,9 @@ paths:
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
-        | Invalid request | 400 | | OperationOutcome | 
+        | Invalid request | 400 | malformedRequest || 
         | Requestor role is not in the list of allowed user groups | 403 | invalidOid ||
-        | Resource is not known | 404 | | OperationOutcome |
-        | Unknown resource type | 404 | | OperationOutcome |
+        | Resource not known or of unknown type | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -420,11 +415,11 @@ paths:
                 AuditEvent_Medication_Service_Search:
                   $ref: '#/components/examples/AuditEvent_Medication_Service_Search'
         '400':
-          $ref: '#/components/responses/OperationOutcome400BadRequest'
+          $ref: "#/components/responses/Error400BadRequest"
         '403':
           $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: '#/components/responses/OperationOutcome404NotFound'
+          $ref: "#/components/responses/Error404NotFound"
         '409':
           $ref: '#/components/responses/Error409Conflict'
         '500':
@@ -433,6 +428,14 @@ paths:
 
 components:
   responses:
+    Error400BadRequest:
+      description: Bad Request.
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
       content:
@@ -448,7 +451,14 @@ components:
                 errorCode: invalidOid
           schema:
             $ref: '#/components/schemas/ErrorType'
-
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
       content:
@@ -466,95 +476,6 @@ components:
             errorCode: internalError
           schema:
             $ref: '#/components/schemas/ErrorType'
-
-    OperationOutcome400BadRequest:
-      description: Bad Request
-      content:
-        application/json:
-          examples:
-            unknown_search_parameter:
-              summary: Unknown search parameter
-              value:
-                resourceType: OperationOutcome
-                meta:
-                  profile:
-                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-                issue:
-                  - severity: error
-                    code: processing
-                    details:
-                      coding:
-                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                          code: MSG_PARAM_UNKNOWN
-                    diagnostic: "Unknown search parameter"
-            invalid_query_parameter:
-              summary: Invalid query parameter(s)
-              value:
-                resourceType: OperationOutcome
-                meta:
-                  profile:
-                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-                issue:
-                  - severity: error
-                    code: processing
-                    details:
-                      coding:
-                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                          code: MSG_BAD_SYNTAX
-                    diagnostic: "Invalid query parameter(s)"
-            invalid_request:
-              summary: Invalid request
-              value:
-                resourceType: OperationOutcome
-                meta:
-                  profile:
-                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-                issue:
-                  - severity: error
-                    code: not-supported
-                    details:
-                      coding:
-                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                          code: MSG_BAD_FORMAT
-                    diagnostic: "Invalid request"
-          schema:
-            $ref: '#/components/schemas/OperationOutcome'
-
-    OperationOutcome404NotFound:
-      description: Not found.
-      content:
-        application/json:
-          examples:
-            resource_not_known:
-              summary: Resource is not known
-              value:
-                resourceType: OperationOutcome
-                meta:
-                  profile:
-                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-                issue:
-                  - severity: error
-                    code: processing
-                    details:
-                      coding:
-                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                          code: MSG_RESOURCE_ID_FAIL
-                    diagnostic: "Resource is not known"
-            unknown_resource_type:
-              summary: Unknown resource type
-              value:
-                resourceType: OperationOutcome
-                meta:
-                  profile:
-                    - https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-                issue:
-                  - severity: error
-                    code: processing
-                    details:
-                      coding:
-                        - system: http://terminology.hl7.org/CodeSystem/operation-outcome
-                          code: MSG_UNKNOWN_TYPE
-                    diagnostic: "Unknown resource type"
 
   parameters:
     insurantid:
@@ -597,38 +518,6 @@ components:
           type: string
       required:
         - errorCode
-
-    OperationOutcome:
-      type: object
-      properties:
-        resourceType:
-          type: string
-          example: OperationOutcome
-        meta:
-          type: object
-          properties:
-            profile:
-              description: A list of profiles (references to [[[StructureDefinition]]]
-                resources) that this resource claims to conform to. The URL is a reference
-                to [[[StructureDefinition.url]]].
-              type: array
-              items:
-                type: string
-                example: https://gematik.de/fhir/epa/StructureDefinition/epa-operation-outcome|1.0.2
-        issue:
-          type: array
-          items:
-            type: object
-            properties:
-              severity:
-                type: string
-              code:
-                type: string
-              details:
-                $ref: '#/components/schemas/CodeableConcept'
-              diagnostic:
-                type: string
-
     Meta:
       type: object
       description: The metadata about a resource. This is content in the resource
@@ -897,10 +786,10 @@ components:
         inappropriate usage.
       properties:
         type:
-          description: The Name of the property (e.g. Document Format, DocumentID, ...).
+          description: The Name of the property (e.g. DocumentFormatCode, DocumentUniqueId, ...).
           type: string
         valueString:
-          description: Property value (e.g. urn:gematik:ig:Zahnbonusheft:v1.1.0)
+          description: Property value (e.g. urn:uuid:f019475d-2356-491d-89fd-e58027d842a1)
           type: string
 
 
@@ -933,6 +822,7 @@ components:
                 value: 1-883110000092404
             altId: 1-883110000092404
             name: Praxis Dr. John Doe
+            requestor: false
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
@@ -942,10 +832,12 @@ components:
             display: XDS Document Service
         entity:
           - name: Arztbrief4711
-            description: operation:provide-and-register-document-set-b
+            description: ProvideAndRegisterDocumentSet-b
             detail:
               - type: DocumentFormatCode
-                valueString: urn:gematik:ig:Arztbrief:r3.1
+                valueString: urn:gematik:ig:Arztbrief:r3.1^^^&1.3.6.1.4.1.19376.3.276.1.5.6&ISO
+              - type: DocumentUniqueId
+                valueString: urn:uuid:f019475d-2356-491d-89fd-e58027d842a1
 
     AuditEvent_Medication_Service:
       summary: "Example AuditEvent from the Medication Service"
@@ -975,6 +867,7 @@ components:
                 value: ERP
             altId: ERP
             name: E-Rezept-Fachdienst
+            requestor: false
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
@@ -984,7 +877,7 @@ components:
             display: Medication Service
         entity:
           - name: MedicationDispense
-            description: operation:cancel-dispensation
+            description: operation:cancelDispensation_MedicationSvc
 
     AuditEvent_Medication_Service_Search:
       summary: "Example AuditEvent from the Medication Service for search"
@@ -1014,6 +907,7 @@ components:
                 value: 1-883110000092404
             altId: 1-883110000092404
             name: Praxis Dr. John Doe
+            requestor: false
         source:
           observer:
             display: Elektronische Patientenakte Fachdienst
