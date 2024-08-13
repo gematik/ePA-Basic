@@ -25,10 +25,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
-  version: 1.1.1
+  version: 1.2.0
 
   # version history:
   # ----------------
+  # version 1.2.0
+  #   - changed array to object with array for consent lists
   # version 1.1.1
   #   - changed path parameter insurantid to header parameter x-insurantid
   # version 1.1.0
@@ -151,14 +153,18 @@ paths:
           content:
             application/json:
               example:
-                - functionId: "medication"
-                  decision: "deny"
-                - functionId: "erp-submission"
-                  decision: "permit"
+                data:
+                  - functionId: "medication"
+                    decision: "deny"
+                  - functionId: "erp-submission"
+                    decision: "permit"
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConsentDecisionsResponseType"
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '404':

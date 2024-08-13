@@ -1,6 +1,22 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.2-1
+### changes
+- fix: added x-authoriztaion-validation parameter in I_Authoriztaion_Service.yaml (C_11901)
+- introduce 'data' as common property for arrays in responses in I_Consent_Decision_Management.yaml, I_Entitlement_Management.yaml and I_Information_Service.yaml (C_11949)
+- editorial correction spelling actorId and insurantId in I_Entitlement_Managemnet.yaml
+- corrections regarding email handling in case of representative entitlement in I_Entitlement_Management.yaml (alignment with changes from C_11885)
+- renamed lastLogin to lastUse in I_Device_Management_Insurant.yaml
+- define deviceIdentifier and -Token as mandatory in I_Device_Management_Insurant.yaml
+- removed obsolete status code 403 in setEmailAddress in I_Email_Management.yaml
+- fixed examples in I_Audit_Event.yaml 
+- added kvnr and name in response of sendAuthCodeFdv in I_Authorization_Service.yaml
+- removed redundant deviceIdentifier in registerDevice response schema in I_Device_Management_Insurant.yaml (C_11957)
+- added status code 404 'notHomeSystem' to replaceEmailAddress in I_Email_Management.yaml
+- replaced operationOutcome responses in I_Audit_Event.yaml (C_11958)
+- changed logging conditions in I_Entitlement_Management.yaml (C_11960)
+- reworked email address management in I_Email_Management.yaml (C_11965)
 ## Release 3.0.2
 - release ePA-3.0.2
 ### changes
@@ -13,6 +29,7 @@
 - reduced maximum amount of email addresses per user to 1, including change of all releated operations, in I_Email_Management.yaml (C_11885)
 - added authorization with device attestation for sendAuthCodeFdv in I_Authorization_Service.yaml (C_11885)
 - removed paging and filtering in I_Email_Management.yaml, I_Entitlement_Management_Insurant.yaml and I_Device_Management.yaml m(C_11912)
+- update fhir profiles for I_Audit_Event.yaml
 ## Release 3.0.2 alpha 
 - pre-release ePA-3.0.2 
 ### changes

@@ -41,10 +41,15 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.4.0
+  version: 1.5.0
 
   # version history:
   # ----------------
+  # version 1.5.0
+  #   - renamed lastLogin to lastUse 
+  #   - typo correction in examples
+  #   - set deviceIDentifier and -Token mandatory for confirmPendingDevice request
+  #   - removed redundant deviceIdentifier in registerDevice resposnes
   # version 1.4.0
   #   - reworked for use of deviceAttestation
   #   - paging and filtering deleted
@@ -120,7 +125,7 @@ tags:
 
 
     Device management automatically deletes existing device registrations when: 
-    - device registration (creation time) is more than 1 year old or
+    - device registration (creation time) is more than 2 years old or
     - device registration is pending and confirmation code for confirmation is not submitted within 6 hours or
     - device registration is pending and a wrong confirmation code was submitted 5 times in a row
 
@@ -244,10 +249,6 @@ paths:
               schema:
                 type: object
                 properties: 
-                  deviceIdentifier:
-                    $ref: '#/components/schemas/DeviceIdentifierType'
-                  deviceToken:
-                    $ref: '#/components/schemas/DeviceTokenType'
                   data:
                     $ref: '#/components/schemas/PendingDeviceType'
                   emailNotification:
@@ -256,27 +257,27 @@ paths:
                 New_Device_1:
                   summary: A new device registration
                   value:
-                    deviceIdentifier: '1d20dfa6-e920-4196-80ab-d411ee257748'
-                    deviceToken: 8827da6359c78d81a5df7650b972308aa88394fa8f325b742b125372d7f70f50
                     data:
+                      deviceToken: 8827da6359c78d81a5df7650b972308aa88394fa8f325b742b125372d7f70f50
+                      deviceIdentifier: '1d20dfa6-e920-4196-80ab-d411ee257748'
                       status: pending
                       displayName: "my health care device"
                       createdAt: 2025-04-22T14:23:01Z
                       remainingConfirmationRetries: 4
                     emailNotification:
-                      - myPrivateMailAccount@example.com
+                      myPrivateMailAccount@example.com
                 New_Device_2:
                   summary: Another new device registration
                   value:
-                    deviceIdentifier: '3def7890-f754-4db5-b563-adc8e888495a'
-                    deviceToken: ae9877f42898a24674d75aed479cabbf02adfa68ebb40a03020c910599337c53
                     data:
+                      deviceToken: ae9877f42898a24674d75aed479cabbf02adfa68ebb40a03020c910599337c53
+                      deviceIdentifier: '3def7890-f754-4db5-b563-adc8e888495a'
                       status: pending
                       displayName: "newDevice001"
                       createdAt: 2025-05-01T08:47:12Z
                       remainingConfirmationRetries: 4
                     emailNotification:
-                      - myPrivateMailAccount@example.com
+                      myPrivateMailAccount@example.com
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -358,6 +359,8 @@ paths:
             schema:
               type: object
               required:
+                - deviceIdentifier
+                - deviceToken
                 - confirmationCode
               properties:
                 deviceIdentifier:
@@ -822,6 +825,10 @@ components:
           format: date-time
     PendingDeviceType:
       allOf:
+        - type: object
+          properties:
+            deviceToken:
+              $ref: '#/components/schemas/DeviceTokenType'
         - $ref: '#/components/schemas/BaseDeviceType'
         - type: object
           properties:
@@ -836,7 +843,7 @@ components:
         - $ref: '#/components/schemas/BaseDeviceType'
         - type: object
           properties:
-            lastLogin:
+            lastUse:
               description: timestamp of last login associated to the registered device
               type: string
               format: date-time

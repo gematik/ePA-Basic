@@ -39,10 +39,12 @@ info:
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
 
-  version: 1.2.0
+  version: 1.3.0
 
   # version history:
   # ----------------
+  # version 1.3.0
+  #   - changed array to object with array for consent lists
   # version 1.2.0
   #   - bugfix UserAgentType
   #   - return all changed consent decisions in response of updateConsentDecision  
@@ -192,26 +194,32 @@ paths:
                 Permit_Medication:
                   summary: Permit functionid == medication (permits erp-submission internally) response
                   value:
-                    - functionId: "medication"
-                      decision: "permit"
-                    - functionId: "erp-submission"
-                      decision: "permit"
+                    data:
+                      - functionId: "medication"
+                        decision: "permit"
+                      - functionId: "erp-submission"
+                        decision: "permit"
                 Deny_erp-submission:
                   summary: Deny functionid == erp-submission (denies medication internally) response
                   value:
-                    - functionId: "medication"
-                      decision: "deny"
-                    - functionId: "erp-submission"
-                      decision: "deny"
+                    data:
+                      - functionId: "medication"
+                        decision: "deny"
+                      - functionId: "erp-submission"
+                        decision: "deny"
                 Deny_erp-submission2:
                   summary: Deny functionid == erp-submission (medication already denied) response
                   value:
-                    - functionId: "erp-submission"
-                      decision: "deny"
+                    data:
+                      - functionId: "erp-submission"
+                        decision: "deny"
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConsentDecisionsResponseType"
         '400':
           $ref: "#/components/responses/Error400BadRequest"
         '403':
@@ -311,14 +319,18 @@ paths:
           content:
             application/json:
               example:
-                - functionId: "medication"
-                  decision: "deny"
-                - functionId: "erp-submission"
-                  decision: "permit"
+                data:
+                  - functionId: "medication"
+                    decision: "deny"
+                  - functionId: "erp-submission"
+                    decision: "permit"
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConsentDecisionsResponseType"
         '400':
           $ref: "#/components/responses/Error400BadRequest"
         '403':

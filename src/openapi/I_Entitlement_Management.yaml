@@ -41,10 +41,16 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.2.3
+  version: 1.3.0
 
   # version history:
   # ----------------
+  # version 1.3.0
+  #   - changed property 'assignment' to 'data' (type alignment among APIs)
+  #   - changed oneOf to anyOf in schema of request for setEntitlement (for tools sake)
+  #   - editorial: set actorId and insurantId to lowerCamelCase in descriptions and jwt for alignment with specification
+  #   - corrections regarding email handling in case of representative entitlement via ePA-FdV (caused by limitation of amount and home-AS for email addresses)
+  #   - changed logging condition to success cases only
   # version 1.2.3
   #   - paging and filtering deleted
   #   - removed limit of 10 mail addresses for representatives to setEntitlement operation
@@ -272,7 +278,7 @@ paths:
        entitlement addresses a user identified by a kvnr (representative).</br>
        A client shall (mandatory) apply a date-time of 9999-12-31T00:00:00Z to the _validTo_ claim of a request if the 
        entitlement addresses a DiGA (oid_diga).</br>
-       A client shall (mandatory) apply an email address for notification and device registration if the 
+       A client shall (mandatory) apply an email address for notification if the 
        entitlement addresses a user identified by a kvnr (representative).</br>
        A client shall delete an assignment of the Blocked User Policy associated to the addressee of this 
        entitlement request first (entitlement is applicable for non-blocked users only).  
@@ -307,13 +313,11 @@ paths:
        Representative Entitlement:</br>
        A request for representative entitlement shall provide (mandatory) a notification mail address 
        of the representative.
-       This notification mail address shall be associated to the representatives identification (kvnr) an kept for
-       a subsequent device registration of the representative on first access to the insurant's health record
-       (hand over to Device Management).</br>
-       Additionally a notification mail shall be send to the representative using this mail address
+       A notification mail shall be sent to the representative using this mail address
        for information about the new established representative role for the insurant's health record, including 
        kvnr and name of the insurant. This notification is obsolete in case the new entitlement replaces an existing
        entitlement of the representative.<br>
+       The email address shall be discarded after use and shall not be persistet.
 
        | Conditions | Status code | Error code | Remarks |
        |------------|-------------|------------|---------|
@@ -337,9 +341,8 @@ paths:
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
        | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement is replaced |
-       | email is stored for device registration and associated to representative's kvnr | representative entitlement only |
        | Entitlement notification is sent | representative entitlement only |
-       | A log-entry for the operation exists | all operation results |
+       | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 
       requestBody:
@@ -347,7 +350,7 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
+              anyOf:
                 - $ref: '#/components/schemas/EntitlementRequestType'
                 - $ref: '#/components/schemas/EntitlementRequestRepType'
             examples:
@@ -409,7 +412,7 @@ paths:
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Entitlement (_actorid_) does not exist | 404 | noResource | applies also if _actorid_ refers to a static entitlement |
+        | Entitlement (_actorId_) does not exist | 404 | noResource | applies also if _actorId_ refers to a static entitlement |
         | Health record is not in state ACTIVATED | 409 | statusMismatch ||
         | Any other error | 500 | internalError ||
 
@@ -463,7 +466,7 @@ paths:
         The addressed entitlement shall be finally removed from the SecureAdminStorage.</br>
         Deletion of entitlements addressing a kvnr (actorId = kvnr, oid = oid_versicherter) shall only be
         successful if requestor is the insurant (kvnr == health record identifier) or the entitled 
-        representative (actorid == kvnr of requestor), i.e. a representative shall not delete entitlements 
+        representative (actorId == kvnr of requestor), i.e. a representative shall not delete entitlements 
         of other representatives.</br>
         Deletion of static entitlements shall not be successful.
 
@@ -477,14 +480,14 @@ paths:
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
         | Entitlement to delete does not exist | 404 | noResource ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
-        | Parameter _actorid_ refers to a static entitlement| 409 | requestMismatch ||
+        | Parameter _actorId_ refers to a static entitlement| 409 | requestMismatch ||
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | The addressed assignment is removed from the associated policy ||
-        | A log-entry for the operation exists | all operation results |
+        | A log-entry for the operation exists | successful operation only |
 
       parameters:
         - in: path
@@ -579,7 +582,7 @@ paths:
        |---------------------------------------|---------|
        | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement with earlier _validTo_ is replaced |
        | The user addressed by the new entitlement is entitled | successful operation only |
-       | A log-entry for the operation exists | all operation results |
+       | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.1 |
 
       requestBody:
@@ -650,7 +653,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  assignments:
+                  data:
                     type: array
                     items:
                       allOf:
@@ -964,7 +967,7 @@ components:
         - payload claims:
           - "iat": issued at timestamp
           - "exp": expiry timestamp (always iat + 20min)
-          - "insurantid": the health record identifier this entitlement is assoctiated to
+          - "insurantId": the health record identifier this entitlement is assoctiated to
           - "actorId": Telematik-Id or KVNR
           - "oid": value of professionOID
           - "displayName": name according to actorId
@@ -986,16 +989,16 @@ components:
           type: string
           format: application/jwt
           pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
-          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRpZCI6IkExMjM0NTY3ODkiLCJhY3RvcmlkIjoiMS04ODMxMTAwMDAwOTI0MDQiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC41MyIsImRpc3BsYXlOYW1lIjoiS3JhbmtlbmhhdXMgU3QuIEpvaGFubmVzIiwidmFsaWRUbyI6IjIwMjUtMTItMDcifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRJZCI6IkExMjM0NTY3ODkiLCJhY3RvcklkIjoiMS04ODMxMTAwMDAwOTI0MDQiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC41MyIsImRpc3BsYXlOYW1lIjoiS3JhbmtlbmhhdXMgU3QuIEpvaGFubmVzIiwidmFsaWRUbyI6IjIwMjUtMTItMDcifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
     EntitlementRequestRepType:
       allOf:
         - $ref: '#/components/schemas/EntitlementRequestType'
         - type: object
           properties:
-             email:
-                type: string
-                format: email
-                example: "name@example.com"
+            email:
+              type: string
+              format: email
+              example: "name@example.com"
 
     EntitlementClaimsResponseType:
       description: Properties of one specific entitlement
@@ -1161,12 +1164,12 @@ components:
     Set_SingleEntitlementRepresentative:
       summary: Entitlement representative.
       value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRpZCI6Ilg5OTk5OTk5OTkiLCJhY3RvcmlkIjoiWDExMDQzNDM3MCIsIm9pZCI6IjEuMi4yNzYuMC43Ni40LjQ5IiwiZGlzcGxheU5hbWUiOiJTaW1vbiB2b24gRMO8c3RlcmJlaG4tSGFyZGVuYmVyZ3NoYXVzZW4iLCJ2YWxpZFRvIjoiOTk5OS0xMi0zMVQwMDowMDowMFoifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRJZCI6Ilg5OTk5OTk5OTkiLCJhY3RvcklkIjoiWDExMDQzNDM3MCIsIm9pZCI6IjEuMi4yNzYuMC43Ni40LjQ5IiwiZGlzcGxheU5hbWUiOiJTaW1vbiB2b24gRMO8c3RlcmJlaG4tSGFyZGVuYmVyZ3NoYXVzZW4iLCJ2YWxpZFRvIjoiOTk5OS0xMi0zMVQwMDowMDowMFoifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
         email: simon@example.com
     Set_SingleEntitlementPharmacy:
       summary: Entitlement pharmacy.
       value:
-        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRpZCI6Ilg5OTk5OTk5OTkiLCJhY3RvcmlkIjoiMy04ODMxMTAwMDAwOTI0NzEiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC41NCIsImRpc3BsYXlOYW1lIjoiQXJtaW5pdXMgQXBvdGhla2UiLCJ2YWxpZFRvIjoiMjAyNS0xMC0wNlQyMjo1OTo1OVoifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
+        jwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRJZCI6Ilg5OTk5OTk5OTkiLCJhY3RvcklkIjoiMy04ODMxMTAwMDAwOTI0NzEiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC41NCIsImRpc3BsYXlOYW1lIjoiQXJtaW5pdXMgQXBvdGhla2UiLCJ2YWxpZFRvIjoiMjAyNS0xMC0wNlQyMjo1OTo1OVoifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ'
     Response_SingleEntitlementRepresentative:
       summary: Entitlement representative.
       value:
