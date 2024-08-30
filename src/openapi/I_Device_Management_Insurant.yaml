@@ -41,10 +41,14 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.5.0
+  version: 1.6.0
 
   # version history:
   # ----------------
+  # version 1.6.0
+  #   - changed response schemas. Response considers 'pending' and 'confirmed' now.
+  #   - changed remainingConfirmationRetries counter values to 5
+  #   - editorial: some wordings revised
   # version 1.5.0
   #   - renamed lastLogin to lastUse 
   #   - typo correction in examples
@@ -75,18 +79,19 @@ tags:
 - name: DeviceManagement
   description: |
     **Device Management**
-    Manegement of devices takes place beside an health record and is also possible for insurants
-    which do not want to use the ePA at all (i.e. generalConsentDecision is 'false')
+    Management of devices takes place beside a health record and is also possible for insurants
+    which do not want to use the ePA at all (i.e. general consent decision for epa usage 
+    is 'deny').
 
     The devices of an insurant are always and only managed in the health record system associated
-    to the insurant ("home health record system" or "home system"), i.e. the health record system 
+    to the insurant ("home health record system" or "home system"), which is the health record system 
     hosting the insurance of the insurant.
 
-    The device registration in a home system can still be used in another system, for example in
-    a role as representative for an insurant hosted by another system.  
+    The device registration in a home system can still be used in another system, especially for
+    the role as representative for an insurant hosted by another system.  
 
-    **Device Management (home system)** allows a user to manage and use all devices 
-    registered to the user's kvnr.
+    **Device Management (home system)** allows an insurant to manage and use all devices. Devices are
+    only registered for the insurant's kvnr and can only be managed by them (not by a representative).
 
     A confirmed device registration is always required for any device with installed ePA-FdV 
     used to access health record content. An unregistered (i.e. new) or not confirmed device 
@@ -250,7 +255,12 @@ paths:
                 type: object
                 properties: 
                   data:
-                    $ref: '#/components/schemas/PendingDeviceType'
+                    allOf:
+                      - type: object
+                        properties:
+                          deviceToken:
+                              $ref: '#/components/schemas/DeviceTokenType'
+                      - $ref: '#/components/schemas/PendingDeviceType'
                   emailNotification:
                     $ref: '#/components/schemas/EmailAddressType'
               examples:
@@ -263,7 +273,7 @@ paths:
                       status: pending
                       displayName: "my health care device"
                       createdAt: 2025-04-22T14:23:01Z
-                      remainingConfirmationRetries: 4
+                      remainingConfirmationRetries: 5
                     emailNotification:
                       myPrivateMailAccount@example.com
                 New_Device_2:
@@ -275,7 +285,7 @@ paths:
                       status: pending
                       displayName: "newDevice001"
                       createdAt: 2025-05-01T08:47:12Z
-                      remainingConfirmationRetries: 4
+                      remainingConfirmationRetries: 5
                     emailNotification:
                       myPrivateMailAccount@example.com
         '400':
@@ -310,17 +320,17 @@ paths:
         **Client**:</br>
         A client shall submit the _confirmationCode_ for confirmation of a new device registration 
         as received via email.
-        A client may retry the confirmation in case the submitted _confirmationCode_ was wrong. The 
-        remaining amount of allowed failed attempts for confirmation are returned on every failed attempt
-        for information. A client shall start a complete new device registration in case no more attempts for
-        confirmation remain.
+        A client may retry the confirmation in not successful cases ( worng submitted _confirmationCode_, 
+        wrong submitted _deviceToken_). The remaining amount of allowed attempts for confirmation is returned 
+        on every failed attempt for information. A client shall start a complete new device registration in 
+        case no more attempts for confirmation remain.
 
         **Provider**</br>
         The submitted _confirmationCode_ shall be validated. _confirmationCode_ and _deviceToken_
         shall match the registered values. The device registration's _status_ shall 
         become _confirmed_ in case of a complete match.
         
-        If the confirmation is not valid, the counter for failed confirmation attempts (retry counter)
+        If the confirmation is not valid, the counter for confirmation attempts (retry counter)
         shall count this attempt and the device registration _status_ shall not be set to _confirmed_.
 
         If the counter for failed confirmation attempts reaches the maximum of allowed consecutive failed 
@@ -328,7 +338,8 @@ paths:
 
         A successful confirmation shall be logged by a _lastUse_ timestamp of current system time 
         added to the registered device values. The confirmation code, retry counter
-        counter and waiting time timer shall be removed from devcie registration.
+        counter and waiting time timer shall be removed from devcie registration. The _status_ shall
+        be altered to _confirmed_.
 
         A successful confirmation result shall be recorded as successful device verification in the user session 
         for later evaluation. 
@@ -341,7 +352,7 @@ paths:
         | Successful operation | 200|||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
-        | Wrong _confirmationCode_ and/or _deviceToken_  | 403 | invalidCode | errorDetail shall indicate amount of remaining allowed failed retries |
+        | Wrong _confirmationCode_ and/or _deviceToken_  | 403 | invalidCode | errorDetail shall indicate amount of remaining allowed retries |
         | Registered device (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
         | Registered device already confirmed (not pending) | 409 | statusMismatch | retry not recommended |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -459,8 +470,9 @@ paths:
                   data:
                     type: array
                     items:
-                      allOf:
-                      - $ref: '#/components/schemas/DeviceType'
+                      oneOf:
+                        - $ref: '#/components/schemas/DeviceType'
+                        - $ref: '#/components/schemas/PendingDeviceType'
               examples:
                 GetAllDevices:
                   value:
@@ -531,7 +543,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeviceType'
+                oneOf:
+                  - $ref: '#/components/schemas/DeviceType'
+                  - $ref: '#/components/schemas/PendingDeviceType'
               examples:
                 GetDevice_conf:
                   value:
@@ -606,7 +620,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeviceType'
+                oneOf:
+                  - $ref: '#/components/schemas/DeviceType'
+                  - $ref: '#/components/schemas/PendingDeviceType'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -673,7 +689,7 @@ paths:
       description: |
         Retrieves the attestation for the current device in use.</br>
         The device attestation is a signed JWT claiming the kvnr using the identity of VAU of the home health record system.
-        Device attestation can only be retrieved from the home health record system of the requesting user.</br> 
+        Device attestation can only be retrieved from the home health record system of the requestor.</br> 
         This operation is limited to users of role oid_versicherter. An entitlement 
         is not required.
 
@@ -684,7 +700,8 @@ paths:
 
         **Provider**</br>
         The operation shall fail if it is not the user's home system. 
-        providing the operation, i.e. the requesting user is not known to the device management. 
+        providing the operation, i.e. the requestor is not known to the device management. 
+        The operation shall succeed only for device registrations with _status_ equal _confirmed_.
         
         
         | Conditions | Status code | Error code | Remarks |
@@ -693,7 +710,7 @@ paths:
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Requestor _kvnr_ is not known to the device management | 403 | invalidUser | user has no device registered or is not known at all |
-        | Device registration (_deviceidentifier_) does not exist | 404 | noResource | also if device is not associated to requestor kvnr |
+        | Device registration does not exist | 404 | noResource | current device in use has no device registration or only _pending_ device registration associated to requestor kvnr |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -707,7 +724,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeviceAttestationResponseType'
+                type: object
+                properties:
+                  jwt:
+                    $ref: '#/components/schemas/DeviceAttestationResponseType'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -779,22 +799,20 @@ components:
             $ref: '#/components/schemas/ErrorType'
 
   schemas:
-    DeviceTokenType:
+    UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
-      description: "Device tokens are strings with 64 hexadecimal symbols."
-      example: "fe6b98ac23a3df214612fd089494eb2946589012a94e91ba6ed57f9213ba520a"
+      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
     DeviceIdentifierType:
       type: string
       format: uuid
       description: "Unique identifier of a device registration"
       example: "74f09dbc-9268-411f-81e7-f1e4f3fb1b4f"
-    DeviceStatusType:
-      description: current status of device registration
+    DeviceTokenType:
       type: string
-      enum:
-      - pending
-      - confirmed
-      example: confirmed
+      description: "Device tokens are strings with 64 hexadecimal symbols."
+      example: "fe6b98ac23a3df214612fd089494eb2946589012a94e91ba6ed57f9213ba520a"
     DisplayNameType:
       description: A readable name for the user's device
       type: string
@@ -805,63 +823,76 @@ components:
       type: string
       pattern: '^\d{6}$'
       example: '123456'
-    UserAgentType:
-      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+    EmailAddressType:
       type: string
-      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
-      example: CLIENTID1234567890AB/2.1.12-45
+      format: email
+      example: name@example.com
     BaseDeviceType:
       type: object
       properties:
         deviceIdentifier:
           $ref: '#/components/schemas/DeviceIdentifierType'
         status:
-          $ref: '#/components/schemas/DeviceStatusType'
+          description: current status of device registration
+          type: string
+          enum:
+          - pending
+          - confirmed
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
         createdAt:
           description: timestamp of registration
           type: string
           format: date-time
+      required:
+        - deviceIdentifier
+        - status
+        - displayName
+        - createdAt
     PendingDeviceType:
       allOf:
-        - type: object
-          properties:
-            deviceToken:
-              $ref: '#/components/schemas/DeviceTokenType'
         - $ref: '#/components/schemas/BaseDeviceType'
         - type: object
           properties:
+            status:
+              type: string
+              enum:
+              - pending
             remainingConfirmationRetries:
-              description: Indication of acceptable consecutive failed confirmation attemps
+              description: Indication of possible retries for confirmation. The initial value shall be 5. 
               type: integer
-              maximum: 4
+              maximum: 5
               minimum: 0
-              example: 4
+              example: 5
+      required:
+        - remainingConfirmationRetries
+      example:
+        deviceIdentifier: 'aaec1b6e-7cb5-41a5-a761-da2d6d967f5e'
+        status: pending
+        displayName: "my new android phone"
+        createdAt: 2025-08-01T12:00:00Z
+        remainingConfirmationRetries: 2
     DeviceType:
       allOf:
         - $ref: '#/components/schemas/BaseDeviceType'
         - type: object
           properties:
+            status:
+              type: string
+              enum:
+              - confirmed
             lastUse:
               description: timestamp of last login associated to the registered device
               type: string
               format: date-time
-    EmailAddressType:
-      type: string
-      format: email
-    ErrorType:
-      description: Error object with additional information about the occurred error
-      type: object
-      properties:
-        errorCode:
-          description: Error condition specifier
-          type: string
-        errorDetail:
-          description: Additional details regarding the error condition (if applicable)
-          type: string
       required:
-        - errorCode
+        - lastUse
+      example:
+        deviceIdentifier: 'aaec1b6e-7cb5-41a5-a761-da2d6d967f5e'
+        status: confirmed
+        displayName: "my new android phone"
+        createdAt: 2025-08-01T12:00:00Z
+        lastUse: 2025-08-01T17:00:00Z
     DeviceAttestationResponseType:
       description: |
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
@@ -876,11 +907,20 @@ components:
           - "exp": expiry timestamp (always iat + 120 min)
           - "actorId": KVNR
         - signature contains token signature
+      type: string
+      format: application/jwt
+      pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
+      example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuc2lnIn0.eyJhY3RvcklkIjoiQTEyMzQ1Njc4OSIsICJpYXQiOjE3MzY4OTkyMDAsImV4cCI6MTczNjkwNjQwMH0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+    ErrorType:
+      description: Error object with additional information about the occurred error
       type: object
       properties:
-        jwt:
+        errorCode:
+          description: Error condition specifier
           type: string
-          format: application/jwt
-          pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
-          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuc2lnIn0.eyJhY3RvcklkIjoiQTEyMzQ1Njc4OSIsICJpYXQiOjE3MzY4OTkyMDAsImV4cCI6MTczNjkwNjQwMH0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
 

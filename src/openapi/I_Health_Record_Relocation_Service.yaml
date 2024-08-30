@@ -47,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0
+  version: 1.2.0
 
   # version history:
   # ----------------
+  # version 1.2.0
+  #   - changed http-statuscode in operation startPackageImport to 204
   # version 1.1.0
   #   - bugfix UserAgentType
   #   - changed http-statuscode in operation startPackageCreation and startPackageImport to 201
@@ -254,7 +256,7 @@ paths:
 
        | Conditions | Status code | Error code | Remarks |
        |------------|-------------|------------|---------|
-       | Successful operation | 201 |||
+       | Successful operation | 204 |||
        | Request does not match schema | 400 | malformedRequest ||       
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_kostentraeger_ | 403 | invalidOid ||
@@ -291,7 +293,7 @@ paths:
                 - requestId
                 - downloadurl
       responses:
-        '201':
+        '204':
           description: Ok.
         '400':
           $ref: '#/components/responses/Error400BadRequest'
