@@ -1,6 +1,13 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.2-2
+### changes
+- resolved an issue in I_Audit_Event.yaml related to the source.type field. It is now correctly defined as a list of code data types, rather than an object.
+- corrected the structure of the Identifier element in I_Audit_Event.yaml. The Identifier element now properly utilizes the CodeableConcept format for the type field instead of a code. 
+- added tutorial "Strukturierte Dokumente"
+- corrections for response content and counter value in I_Device_Management_Insurant.yaml (C_11981)
+- changed http-statuscodes for some operations from '201' to '204' in I_Health_Record_Relocation_Service.yaml, I_Information_Service.yaml and I_Information_Service_Accounts.yaml (C_11990)
 ## Release 3.0.2-1
 ### changes
 - fix: added x-authoriztaion-validation parameter in I_Authoriztaion_Service.yaml (C_11901)
