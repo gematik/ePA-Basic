@@ -36,10 +36,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.3.3
+  version: 1.4.0
 
   # version history:
   # ----------------
+  # version 1.4.0
+  #   - added optional x-redirecturi parameter in sendAuthorizationRequestFdV
   # version 1.3.3
   #   - added x-authorization-validation parameter in sendAuthorizationRequestFdV
   #   - added actorId (kvnr) and displayName of authorized user in response of a sendAuthCodeFdV
@@ -520,6 +522,7 @@ paths:
         - $ref: '#/components/parameters/idp-iss'
         - $ref: '#/components/parameters/authorize_representative'
         - $ref: '#/components/parameters/authorize_validation'
+        - $ref: '#/components/parameters/redirecturi'
       tags:
         - Authorization FdV
       operationId: sendAuthorizationRequestFdV
@@ -544,6 +547,10 @@ paths:
         **Provider**:</br>
         The authorization service shall send a pushed authorization request (PAR) to the IDP (see: find more details).
 
+        The _redirect_uri_ parameter of the PAR shall be set to <Location Authorization Service>/epa/authz/<version>/send_authcode_fdv 
+        when operation parameter _x-redirecturi_ is not present, else the conetnt of _x-redirecturi_ shall be used
+        (according to A_25717-*).
+
         The authorize representative situation (_x-authorize-representative_ == _true_) shall be kept for the subsequent
         _sendAuthCodeFdV_ and device management operations. 
         
@@ -560,6 +567,7 @@ paths:
         | Request does not match schema | 400 | malformedRequest | also if both "x-authorize"-parameters are set to _true_ |
         | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
         | state or clientid value mismatch | 403 | invalData | returned URI-PAR does not contain expected state or clientid value |
+        | unregistered redirecturi | 403 | invalRedir | redirecturi (e.g. _x-redirecturi_) is unknown, registraion required |
         | Invalid URI (x-idp-iss) | 404 | noResource | |
         | Any other error | 500 | internalError ||
 
@@ -782,6 +790,15 @@ components:
       schema:
         type: string
         example: https://idp_kk.de
+    redirecturi:
+      name: x-redirecturi
+      description: An optional redirecturi (URL) to be used in PAR for redirection of the authorizationcode. 
+       The redirecturi must be registered as valid on the epa application server (entity statement)
+      in: header
+      required: false
+      schema:
+        type: string
+        example: https://redirect.kk.de/epa
     deviceidentifier:
       name: x-device-identifier
       in: header

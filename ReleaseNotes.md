@@ -1,6 +1,9 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.2-3
+### changes
+- added optional parameter x-redirecturi to sendAuthorizationRequestFdV in I_Authorization_Service.yaml (C_12039)
 ## Release 3.0.2-2
 ### changes
 - resolved an issue in I_Audit_Event.yaml related to the source.type field. It is now correctly defined as a list of code data types, rather than an object.
