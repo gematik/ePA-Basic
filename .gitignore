@@ -1,4 +1,14 @@
-.idea
+**/.DS_Store
+.vscode/*
+.history/
+**/fsh-index.*
+**/*.bak.puml
+**/*.drawio.bkp
+**/package-lock.json
+**/fhirpkg.lock.json
+**/node_modules
+.idea/**
+**/.venv
 
 .gitignore
 jenkinsfiles

@@ -36,10 +36,15 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.4.0
+  version: 1.5.0
 
   # version history:
   # ----------------
+  # version 1.5.0
+  #   - fixed actorId and displayyName in responses of sendAuthCodeSc and sendAuthorizationRequestBearerToken
+  #   - removed length limit for authorization code
+  #   - fixed typo in clientAttest (required element)
+  #   - removed 'npa + pin' from description in sendAuthorizationRequestFdV (editorial)
   # version 1.4.0
   #   - added optional x-redirecturi parameter in sendAuthorizationRequestFdV
   # version 1.3.3
@@ -536,8 +541,7 @@ paths:
         **Client**:</br>
         A client shall use parameter _x-authorize_representative_ for the "Authorize Representative" use case,
          a login of a user on not owned device for representative entitlement only.
-        The _x-authorize-representative_ parameter will force an authentication of the user with egK + pin or 
-        npa + pin only and limit the possible operations to entitlement management only.
+        The _x-authorize-representative_ parameter will force an authentication of the user with egK + pin only and limit the possible operations to entitlement management only.
         A client shall use the returned redirect url to invoke the authenticator. <br/>
        
         A client shall use parameter _x-authorize-validation_ for a login of a validation identity (e.g. "Prüfkarte eGK"), 
@@ -682,7 +686,7 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/AuthorizationResponse200'
+          $ref: '#/components/responses/AuthorizationResponseFdV200'
         '400':
           description: Bad Request.
           content:
@@ -846,8 +850,21 @@ components:
         application/json:
           example:
             vau-np: c9a7289e763616d449886acdeb8b83d115881c5d078b8643d112190bc7516584
-            actorId: Z123456789
-            displayName: 'Praxis Dr. Annamaria Heckhausén'
+          schema:
+            type: object
+            properties:
+              vau-np:
+                $ref: '#/components/schemas/VauUserPseudonymType'
+            required:
+              - vau-np
+    AuthorizationResponseFdV200:
+      description: "OK, Successful login"
+      content:
+        application/json:
+          example:
+            vau-np: 38cf15178959a706b95371c3047a45ae7022f38214b495f67c89c92500b463ec
+            actorId: X110434370
+            displayName: 'Simon von Düsterbehn-Hardenbergshausen'
           schema:
             type: object
             properties:
@@ -978,7 +995,6 @@ components:
     AuthorizationCodeType:
       description: Authorization code as received from authenticator / IDP
       type: string
-      maxLength: 2000
       example: 2435623452hkjlk34t
     SendAuthCodeSCtype:
       description: Authorization code and client attestation
@@ -990,7 +1006,7 @@ components:
           $ref: '#/components/schemas/ClientAttestationType'
       required: 
         - authorizationCode
-        - clienatAttest
+        - clientAttest
     SendAuthCodeFdVtype:
       description: Authorization code
       type: object

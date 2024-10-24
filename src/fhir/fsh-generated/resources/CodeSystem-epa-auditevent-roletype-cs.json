@@ -1,0 +1,20 @@
+{
+  "resourceType": "CodeSystem",
+  "status": "active",
+  "content": "complete",
+  "name": "EPAAuditEventRoleTypeCS",
+  "id": "epa-auditevent-roletype-cs",
+  "description": "EPAAuditEventRoleTypeCS",
+  "version": "1.0.2",
+  "url": "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-roletype-cs",
+  "concept": [
+    {
+      "code": "OMBUDSOFFICE",
+      "display": "Ombuds Office"
+    }
+  ],
+  "experimental": false,
+  "publisher": "gematik GmbH",
+  "date": "2024-07-10",
+  "count": 1
+}
