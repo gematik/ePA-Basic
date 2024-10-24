@@ -51,7 +51,7 @@ Das *Entitlement Management* löscht regelmäßig Befugnisse, bei denen das Endd
 
 Wird eine eGK in der Umgebung des zu Befugenden zum Zwecke des Lesens der Versichertenstammdaten gesteckt, wird durch das Primär-/Clientsystem auch eine Befugnis erzeugt und im *Entitlement Mangement* registriert. Die Dauer der Befugnis für Apotheken, Öffentlichen Gesundheitsdienst (ÖGD) und Institutionen der Arbeits- und Betriebsmedizin beträgt 3 Tage und für sonstige Leistungserbringerinstitutionen 90 Tage.
 
-Zum Erstellen einer Befugnis ist ein Anwesenheitsnachweis der eGK verpflichtend. Dieser wird über den Prüfungsnachweis erzeugt, der aus der Durchführung des VSDM-Anwendungsfalls "ReadVSD" im Konnektor/TI-Gateway resultiert. Damit der Prüfungsnachweis in Verbindung zur Umgebung gesetzt werden kann, wird dieser zudem mit der C.HCI.AUT-Identität der SMC-B signiert, bevor er im *Entitlement Management* registriert wird.
+Zum Erstellen einer Befugnis ist ein Anwesenheitsnachweis der eGK verpflichtend. Dieser wird über den Prüfungsnachweis erzeugt, der aus der Durchführung des VSDM-Anwendungsfalls "ReadVSD" im Konnektor/TI-Gateway resultiert. Damit der Prüfungsnachweis in Verbindung zur Umgebung gesetzt werden kann, wird dieser zudem mit der C.HCI.OSIG-Identität der SMC-B signiert, bevor er im *Entitlement Management* registriert wird.
 
 Eine potentiell bereits bestehende Befugnis wird durch die neue Befugnis ersetzt, falls die Dauer der alten Befugnis geringer ist als die der neu hinzuzufügenden Befugnis.
 
@@ -67,7 +67,7 @@ Die Befugnisse für den Kostenträger, für den E-Rezept-Fachdienst und den Vers
 
 ===== Hinzufügen eines Nutzers zum Befugniskontext
 
-Unter Verwendung der Suche von Leistungserbringerinstitutionen (LEI) über den Verzeichnisdienst *VZD FHIR-Directory* sucht der Versicherte oder ein berechtigter Vertreter zunächst den neu zu befugenden Nutzer (z.B. eine Leistungserbringerinstitution, Institution des Öffentlicher Gesundheitsdienstes oder eine Institution der Arbeits- und Betriebsmedizin). Das *ePA-FdV* erzeugt dann eine neue Befugnis mit der Telematik-ID aus dem *VZD FHIR-Directory* mit der gewünschten Laufzeit und signiert diese mit Hilfe des Signaturdienstes (SigD). Nach erfolgreicher Anmeldung am Aktensystem wird die Befugnis im *Entitlement Management* registriert.
+Unter Verwendung der Suche von Leistungserbringerinstitutionen (LEI) über den Verzeichnisdienst *VZD FHIR-Directory* sucht der Versicherte oder ein berechtigter Vertreter zunächst den neu zu befugenden Nutzer (d.h. eine Leistungserbringerinstitution, Institution des Öffentlicher Gesundheitsdienstes oder eine Institution der Arbeits- und Betriebsmedizin). Das *ePA-FdV* erzeugt dann eine neue Befugnis mit der Telematik-ID aus dem *VZD FHIR-Directory* mit der gewünschten Laufzeit und signiert diese mit Hilfe des Signaturdienstes (SigD). Nach erfolgreicher Anmeldung am Aktensystem wird die Befugnis im *Entitlement Management* registriert.
 
 Der Versicherte bzw. ein berechtigter Vertreter kann die Laufzeit der neuen Befugnis flexibel festlegen oder aber eine dauerhafte Gültigkeit wählen. Die Befugnis für eine DiGA gilt immer bis zu deren Entzug.
 

@@ -41,12 +41,13 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.3.1
+  version: 1.4.0
 
   # version history:
   # ----------------
-  # version 1.3.1
-  #   - editorial changes (list of oids)
+  # version 1.4.0
+  #   - added limit for maximum number of entitled representatives
+  #   - editorial correction in EntitlementRequestType (added bullet points)
   # version 1.3.0
   #   - changed property 'assignment' to 'data' (type alignment among APIs)
   #   - changed oneOf to anyOf in schema of request for setEntitlement (for tools sake)
@@ -108,10 +109,6 @@ tags:
      - oid_institution-pflege
      - oid_institution-geburtshilfe
      - oid_praxis-physiotherapeut
-     - oid_praxis-ergotherapeut
-     - oid_praxis-logopaede
-     - oid_praxis-podologe
-     - oid_praxis-ernaehrungstherapeut     
      - oid_institution-oegd
      - oid_institution-arbeitsmedizin
      - oid_versicherter (for representatives)
@@ -165,10 +162,6 @@ tags:
      | oid_institution-pflege | 90 |
      | oid_institution-geburtshilfe | 90 |
      | oid_praxis-physiotherapeut | 90 |
-     | oid_praxis-ergotherapeut | 90 |
-     | oid_praxis-logopaede | 90 |
-     | oid_praxis-podologe | 90 |
-     | oid_praxis-ernaehrungstherapeut | 90 |
      | oid_institution-oegd | 3 |
      | oid_institution-arbeitsmedizin | 3 |
 
@@ -184,33 +177,29 @@ tags:
     description: |
      **for insurants and representatives (ePA-FdV) and ombuds offices**
 
-     User blocking allow configuration of the blocked user policy of a health record by 
-     setting or deleting assignments by the insurant or an entitled representative or the entitled ombuds office.</br>
-     An assignment is related to a single user identified by a telematik-id. Any user covered by 
-     an assignment is excluded from entitlement, i.e. can not be entitled and existing entitlements are 
-     deleted.
+      User blocking allow configuration of the blocked user policy of a health record by 
+      setting or deleting assignments by the insurant or an entitled representative or the entitled ombuds office.</br>
+      An assignment is related to a single user identified by a telematik-id. Any user covered by 
+      an assignment is excluded from entitlement, i.e. can not be entitled and existing entitlements are 
+      deleted.
       
-     **Allowed usergroups for user blocking:**:</br> 
-     The blocked user policy shall have entries for users of the following roles (professionOid) only.</br>
-     The following list of oids is for information only and may be incomplete, the normative requirement is defined in A_24463-*
-     - oid_praxis_arzt
-     - oid_krankenhaus
-     - oid_institution-vorsorge-reha
-     - oid_zahnarztpraxis
-     - oid_öffentliche_apotheke
-     - oid_praxis_psychotherapeut
-     - oid_institution-pflege
-     - oid_institution-geburtshilfe
-     - oid_praxis-physiotherapeut
-     - oid_praxis-ergotherapeut
-     - oid_praxis-logopaede
-     - oid_praxis-podologe
-     - oid_praxis-ernaehrungstherapeut     
-     - oid_institution-oegd
-     - oid_institution-arbeitsmedizin
+      **Allowed usergroups for user blocking:**:</br> 
+      The blocked user policy shall have entries for users of the following roles (professionOid) only.</br>
+      The following list of oids is for information only and may be incomplete, the normative requirement is defined in A_24463-*
+      - oid_praxis_arzt
+      - oid_krankenhaus
+      - oid_institution-vorsorge-reha
+      - oid_zahnarztpraxis
+      - oid_öffentliche_apotheke
+      - oid_praxis_psychotherapeut
+      - oid_institution-pflege
+      - oid_institution-geburtshilfe
+      - oid_praxis-physiotherapeut
+      - oid_institution-oegd
+      - oid_institution-arbeitsmedizin
 
-     Remark: DIGAs (oid_diga) can not be entitled by a proof of audit like other health care institutions, so blocking of DiGAs 
-     is not required.    
+      Remark: DIGAs (oid_diga) can not be entitled by a proof of audit like other health care institutions, so blocking of DiGAs 
+      is not required.    
 
 paths:
   /epa/basic/api/v1/entitlements:
@@ -323,8 +312,11 @@ paths:
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request
        - request claims  _validTo_ which is not equal or in the future of current date
+       - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already 
+          reached and new request does not replace existing one (i.e. requests entitlement for the 6th representative)
        
        Representative Entitlement:</br>
+       The maximum amount of entitled representatives is five (5). Requests exceeding this limit shall be rejected.
        A request for representative entitlement shall provide (mandatory) a notification mail address 
        of the representative.
        A notification mail shall be sent to the representative using this mail address
@@ -346,9 +338,10 @@ paths:
        | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | blockedActorId ||
-       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant| 409 | requestMismatch ||
-       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request| 409 | noMail ||
-       | request claims  _validTo_ which is not equal or in the future of current date| 409 | requestMismatch ||
+       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant | 409 | requestMismatch ||
+       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request | 409 | noMail ||
+       | request claims  _validTo_ which is not equal or in the future of current date | 409 | requestMismatch ||
+       | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already reached | 409 | representativeLimit | only if limit is exceeded |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -973,30 +966,30 @@ components:
       description: |
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
         base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
-        Content for ePA-FdV originated entitlements:</br>
-        - protected_header contains:
-          - "typ": "JWT"
-          - "alg": "ES256" 
-          - "x5c": signature certificate (C.CH.SIG)
-        - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiry timestamp (always iat + 20min)
-          - "insurantId": the health record identifier this entitlement is assoctiated to
-          - "actorId": Telematik-Id or KVNR
-          - "oid": value of professionOID
-          - "displayName": name according to actorId
-          - "validTo": Expiry date-time of entitlement in format according to rfc3339
-        - signature contains token signature
-        Content for PS originated entitlements:</br>
-        - protected_header contains:
-          - "typ": "JWT"
-          - "alg": "ES256" or "PS256"
-          - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
-        - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiry timestamp (always iat + 20min)
-          - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
-        - signature contains token signature
+        - Content for ePA-FdV originated entitlements:</br>
+          - protected_header contains:
+            - "typ": "JWT"
+            - "alg": "ES256" 
+            - "x5c": signature certificate (C.CH.SIG)
+          - payload claims:
+            - "iat": issued at timestamp
+            - "exp": expiry timestamp (always iat + 20min)
+            - "insurantId": the health record identifier this entitlement is assoctiated to
+            - "actorId": Telematik-Id or KVNR
+            - "oid": value of professionOID
+            - "displayName": name according to actorId
+            - "validTo": Expiry date-time of entitlement in format according to rfc3339
+          - signature contains token signature
+        - Content for PS originated entitlements:</br>
+          - protected_header contains:
+            - "typ": "JWT"
+            - "alg": "ES256" or "PS256"
+            - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+          - payload claims:
+            - "iat": issued at timestamp
+            - "exp": expiry timestamp (always iat + 20min)
+            - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+          - signature contains token signature
       type: object
       properties:
         jwt:

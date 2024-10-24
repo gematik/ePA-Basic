@@ -37,9 +37,9 @@ Ein Lesezugriff impliziert generell auch das Ausführen von Suchanfragen.
 <<<
 [caption="Tabelle {counter:table-number}: "]
 .Legal Policy
-[cols="2,3,5,4,4,4,4,4,4,4,4,4,4,4,4",options="header"]
+[cols="2,3,5,4,4,4,4,4,4,4,4,4,4,4",options="header"]
 |===
-3+|Datenkategorie gemäß § 341 Abs. 2 SGB V 12+| Zugriffsrecht für Berufsgruppen gemäß § 352 SGB V (hier abgeleitete Betriebsstätten), Fachdienste und Versicherte
+3+|Datenkategorie gemäß § 341 Abs. 2 SGB V 11+| Zugriffsrecht für Berufsgruppen gemäß § 352 SGB V (hier abgeleitete Betriebsstätten), Fachdienste und Versicherte
 
 .>h|Nr.
 .>h|Technischer Identifikator
@@ -48,16 +48,15 @@ h|Arztpraxis, Zahnarzt- praxis, Krankenhaus, Psycho- therapeut, Vorsorge- und Re
 h|Öffentliche Apotheke
 h|Gesundheits-, Kranken- und Altenpflege
 h|Geburtshilfe
-h|Heilmittelerbringer
+h|Physiotherapie
 h|Arbeitsmedizin
 h|Kostenträger
 h|Ombudsstelle
 h|Digitale Gesundheits- anwendung
 h|E-Rezept-Fachdienst
-h|NCPeH-Fachdienst
 h|Versicherter/ Vertreter
 
-15.1+^h|Medical Service «XDS Document Service»
+14.1+^h|Medical Service «XDS Document Service»
 
 |1a
 |reports
@@ -66,9 +65,8 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|R
-^|CRUD
 ^|R
-^|-
+^|R
 ^|-
 ^|-
 ^|-
@@ -88,7 +86,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |1c
@@ -104,7 +101,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|R
 ^|RD
 
 |1d
@@ -116,7 +112,6 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|R
-^|-
 ^|-
 ^|-
 ^|-
@@ -136,7 +131,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |3
@@ -148,7 +142,6 @@ h|Versicherter/ Vertreter
 ^|CRUD
 ^|R
 ^|R
-^|-
 ^|-
 ^|-
 ^|-
@@ -168,7 +161,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |5
@@ -180,7 +172,6 @@ h|Versicherter/ Vertreter
 ^|R
 ^|-
 ^|CRUD
-^|-
 ^|-
 ^|-
 ^|-
@@ -200,7 +191,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|CRUD
 
 |8
@@ -213,7 +203,6 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|CU
-^|-
 ^|-
 ^|-
 ^|-
@@ -232,7 +221,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|CU
 ^|-
-^|-
 ^|RD
 
 |10
@@ -244,7 +232,6 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|R
-^|-
 ^|-
 ^|-
 ^|-
@@ -264,7 +251,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |13
@@ -280,14 +266,12 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |14
 |rehab
 |Daten der Heilbehandlung und Rehabilitation gemäß § 27 Abs. 1 des Siebten Buches
 ^|CRUD
-^|-
 ^|-
 ^|-
 ^|-
@@ -312,7 +296,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|-
-^|-
 ^|RD
 
 |- -
@@ -328,17 +311,16 @@ h|Versicherter/ Vertreter
 ^|R
 ^|-
 ^|-
-^|-
 ^|R
 
-15.1+^h|Medical Service «Medication Service»
+14.1+^h|Medical Service «Medication Service»
 
 
 |11
 |medication
 |Verordnungs-, Dispensier- und Medikationsdaten in einer Elektronischen Medikationsliste (eML)
-^|CRUD
-^|CRUD
+^|R
+^|R
 ^|R
 ^|R
 ^|-
@@ -347,7 +329,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|CU
-^|-
 ^|R
 
 |===
