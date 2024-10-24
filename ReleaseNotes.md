@@ -1,6 +1,9 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.2-4
+### changes
+- reworked links to associated repositories
 ## Release 3.0.2-3
 ### changes
 - added optional parameter x-redirecturi to sendAuthorizationRequestFdV in I_Authorization_Service.yaml (C_12039)
