@@ -422,7 +422,7 @@ link:./chapters/audit_event_service.adoc[Audit Event Service]
 
 link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
 
-link:./chapters/research_data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
+link:./chapters/data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
 endif::[]
 
 <<<
