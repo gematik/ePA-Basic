@@ -552,7 +552,7 @@ paths:
         The authorization service shall send a pushed authorization request (PAR) to the IDP (see: find more details).
 
         The _redirect_uri_ parameter of the PAR shall be set to <Location Authorization Service>/epa/authz/<version>/send_authcode_fdv 
-        when operation parameter _x-redirecturi_ is not present, else the conetnt of _x-redirecturi_ shall be used
+        when operation parameter _x-redirecturi_ is not present, else the content of _x-redirecturi_ shall be used
         (according to A_25717-*).
 
         The authorize representative situation (_x-authorize-representative_ == _true_) shall be kept for the subsequent
