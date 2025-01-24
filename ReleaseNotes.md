@@ -1,6 +1,13 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
+## Release 3.0.3-2
+### changes
+- added error 423 locked for setEntitlementPs if Rate Limiting ist reached -> temporarily blocked (C_12146)
+- added hcv as optional claim to jwt (C_12143)
+- check if hcv value of jwt and hcv from hsm rule rr3 are both available with error 403 invalidToken, if hcv check does not match
+- added error 409 hcvMissing if hcv value of jwt does not exist only in case of enforce_hcv_check == true
+- added error 423 locked, if to many failed attempts of hcv check or kvnr check
 ## Release 3.0.3
 ### changes
 - added details on the mandatory use of absolute URLs or UUID-based URIs in the fullUrl field of FHIR bundles, and disallowed the use of relative paths
