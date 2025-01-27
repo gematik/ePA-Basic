@@ -600,8 +600,8 @@ paths:
        | hcv value of jwt does not exist | 409 | hcvMissing ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
        | Rate limiting | 423 | locked||
-       | to many failed attempts | 423 | locked | _hcv_ check limit |
-       | to many failed attempts | 423 | locked | _kvnr_ check limit |
+       | too many failed attempts | 423 | locked | _hcv_ check limit |
+       | too many failed attempts | 423 | locked | _kvnr_ check limit |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
