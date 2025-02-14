@@ -36,10 +36,23 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.4.0
+  version: 1.6.0
 
   # version history:
   # ----------------
+  # version 1.6.0
+  #   - reject login attempts when user session already established in sendAuthorizationRequestSc and sendAuthorizationRequestFdv 
+  #   - added oid_ncpeh to list of allowed roles
+  #   - clarification for 'iat' and 'exp' in client attest jwt
+  #   - (guest-) authentication for desktop-fdv
+  # version 1.5.1
+  #   - clarification of 'iat' and 'exp' in jwt
+  #   - removed fixed redirect_uri in sendAuthorizationRequestFdV
+  # version 1.5.0
+  #   - fixed actorId and displayyName in responses of sendAuthCodeSc and sendAuthorizationRequestBearerToken
+  #   - removed length limit for authorization code
+  #   - fixed typo in clientAttest (required element)
+  #   - removed 'npa + pin' from description in sendAurequest_fdvthorizationRequestFdV (editorial)
   # version 1.4.0
   #   - added optional x-redirecturi parameter in sendAuthorizationRequestFdV
   # version 1.3.3
@@ -162,7 +175,7 @@ tags:
    **Allowed usergroups for Authorization SMC-B**
    Authorization with SMC-B is limited to certain user roles: 
    The following list of allowed roles (professionOid) is for information only and may be incomplete, 
-   the normative requirement is defined in A_23941-* (excluding oid_versicherter and oid_erp-vau).
+   the normative requirement is defined in A_23941-* (excluding oid_versicherter and oid_erp-vau) and C_12159-*.
 
    Allowed roles [professionOID] 
    - oid_praxis_arzt
@@ -179,6 +192,7 @@ tags:
    - oid_kostentraeger
    - oid_ombudsstelle
    - oid_diga
+   - oid_ncpeh
 
 
 - name: Authorization BearerToken
@@ -309,13 +323,16 @@ paths:
 
         **Provider**:</br>
         The authorization server shall prepare a complete redirection uri and authorization request parameters 
-        (PAR-URI) for the central smartcard IDP  
+        (PAR-URI) for the central smartcard IDP. 
+        This operation shall be rejected if the corresponding user session is already authorized. Repeated authorization
+        attempts are not supported.
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 302 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Invalid request | 403 | invalAuth | includes any error of Authorization Service which is not mapped to 500 internal Server error |
+        | Repeated authorization attempt | 409 | statusMismatch | when user session is already authorized only |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -330,6 +347,8 @@ paths:
           $ref: '#/components/responses/Error400BadRequest'
         '403':
           $ref: '#/components/responses/Error403Forbidden'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
@@ -362,8 +381,9 @@ paths:
         and the client attestation:
         - _clientAttest_ is valid if
           - signature is valid
-          - "iat" is a timestamp in the past of "exp".
-          - "exp" is a timestamp in the future of 'current time'.
+          - "iat" issued_at is the timestamp of the time of issue.
+          - "exp" expiration_time is a timestamp 20 minutes in the future "iat".
+          - current time is greater or equal than 'iat' and less than 'exp' with 15 seconds tolerance ('iat' - 15s <= current time < 'exp' + 15s).          
           - user has role as in "Allowed usergroups for Authorization SMC-B" (from signature cert)
         - stored nonce shall not be outdated
         - stored nonce shall match client attestation nonce
@@ -521,7 +541,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/idp-iss'
         - $ref: '#/components/parameters/authorize_representative'
-        - $ref: '#/components/parameters/authorize_validation'
+        - $ref: '#/components/parameters/authorize_egk'
         - $ref: '#/components/parameters/redirecturi'
       tags:
         - Authorization FdV
@@ -536,30 +556,32 @@ paths:
         **Client**:</br>
         A client shall use parameter _x-authorize_representative_ for the "Authorize Representative" use case,
          a login of a user on not owned device for representative entitlement only.
-        The _x-authorize-representative_ parameter will force an authentication of the user with egK + pin or 
-        npa + pin only and limit the possible operations to entitlement management only.
+        The _x-authorize-representative_ parameter will force an authentication of the user with egK + pin only and limit the possible operations to entitlement management only.
         A client shall use the returned redirect url to invoke the authenticator. <br/>
        
-        A client shall use parameter _x-authorize-validation_ for a login of a validation identity (e.g. "Prüfkarte eGK"), 
-        forcing the authorization service to request an authentication at the identity provider in guest mode (eGK + pin). 
+        A client shall use parameter _x-authorize-egk_ for a login in guest mode with egk and pin, e.g. of a validation identity 
+        (i.e. "Prüfkarte eGK"), forcing the authorization service to request an authentication at the identity provider 
+        in guest mode (eGK + pin). 
         A client shall use the returned redirect url to invoke the authenticator.
 
         **Provider**:</br>
         The authorization service shall send a pushed authorization request (PAR) to the IDP (see: find more details).
 
-        The _redirect_uri_ parameter of the PAR shall be set to <Location Authorization Service>/epa/authz/<version>/send_authcode_fdv 
-        when operation parameter _x-redirecturi_ is not present, else the conetnt of _x-redirecturi_ shall be used
-        (according to A_25717-*).
+        The _redirect_uri_ parameter of the PAR shall be set to a predefined value when operation parameter 
+        _x-redirecturi_ is not present, else the content of _x-redirecturi_ shall be used (according to A_25717-*).
 
         The authorize representative situation (_x-authorize-representative_ == _true_) shall be kept for the subsequent
         _sendAuthCodeFdV_ and device management operations. 
         
-        For the _x-authorize-representative_ and the _x-authorize-validation_ case the PAR for the IDP shall include:
+        For the _x-authorize-representative_ and the _x-authorize-egk_ case the PAR for the IDP shall include:
         - amr = urn:telematik:auth:guest:eGK
 
-        _x-authorize-representative_ and _x-authorize-validation_ both should not be set to _true_ at the same time.
+        _x-authorize-representative_ and _x-authorize-egk_ both should not be set to _true_ at the same time.
 
         The authorization service' state value and clientid used for the PAR shall occur in the URI-PAR response of the IDP.
+       
+        This operation shall be rejected if the corresponding user session is already authorized. Repeated authorization
+        attempts are not supported.
 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
@@ -567,8 +589,9 @@ paths:
         | Request does not match schema | 400 | malformedRequest | also if both "x-authorize"-parameters are set to _true_ |
         | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
         | state or clientid value mismatch | 403 | invalData | returned URI-PAR does not contain expected state or clientid value |
-        | unregistered redirecturi | 403 | invalRedir | redirecturi (e.g. _x-redirecturi_) is unknown, registraion required |
+        | unregistered redirecturi | 403 | invalRedir | redirecturi in _x-redirecturi_ is not known, registration required |
         | Invalid URI (x-idp-iss) | 404 | noResource | |
+        | Repeated authorization attempt | 409 | statusMismatch | when user session is already authorized only |
         | Any other error | 500 | internalError ||
 
          </br>
@@ -585,6 +608,8 @@ paths:
           $ref: '#/components/responses/Error403Forbidden'
         '404':
           $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
@@ -682,7 +707,7 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/AuthorizationResponse200'
+          $ref: '#/components/responses/AuthorizationResponseFdV200'
         '400':
           description: Bad Request.
           content:
@@ -829,10 +854,10 @@ components:
         type: boolean
         enum: [true]
         example: true
-    authorize_validation:
-      name: x-authorize-validation
+    authorize_egk:
+      name: x-authorize-egk
       in: header
-      description: This parameter shall be absent or set to _true_ to indicate an authorization request for validation identities. 
+      description: This parameter shall be absent or set to _true_ to indicate an authorization request in guest mode with egk + pin e.g. for validation identities. 
       required: false
       schema:
         type: boolean
@@ -846,8 +871,21 @@ components:
         application/json:
           example:
             vau-np: c9a7289e763616d449886acdeb8b83d115881c5d078b8643d112190bc7516584
-            actorId: Z123456789
-            displayName: 'Praxis Dr. Annamaria Heckhausén'
+          schema:
+            type: object
+            properties:
+              vau-np:
+                $ref: '#/components/schemas/VauUserPseudonymType'
+            required:
+              - vau-np
+    AuthorizationResponseFdV200:
+      description: "OK, Successful login"
+      content:
+        application/json:
+          example:
+            vau-np: 38cf15178959a706b95371c3047a45ae7022f38214b495f67c89c92500b463ec
+            actorId: X110434370
+            displayName: 'Simon von Düsterbehn-Hardenbergshausen'
           schema:
             type: object
             properties:
@@ -960,8 +998,8 @@ components:
           - "alg": "ES256" 
           - "x5c": signature certificate (C.FD.SIG)
         - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiry timestamp (always iat + 120 min)
+          - "iat" issued_at is the timestamp of the time of issue.
+          - "exp" expiration_time is a timestamp 120 minutes in the future "iat".
           - "actorId": KVNR
         - signature contains token signature
       type: object
@@ -978,7 +1016,6 @@ components:
     AuthorizationCodeType:
       description: Authorization code as received from authenticator / IDP
       type: string
-      maxLength: 2000
       example: 2435623452hkjlk34t
     SendAuthCodeSCtype:
       description: Authorization code and client attestation
@@ -990,7 +1027,7 @@ components:
           $ref: '#/components/schemas/ClientAttestationType'
       required: 
         - authorizationCode
-        - clienatAttest
+        - clientAttest
     SendAuthCodeFdVtype:
       description: Authorization code
       type: object
@@ -1030,8 +1067,8 @@ components:
           - "alg": "ES256" or "PS256"
           - "x5c": signature certificate c.hci.aut
         - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiration timestamp
+          - "iat" issued_at is the timestamp of the time of issue.
+          - "exp" expiration_time is a timestamp 20 minutes in the future "iat".
           - "nonce": nonce value
         - signature: contains token signature
       type: string
@@ -1043,16 +1080,19 @@ components:
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
         base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
         Content for ePrescription backend bearerToken</br>
+        (expiration time is implicite, HSM rule 'rr0' will reject tokens with 'iat' 
+        more than 10 minutes in the past of current time.)</br>
         - protected_header contains:
           - "typ": "JWT"
           - "alg": "ES256" 
           - "x5c": signature certificate c.fd.aut
         - payload claims:
           - "type": "ePA-Authentisierung über PKI" (fixed value)
-          - "iat": issued at timestamp
+          - "iat" issued_at is the timestamp of the time of issue.
           - "challenge": freshness parameter (base64 encoded)
           - "sub": Telematik-ID ePrescription backend
         - signature: contains token signature
+        
       type: object
       properties:
         bearerToken:

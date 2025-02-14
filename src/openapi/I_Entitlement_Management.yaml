@@ -32,7 +32,11 @@ info:
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24987*.
-
+    Log entry storage requires an entitled user for the related operation to 
+    ensure access to secure data storage. Therefore, log entry creation shall 
+    always be skipped and no log entry shall be stored if this precondition is 
+    not met.
+    
   contact:
     name: gematik GmbH
     url: 'http://www.gematik.de'
@@ -41,10 +45,23 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.3.1
+  version: 1.5.0
 
   # version history:
   # ----------------
+  # version 1.5.0
+  #   - additional error 423 locked for setEntitlementPs if rate limit is reached 
+  #   - added hcv to jwt
+  #   - check if hcv value of jwt and hcv from hsm rule rr3 are both available with error 403 invalidToken, if hcv check does not match
+  #   - added error 409 hcvMissing if hcv-value of jwt does not exist only in case of enforce_hcv_check == true
+  #   - added error 423 locked, if to many failed attempts of hcv check or kvnr check
+  # version 1.4.0
+  #   - added error condition for not authenticated user sessions
+  #   - added limit for maximum number of entitled representatives
+  #   - editorial correction in EntitlementRequestType (added bullet points)
+  # version 1.3.2
+  #   - clarification regarding representative email address and replacement situation in setEntitlement
+  #   - clarification regarding required entitlement for logging
   # version 1.3.1
   #   - editorial changes (list of oids)
   # version 1.3.0
@@ -236,6 +253,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -292,7 +310,7 @@ paths:
        entitlement addresses a user identified by a kvnr (representative).</br>
        A client shall (mandatory) apply a date-time of 9999-12-31T00:00:00Z to the _validTo_ claim of a request if the 
        entitlement addresses a DiGA (oid_diga).</br>
-       A client shall (mandatory) apply an email address for notification if the 
+       A client shall (mandatory) apply an email address for notification if a _new_ 
        entitlement addresses a user identified by a kvnr (representative).</br>
        A client shall delete an assignment of the Blocked User Policy associated to the addressee of this 
        entitlement request first (entitlement is applicable for non-blocked users only).  
@@ -313,7 +331,7 @@ paths:
        - _issued-displayName_ of requestor (from request context)
        
        The completed entitlement shall be stored, encrypted by SecureAdminStorageKey of the health record.</br>
-       Existing entitlements (same _actorId_) shall automatically be replaced by the new, valid entitlement.
+       Existing entitlements (same _actorId_ and _oid_, _displayName_ ignored) shall automatically be replaced by the completed entitlement.
 
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - request claims _actorId_ which is _actorId_ of a static entitlement
@@ -321,22 +339,26 @@ paths:
        - request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z
        - request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant
-       - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request
+       - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter), entitlement is new (i.e. does not replace any existing one) and _email_ is not in request 
        - request claims  _validTo_ which is not equal or in the future of current date
+       - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already 
+          reached and new request does not replace existing one (i.e. requests entitlement for the 6th representative)
        
        Representative Entitlement:</br>
-       A request for representative entitlement shall provide (mandatory) a notification mail address 
-       of the representative.
-       A notification mail shall be sent to the representative using this mail address
+       The maximum amount of entitled representatives is five (5). Requests exceeding this limit shall be rejected.
+       A request for a new representative entitlement shall provide (mandatory) a notification mail address 
+       of the representative. A notification mail shall be sent to the representative using this mail address
        for information about the new established representative role for the insurant's health record, including 
-       kvnr and name of the insurant. This notification is obsolete in case the new entitlement replaces an existing
-       entitlement of the representative.<br>
+       kvnr and name of the insurant. The mail address provision and the notification is optional in case 
+       the new entitlement replaces an existing entitlement of the representative, but if address is available a 
+       notification shall be sent.<br>
        The email address shall be discarded after use and shall not be persistet.
 
        | Conditions | Status code | Error code | Remarks |
        |------------|-------------|------------|---------|
        | Successful operation | 201 |||
        | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
        | HSM verification failed | 403 | invalidToken ||
@@ -346,16 +368,17 @@ paths:
        | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | blockedActorId ||
-       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant| 409 | requestMismatch ||
-       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request| 409 | noMail ||
-       | request claims  _validTo_ which is not equal or in the future of current date| 409 | requestMismatch ||
+       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant | 409 | requestMismatch ||
+       | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request | 409 | noMail ||
+       | request claims  _validTo_ which is not equal or in the future of current date | 409 | requestMismatch ||
+       | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already reached | 409 | representativeLimit | only if limit is exceeded |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
        | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement is replaced |
-       | Entitlement notification is sent | representative entitlement only |
+       | Entitlement notification is sent | if applicable, for representative entitlement only |
        | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 
@@ -423,6 +446,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -488,6 +512,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 204 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Requestor is representative deleting an entitlement of another representative  | 403 | accessDenied ||
@@ -552,12 +577,19 @@ paths:
        evidence (JWT) associated to the health record owner acting as health record owner's explicit
        permission for the requesting user to establish a new entitlement.
        
+       The operation shall count the number of failed comparison check of _hcv_ values 
+       and also _kvnr_ for each user (telematik-id).
+       In case of more than 5 failed comparison checks (5 checks for each counter) within 1 hour
+       the operation shall be aborted. 
+
        The received JWT shall be passed to the HSM for entitlement verification, using rule _rr3_.
 
-       The HSM rule verifies JWT signature, _actorID_, _kvnr_ (associated health record) and claims
+       The HSM rule verifies JWT signature, _actorID_, encryption of _kvnr_ (associated health record) and claims
        in a CMAC secured result _actorId_, _kvnr_ and _validTo_ (_validTo_ is applied by HSM according to 
        user role). HSM verifies also consistence of requestor properties vs claims in JWT signature
        and audit evidence.
+
+       The entitlement management enforces the requirements for rate limiting.
 
        The CMAC secured result shall be completed with the following data:
        - _oid_ of the entitled user (from JWT or request context)
@@ -569,6 +601,9 @@ paths:
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - _oid_ is not in the list of allowed usergroups (role)
        - _actorId_ is referenced by a Blocked User Policy assignment
+       - if _enforce_hcv_check_ == true or _hcv_ value of JWT and _hcv_ from hsm rule _rr3_ are both available:
+          - _hcv_ value of JWT does not match _hcv_ from hsm rule _rr3_
+       - _x-insurantid_ does not match _kvnr_ from hsm rule _rr3_
 
        If an existing and stored entitlement addressing the same user exists and if this stored
        entitlement indicates a _validTo_ which is in the future of the new entitlement's _validTo_, 
@@ -584,11 +619,16 @@ paths:
        |------------|-------------|------------|---------|
        | Successful operation | 201 || even if an existing entitlement is kept due to longer validity |
        | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
-       | HSM verification failed | 403 | invalidToken ||
+       | Token verification failed | 403 | invalidToken ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | hcv value of jwt does not exist | 409 | hcvMissing ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
+       | Rate limiting | 423 | locked||
+       | to many failed attempts | 423 | locked | _hcv_ check limit |
+       | to many failed attempts | 423 | locked | _kvnr_ check limit |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -648,6 +688,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -711,6 +752,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 201 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -784,6 +826,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -836,6 +879,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 204 |||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -973,37 +1017,38 @@ components:
       description: |
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
         base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
-        Content for ePA-FdV originated entitlements:</br>
-        - protected_header contains:
-          - "typ": "JWT"
-          - "alg": "ES256" 
-          - "x5c": signature certificate (C.CH.SIG)
-        - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiry timestamp (always iat + 20min)
-          - "insurantId": the health record identifier this entitlement is assoctiated to
-          - "actorId": Telematik-Id or KVNR
-          - "oid": value of professionOID
-          - "displayName": name according to actorId
-          - "validTo": Expiry date-time of entitlement in format according to rfc3339
-        - signature contains token signature
-        Content for PS originated entitlements:</br>
-        - protected_header contains:
-          - "typ": "JWT"
-          - "alg": "ES256" or "PS256"
-          - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
-        - payload claims:
-          - "iat": issued at timestamp
-          - "exp": expiry timestamp (always iat + 20min)
-          - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
-        - signature contains token signature
+        - Content for ePA-FdV originated entitlements:</br>
+          - protected_header contains:
+            - "typ": "JWT"
+            - "alg": "ES256" 
+            - "x5c": signature certificate (C.CH.SIG)
+          - payload claims:
+            - "iat": issued at timestamp
+            - "exp": expiry timestamp (always iat + 20min)
+            - "insurantId": the health record identifier this entitlement is assoctiated to
+            - "actorId": Telematik-Id or KVNR
+            - "oid": value of professionOID
+            - "displayName": name according to actorId
+            - "validTo": Expiry date-time of entitlement in format according to rfc3339
+          - signature contains token signature
+        - Content for PS originated entitlements:</br>
+          - protected_header contains:
+            - "typ": "JWT"
+            - "alg": "ES256" or "PS256"
+            - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+          - payload claims:
+            - "iat": issued at timestamp
+            - "exp": expiry timestamp (always iat + 20min)
+            - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+            - "hcv": optional if _enforce_hcv_check_ == false; hash check value generated by PS according to A_27352-*
+          - signature contains token signature
       type: object
       properties:
         jwt:
           type: string
           format: application/jwt
           pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
-          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiaW5zdXJhbnRJZCI6IkExMjM0NTY3ODkiLCJhY3RvcklkIjoiMS04ODMxMTAwMDAwOTI0MDQiLCJvaWQiOiIxLjIuMjc2LjAuNzYuNC41MyIsImRpc3BsYXlOYW1lIjoiS3JhbmtlbmhhdXMgU3QuIEpvaGFubmVzIiwidmFsaWRUbyI6IjIwMjUtMTItMDcifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiYXVkaXRFdmlkZW5jZSI6IjNqVVNtSFc1SnpvYmcwRk84Z0o1WVllREFTandQaG1DTmdtL2JraWttL0JrQ1Z6dEhDdFNndUFEc0V4TTczUT0iLCJoY3YiOiI2NTQ1NDkxZDE0In0.onKNsnrNniUjF2zlnjIRMU93kfFsm0aSbudXJijnDT8amDfhAVd-Ed0ATNdvGgDizhLyisezmiPxkouhpHqY3g"
     EntitlementRequestRepType:
       allOf:
         - $ref: '#/components/schemas/EntitlementRequestType'
@@ -1210,7 +1255,7 @@ components:
     Set_SingleEntitlement:
       summary: An entitlement request (dummy data).
       value:
-        jwt: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuaGNpLmF1dCJ9.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiYXVkaXRFdmlkZW5jZSI6InRvIGJlIGRlZmluZWQifQ.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+        jwt: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiYXVkaXRFdmlkZW5jZSI6IjNqVVNtSFc1SnpvYmcwRk84Z0o1WVllREFTandQaG1DTmdtL2JraWttL0JrQ1Z6dEhDdFNndUFEc0V4TTczUT0iLCJoY3YiOiI2NTQ1NDkxZDE0In0.KO9VDY08ZKVuKEAbq1EkjkX9rWTSC9ekRvNQWSIqQGpwPeoOSnPA1gLnf05GHNy5S1Iux4b3ZYKjFgPLHlkMEA"
 
     Get_AllPolicyAssignments:
       summary: Get all Blocked User Policy assignments.

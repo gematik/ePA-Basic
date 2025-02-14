@@ -125,7 +125,7 @@ h|Versicherter/ Vertreter
 
 |2
 |dental
-|Daten zum Nachweis der regelmäßigen Inanspruchnahme zahnärztlicher Vorsorgeuntersuchungen gemäß § 55 Abs. 1 in Verbindung mit § 92 Abs. 1 S. 2 Nr. 2 (elektronisches Zahnbonusheft)
+|Daten aus der zahnärztlichen Dokumentation
 ^|CRUD
 ^|-
 ^|R
@@ -189,7 +189,7 @@ h|Versicherter/ Vertreter
 
 |6
 |patient
-|Gesundheitsdaten, die durch den Versicherten bereit gestellt werden oder vom Kostenträger übermittelte, digitalisierte medizinische Informationen in Papierform gemäß § 350a SGB V 
+|Gesundheitsdaten, die durch den Versicherten bereit gestellt werden oder vom Kostenträger übermittelte, digitalisierte medizinische Informationen in Papierform gemäß § 350a SGB V
 ^|RD
 ^|R
 ^|R
@@ -336,7 +336,7 @@ h|Versicherter/ Vertreter
 
 |11
 |medication
-|Verordnungs-, Dispensier- und Medikationsdaten in einer Elektronischen Medikationsliste (eML)
+|Verordnungs-, Dispensier- und Medikationsdaten in einer elektronischen Medikationsliste (eML) und einem elektronischen Medikationsplan (eMP)
 ^|CRUD
 ^|CRUD
 ^|R

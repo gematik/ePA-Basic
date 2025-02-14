@@ -37,7 +37,11 @@ info:
 
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24982* and A_24980*.
+    data as defined in A_24982*.
+    Log entry storage requires an entitled user for the related operation to 
+    ensure access to secure data storage. Therefore, log entry creation shall 
+    always be skipped and no log entry shall be stored if this precondition is 
+    not met.
 
   contact:
     name: gematik GmbH
@@ -47,10 +51,13 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.2.0
+  version: 1.2.1
 
   # version history:
   # ----------------
+  # version 1.2.1
+  #   - clarification regarding required entitlement for logging
+  #   - removed logging requirement for health record state changes
   # version 1.2.0
   #   - changed http-statuscode in operation startPackageImport to 204
   # version 1.1.0
@@ -125,7 +132,6 @@ paths:
        The health record status shall be set to SUSPENDED to prevent from further usage.</br>
        _requestId_ in response shall equal _requestId_ in request.
        The response may be sent prior to export package finalization. 
-       The state change to SUSPENDED shall be logged. This log-entry shall be part of the export package. 
 
        The export package preparation may be aborted/ not started in case an incident (from _Information Service Account_) with
        reference to _requestId_ was received:
@@ -152,7 +158,6 @@ paths:
        |---------------------------------------|---------|
        | Export package generation is started | if not aborted by requesting provider |
        | The health record is in state SUSPENDED | if not aborted by requesting provider |
-       | A log-entry for the operation exists | health record status change only, shall be contained in export package |
 
       requestBody:
         required: true
@@ -271,7 +276,6 @@ paths:
        | Export package import and data migration is started ||
        | The health record is in state ACTIVATED | after successful data migration |
        | A log-entry for the data migration operation exists | for any operation result |
-       | A log-entry for the health record state change exists ||
 
       requestBody:
         required: true

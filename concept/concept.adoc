@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 30.01.2024
-:revnumber: 3.1.0
+// :revdate: 21.02.2025
+:revnumber: 3.0.5
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.1.0 Pre-Release Review, 27.3.2024
+//Version: 3.0.5 Release, 21.02.2025
 endif::[]
 
 
@@ -122,6 +122,12 @@ endif::[]
 
 |3.1.0
 |14.08.2024
+|
+|Veröffentlichung
+|gematik
+
+|3.0.5
+|21.02.2025
 |
 |Veröffentlichung
 |gematik
@@ -404,7 +410,6 @@ include::chapters/device_management.adoc[]
 include::chapters/email_management.adoc[]
 include::chapters/audit_event_service.adoc[]
 include::chapters/relocation_service.adoc[]
-include::chapters/data_submission.adoc[]
 include::chapters/eu_access.adoc[]
 endif::[]
 ifdef::env-github[]
@@ -422,7 +427,6 @@ link:./chapters/audit_event_service.adoc[Audit Event Service]
 
 link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
 
-link:./chapters/data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
 endif::[]
 
 <<<
@@ -477,8 +481,6 @@ endif::[]
 * eMP – Elektronischer Medikationsplan
 
 *F*
-
-* FDZ – Forschungsdatenzentrum Gesundheit beim BfArM
 
 * FHIR – Fast Healthcare Interoperability Resources – International etablierter IT-Standard für die Beschreibung von u.a. medizinischen Daten
 
@@ -539,8 +541,6 @@ endif::[]
 *V*
 
 * VAU – Vertrauenswürdige Ausführungsumgebung
-
-* VST – Vertrauensstelle Elektronische Patientenakte vom RKI
 
 * VZD – Verzeichnisdienst
 
