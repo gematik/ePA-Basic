@@ -6,11 +6,11 @@
 |:----|----|
 | Context| __ePA 3.0 (ePA für alle)__|
 | Designation  | __Release 3.1.0__  |
-| Current status | __released__ |
+| Current status | __deprecated__ </br> ! Go back to 'previous release' and follow the link to the subsequent version! |
 | Release date   | __2024-08-14__  |
 | Specifications| [Fachportal gematik: ePA 3.1.0](https://gemspec.gematik.de/releases/ePA_3_1_0/)|
 | Previous release | [**ePA-Basic (3.0.3)**](https://github.com/gematik/ePA-Basic/tree/ePA-3.0.3)|
-| Follow-up | not yet defined |
+| Follow-up | ! Go back to 'previous release' and follow the link to the subsequent version ! |
 | Associated repositories:||
 | Medication Service | [**ePA Medication (3.1.0)**](https://github.com/gematik/ePA-Medication/tree/ePA-3.1.0) |
 | XDS Document Service | [**ePA XDS Document (3.1.0)**](https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.0) |

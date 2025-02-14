@@ -14,6 +14,9 @@
 </details>
 
 ## About ePA Basic
+⚠️ **Warning:** This version (3.1.0) will not be continued and is not eligible for approval. Follow links in [Branchinformation.md](./Branchinformation.md) back to previous version.
+
+
 This repository provides technical information for the Electronic Health Record (ePA) application as part of the Telematic Infrastructure (TI). 
 
 This branch relates to a particular release in context of **ePA version 3** ('ePA für alle') 
