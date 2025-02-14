@@ -1,10 +1,31 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
  
 # Release Notes ePA Basic
-## Release 3.1.0-3
+## Release 3.0.5
+This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0. 
 ### changes
-- reworked links to associated repositories
-- fix github chapter link in concept.adoc
+- guest authentication with egk + pin now also for desktop-fdv (C_12166)
+- all data submission releated issues introduced by release 3.1.0 (former descendant release of 3.0.3)  
+- clarification regarding representative email address and replacement situation in setEntitlement in I_Entitlement_Management.yaml (C_12041)
+- clarification regarding required entitlement for logging in I_Consent_Decision_Management_Insurant.yaml and I_Entitlement_Management.yaml (C_12051)
+- removed logging requirement for health record state changes in I_Health_Record_Relocation_Service.yaml (C_12051)
+- removed default redirect_uri value for PAR in sendAuthorizationCodeFdV in I_Authorization_Service.yaml (C_12086)
+- reject authorization attempt on authorized user session in I_Authorization_Service.yaml (C_12108)
+- clarifications on category 'dental' in concept.adoc
+- clarifications about 'iat' and 'exp' for clientAttest jwt in sendAuthCodeSc in I_Authorization_Service.yaml (C_12141)
+- additional error conditions for not authorized user sessions and missing device registrations (C_11972)
+- add oid_ncpeh to allowed user roles of SMC-B (C_12159)
+- integrate all changes from ePA-3.0.3-2
+    - added error 423 locked for setEntitlementPs if Rate Limiting ist reached -> temporarily blocked (C_12146)
+    - added hcv as optional claim to jwt (C_12143)
+    - check if hcv value of jwt and hcv from hsm rule rr3 are both available with error 403 invalidToken, if hcv check does not match
+    - added error 409 hcvMissing if hcv value of jwt does not exist only in case of enforce_hcv_check == true
+    - added error 423 locked, if to many failed attempts of hcv check or kvnr check
+- integrate all changes from ePA-3.0.3
+    - fixed actorId and displayyName in responses of I_Authorization_Service.yaml (C_12044)
+    - removed size limit for authorization codes in I_Authorization_Service.yaml (C_12063)
+    - fixed typo in I_Authorization_Service.yaml (C_12063)
+    - added maximum number of representatives limit in I_Entitlement_Management.yaml (C_12072)
 ## Release 3.1.0-2
 ### changes
 - replaced wrong C.HCI.OSIG with C.HCI.AUT identity in concept (for entitlement)
