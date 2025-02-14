@@ -36,10 +36,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.3.0
+  version: 1.3.1
 
   # version history:
   # ----------------
+  # version 1.3.1
+  #   - added error condition for not authenticated user sessions
   # version 1.3.0
   #   - added status code 404 notHomeSystem to replaceEmailAddress
   #   - clarification regarding x-insurant-id (editorial)
@@ -94,7 +96,7 @@ paths:
       description: |
        Retrieves information about a specific email address.</br>
        This operation is limited to users of role oid_versicherter which has to be the insurant 
-       (health reocrd owner) or role oid_kostentraeger, which shall manage only adresses of associated insurants.
+       (health record owner) or role oid_kostentraeger, which shall manage only adresses of associated insurants.
 
         **Client**:</br>
         An ePA-FdV client shall have a valid device registration.
@@ -110,6 +112,7 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200|||
         | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor role is not _oid_versicherter_ or _oid_kostentraeger_ | 403 | invalidOid ||
         | Device registration does not exist |403 | unregisteredDevice | in case requestor role is _oid_versicherter_ |
         | Wrong or missing _x-insurantid_ | 403 | invalidParam | in case requestor role is _oid_kostentraeger_ |
@@ -173,6 +176,7 @@ paths:
        |------------|-------------|------------|---------|
        | Successful operation | 200 |||
        | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
        | Requestor role is not _oid_versicherter_ or _oid_kostentraeger_ | 403 | invalidOid ||
        | Device registration does not exist |403 | unregisteredDevice | in case requestor role is _oid_versicherter_ |
        | Wrong or missing _x-insurantid_ | 403 | invalidParam | in case requestor role is _oid_kostentraeger_ |
