@@ -315,6 +315,22 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
+|16
+|health_risk_analysis
+|Ergebnisse datengestützter Auswertungen der Krankenkassen zu individuellen Gesundheitsrisiken gemäß § 25b SGB V
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|C
+^|-
+^|-
+^|-
+^|-
+^|RD
+
 |- -
 |audit
 |Protokolle von Zugriffen seitens Leistungserbringer auf die Akte des Versicherten gemäß § 309 Abs. 1 SGB V

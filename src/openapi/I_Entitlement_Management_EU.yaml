@@ -41,10 +41,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.2 
+  version: 1.0.3 
 
   # version history:
   # ----------------
+  # version 1.0.3
+  #   - additional error condition for missing device registration 
   # version 1.0.2
   #   - added error condition for not authenticated user sessions
   # version 1.0.1
@@ -173,6 +175,7 @@ paths:
        | Successful operation | 201 |||
        | Request does not match schema | 400 | malformedRequest ||
        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+       | Device registration does not exist | 403 | unregisteredDevice ||
        | Requestor is not the insurant | 403 | invalidUser ||
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -252,6 +255,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
         | Requestor is not the insurant | 403 | invalidUser ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
         | Entitlement (_actorid_) does not exist | 404 | noResource ||

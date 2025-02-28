@@ -1,11 +1,18 @@
-<img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>    
- 
+<img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
+
 # Release Notes ePA Basic
-## Release 3.0.5
-This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0. 
+## information
+This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
+## Release 3.0.5-1
+### changes
+- completed missing changes regarding status code for missing device registration in several *.yaml files (C_11972)
+- clarification about device attestation token usage in I_Device_Management_Insurant.yaml and I_Authorization_Service.yaml
+- clarification regarding affected categories and services for UdpMedication in I_Consent_Decision_Management.yaml
+- added health_risk_analysis category (aka §25b) to legal policy (C_12180)
+## Release 3.0.5-0
 ### changes
 - guest authentication with egk + pin now also for desktop-fdv (C_12166)
-- all data submission releated issues introduced by release 3.1.0 (former descendant release of 3.0.3)  
+- all data submission releated issues introduced by release 3.1.0 (former descendant release of 3.0.3)
 - clarification regarding representative email address and replacement situation in setEntitlement in I_Entitlement_Management.yaml (C_12041)
 - clarification regarding required entitlement for logging in I_Consent_Decision_Management_Insurant.yaml and I_Entitlement_Management.yaml (C_12051)
 - removed logging requirement for health record state changes in I_Health_Record_Relocation_Service.yaml (C_12051)
@@ -35,7 +42,7 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 ### changes
 - integrate all changes from ePA-3.0.2-2:
     - resolved an issue in I_Audit_Event.yaml related to the source.type field. It is now correctly defined as a list of code data types, rather than an object.
-    - corrected the structure of the Identifier element in I_Audit_Event.yaml. The Identifier element now properly utilizes the CodeableConcept format for the type field instead of a code. 
+    - corrected the structure of the Identifier element in I_Audit_Event.yaml. The Identifier element now properly utilizes the CodeableConcept format for the type field instead of a code.
     - added tutorial "Strukturierte Dokumente"
     - corrections for response content and counter value in I_Device_Management_Insurant.yaml (C_11981)
     - changed http-statuscodes for some operations from '201' to '204' in I_Health_Record_Relocation_Service.yaml, I_Information_Service.yaml and I_Information_Service_Accounts.yaml (C_11990)
@@ -49,8 +56,8 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
     - corrections regarding email handling in case of representative entitlement in I_Entitlement_Management.yaml (alignment with changes from C_11885)
     - renamed lastLogin to lastUse in I_Device_Management_Insurant.yaml
     - define deviceIdentifier and -Token as mandatory in I_Device_Management_Insurant.yaml
-    - removed obsolete status code 403 in setEmailAddress in I_Email_Management.yaml    
-    - fixed examples in I_Audit_Event.yaml 
+    - removed obsolete status code 403 in setEmailAddress in I_Email_Management.yaml
+    - fixed examples in I_Audit_Event.yaml
     - added kvnr and name in response of sendAuthCodeFdv in I_Authorization_Service.yaml
     - removed redundant deviceIdentifier in registerDevice response schema in I_Device_Management_Insurant.yaml (C_11957)
     - added status code 404 'notHomeSystem' to replaceEmailAddress in I_Email_Management.yaml
@@ -58,7 +65,7 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
     - changed logging conditions in I_Entitlement_Management.yaml (C_11960)
     - reworked email address management in I_Email_Management.yaml (C_11965)- changed status code for data usage purposes operations in I_Consent_Decision_Management.yaml
 - revised API for research data centre package download in I_Data_Submission_Service.yaml
-- introduce user specific deny policy for medication service access 
+- introduce user specific deny policy for medication service access
 - update list of affected oids and fixed some typos in I_Entitlement_Management.yaml (editorial)
 - renamed I_Research_Data_Submission.yaml to I_Data_Submission_Service.yaml
 - renamed several terms related to "research". Purposes of submitted data is now "secondary usage" in I-Consent_Management.yaml and I_Data_Submission_Service.yaml
@@ -66,7 +73,7 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 - changed logging conditions in I_Entitlement_Management_EU.yaml (according to change in ePA-3.0.2-1 - C_11960)
 - add tutorial "Strukturierte Dokumente"
 ## Release 3.1.0 RC
-- release candidate ePA-3.1.0 
+- release candidate ePA-3.1.0
 ### changes
 - new interface I_Entitlement_Management_EU.yaml
 - update concept for research data submission
@@ -77,7 +84,7 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 ### changes
 - changed regex for pattern of jwts (now for base64url only) (C_11878)
 - added statuscode 403 (invalidAuth) for getFHIRVZDToken in I_Authorization_Service.yaml (C_11879)
-- added timestamp in response of getGeneralConsentDecision in I_Information_Service_Accounts.yaml (C_11884) 
+- added timestamp in response of getGeneralConsentDecision in I_Information_Service_Accounts.yaml (C_11884)
 - fixed the EPAParticipationRoleType ValueSet
 - I_Test_Driver_FdV.yaml moved to: https://github.com/gematik/api-ePA-Testtreiber
 - added tutorials
@@ -85,8 +92,8 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 - added authorization with device attestation for sendAuthCodeFdv in I_Authorization_Service.yaml (C_11885)
 - removed paging and filtering in I_Email_Management.yaml, I_Entitlement_Management_Insurant.yaml and I_Device_Management.yaml m(C_11912)
 - update fhir profiles for I_Audit_Event.yaml
-## Release 3.0.2 alpha 
-- pre-release ePA-3.0.2 
+## Release 3.0.2 alpha
+- pre-release ePA-3.0.2
 ### changes
 - renamed 'challenge' to 'freshness (parameter)' and removed claims in bearer token in I_Authorization_Service.yaml (C_11806)
 - added list of notified emails in response of registerDevice in I_Device_Management_Insurant.yaml (C_11818)
@@ -111,7 +118,7 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 - (all changes from changelist 'ePAfueralle_3.0.1' and final review)
 ### changes
 - added 'exp' to JWT 'bearerToken' and 'clientAttestation' in I_Authorization_Service.yaml (C_11759)
-- changed enc-certificate handling for health record relocation (C_11697) 
+- changed enc-certificate handling for health record relocation (C_11697)
 - changes in legal policy (concept) for KTR and new category added
 - correction of several typos
 - added link to 'ref-ePA-HealthRecordMigration' repo for information
@@ -124,13 +131,13 @@ This version 3.0.5 is the logically subsequent version of version 3.0.3 and inco
 ## Release 3.0.1 RC
 - release candidate ePA-3.0.1
 ### changes
-- added description for allowed PDF/A formats (I_Audit_Event_Render - C_11690) 
-- I_Audit_Event_Render_Insurant.yaml renamed to I_Audit_Event_Render.yaml (C_11725) 
-- rendered audit events pdf signed or unsigned, also for ombudsoffice (I_Audit_Event_Render - C_11725) 
-- correction of depending consent decisions 'medication' and 'erp-submission' (I_Consent_Decicion_Management - C_11720) 
+- added description for allowed PDF/A formats (I_Audit_Event_Render - C_11690)
+- I_Audit_Event_Render_Insurant.yaml renamed to I_Audit_Event_Render.yaml (C_11725)
+- rendered audit events pdf signed or unsigned, also for ombudsoffice (I_Audit_Event_Render - C_11725)
+- correction of depending consent decisions 'medication' and 'erp-submission' (I_Consent_Decicion_Management - C_11720)
 - exclude users with oid_versicherter from category locking related to consent 'medication' (I_Consent_Decicion_Management - C_11691)
 - representative can delete own entitlement (I_Entitlement_Management - C_11699)
-- reworked device management for explicit device registration and confirmation with confirmation code (I_Device_Management_Insurant - C_11689) 
+- reworked device management for explicit device registration and confirmation with confirmation code (I_Device_Management_Insurant - C_11689)
 - reworked concept for device management with confirmation code (concept)
 - changes from comment gkv-sv_216 (concept)
 - added email management API (I_Email_Management - C_11738)

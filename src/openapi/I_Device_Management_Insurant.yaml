@@ -41,10 +41,13 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.6.1
+  version: 1.6.2
 
   # version history:
   # ----------------
+  # version 1.6.2
+  #   - reworked error condition for 403 in getDeviceAttestation
+  #   - clarification about device attestation persistance in DeviceManagement section
   # version 1.6.1
   #   - added error condition for not authenticated user sessions
   # version 1.6.0
@@ -153,8 +156,8 @@ tags:
     instead of the deviceToken and deviceIdentifier as used with the home system.
 
     Deviating from the behaviour of the home system which persists a confirmed device registration, is a device attestation
-    only temporarily valid within a single user session, i.e. a new device attestation shall be retrieved from the home system
-    for any new login to another system.
+    only temporarily valid and never persisted, i.e. usually a new device attestation must be obtained from the home system
+    for each new login to another system.
 
 paths:
   /epa/basic/api/v1/devices/manage:
@@ -718,8 +721,7 @@ paths:
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
-        | Requestor _kvnr_ is not known to the device management | 403 | invalidUser | user has no device registered or is not known at all |
-        | Device registration does not exist | 404 | noResource | current device in use has no device registration or only _pending_ device registration associated to requestor kvnr |
+        | Device registration does not exist | 403 | unregisteredDevice ||
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
