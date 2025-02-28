@@ -43,10 +43,13 @@ info:
     always be skipped and no log entry shall be stored if this precondition is 
     not met.
 
-  version: 1.5.2
+  version: 1.5.3
 
   # version history:
   # ----------------
+  # version 1.5.3
+  #   - additional error condition for missing device registration 
+  #   - clarification on scope of an UdpMedication assignment (fhir medication + category emp)
   # version 1.5.2
   #   - remove consent for data submission and DataUsagePurpose
   # version 1.5.1
@@ -93,13 +96,22 @@ tags:
      decisions regarding consent related functions of the health record.
   - name: UdpMedication
     description: |
-      UdpMedication allows configuration of the user specific deny policy for medication service only. 
-      The UdpMedication is managed for a health record by setting or deleting assignments by the insurant 
-      or an entitled representative.</br>
-      An assignment is related to a single user identified by a telematik-id. Any user covered by 
-      an assignment is excluded from access to the medication service, i.e. each operation of the medication 
-      service invoked by this user is aborted and leads to an error.
+      UdpMedication allows configuration of the user-specific deny policy for medication service only. 
+      The UdpMedication is managed the insurant or entitled representatives for a health record by setting 
+      or deleting assignments.</br>
+      An assignment addresses a single user identified by a telematik-id. Any user covered by 
+      an assignment is excluded from access to the medication service, even if a valid entitlement for this user applies.
+      Vice versa access for a specific user is restored as soon as the assignment in UdpMedication is deleted.
+        - an assignment for user X prevents access to: 
+          - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
+          - fhir data service "medication"
+        - deletion of an assignment for user X allows access to (see Remark): 
+          - xds data category "emp"; folder.Codelist: code = "emp"; codeSystem = "urn:oid:1.2.276.0.76.5.512"
+          - fhir data service "medication"
       
+      Remark: access to medication related data still requires a valid entitlement for the user and also a permitted general
+      consent for _medication_ (see ConsentDecisions)
+
       **Allowed usergroups for UdpMedication assigments:**:</br> 
       TheUdpMedication shall have entries for users of the following roles (professionOid) only.</br>
       The following list of oids is for information only and may be incomplete, the normative requirement is defined in A_26406-*
@@ -193,6 +205,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -295,6 +308,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -350,6 +364,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -412,6 +427,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -479,6 +495,7 @@ paths:
         | Successful operation | 201 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -550,6 +567,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -606,6 +624,7 @@ paths:
         | Successful operation | 204 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |

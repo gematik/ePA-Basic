@@ -45,6 +45,8 @@ info:
   #   - added oid_ncpeh to list of allowed roles
   #   - clarification for 'iat' and 'exp' in client attest jwt
   #   - (guest-) authentication for desktop-fdv
+  #   - clarification for device attestation usage
+  #   - clarification postcondition for fdv logout operation
   # version 1.5.1
   #   - clarification of 'iat' and 'exp' in jwt
   #   - removed fixed redirect_uri in sendAuthorizationRequestFdV
@@ -151,8 +153,8 @@ tags:
    instead of the deviceToken and deviceIdentifier as used with the home system.
    
    Deviating from the behaviour of the home system which persists a confirmed device registration, is a device attestation
-   only temporarily valid within a single user session, i.e. a new device attestation shall be retrieved from the home system
-   for any new login to another system.
+   only temporarily valid and never persisted, i.e. usually a new device attestation must be obtained by a client from the 
+   home system for each new login to another system.
 
 - name: Authorization SMC-B
   description: |
@@ -635,14 +637,17 @@ paths:
         **Client**:</br>
         A client shall always send the authorization code received from the authenticator / IDP. <br/>
 
-        If the user needs access to home system and if device used is already registered, a client shall send _x-device-identifier_ and _x-device-token_.<br/>
+        A client shall send both, _x-device-identifier_ and _x-device-token_, on login to the home system
+        of the user for proof of a registered device.
 
-        If the user needs access to other than home system and if device used is already registered, a client shall send the device attestation. 
-        To get a device attestation the client shall request it at home system of the user (operation getDeviceAttestation of I_Device_Management_Insurant).<br/>
+        If the user has a device registration in another home system, then a device attestation from his home 
+        system must be used and a client shall submit _x-device-attestation_ (instead of _x-device-identifier_ 
+        and _x-device-token_). A client can obtain a device attestation from the home system via a 
+        _getDeviceAttestation_ operation call.  
 
-        A client shall not send _x-device-identifier_ and _x-device-token_ (suppress parameters at all) if the
-        device is not yet registered and confirmed or if the preceding _sendAuthorizationRequestFdV_ call 
-        includes the parameter _x-authorize_representative_ == _true_.
+        A client shall not send _x-device-identifier_ and _x-device-token_ or even _x-device-attestation_ 
+        (suppress parameters at all) if the device is not yet registered and confirmed or if the preceding 
+        _sendAuthorizationRequestFdV_ call includes the parameter _x-authorize_representative_ == _true_.
 
         (For registration of a new device, including confirmation of the registration, see Device Management 
         Service operations _registerDevice_ and _confirmDevice_). 
@@ -660,8 +665,14 @@ paths:
 
         Device verification - other than home system:</br>
         If _x-device-attestation_ is submitted the device verification starts immediately after the authorization completion.
-        The authorization service shall check the signature of device attestation. 
-        If the device attestation is valid by signature and time, and the KVNR submitted in device attestation matches to KVNR of the authorized user the authorization service shall accept the device registration.
+        The authorization service shall accept a device attestation in case
+          - signature is valid
+          - "exp" expiration_time is a timestamp 120 minutes in the future "iat".
+          - current time is greater or equal than 'iat' and less than 'exp' with 15 seconds tolerance ('iat' - 15s <= current time < 'exp' + 15s).          
+          - claim _actorId_ from device attestation matches kvnr of ID-Token or HSM-ID-Token.
+
+        If the device attestation is valid by signature and time, and the KVNR submitted in device attestation matches the 
+        KVNR of the authorized user the authorization service shall accept the device registration.
 
         On success (ID-Token / HSM-ID-Token received and device binding check successful) a new user session shall be instantiated, 
         associated to the HSM-ID-Token.
@@ -681,11 +692,12 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Only _x-device-identifier_ or _x-device-token_ provided | 400 | paramExcpected | both parameters required or none |
-        | _authorize_representative_ is set and _x-device-identifier_ and/or _x-device-token_ provided | 400 | authorizeRep | _x-authorize_representative_ from preceding sendAuthorizationRequestFdV |
+        | (_x-device-identifier_ and/or _x-device-token_) and _x-device-attestation_ provided | 400 | paramExcpected | use only registration of home system, another system or none (yet unregistered device) |
+        | _authorize_representative_ is set and _x-device-identifier_ and/or _x-device-token_ and/or x-device-attestation_ provided | 400 | authorizeRep | _x-authorize_representative_ from preceding sendAuthorizationRequestFdV |
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | _authorizationCode_ not valid | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
         | Wrong _x-device-token_  | 403 | invalidToken | if both parameters avaiable and allowed|
-        | Invalid signature of _x-device-attestation_ | 403 | invalSignature ||
+        | Invalid _x-device-attestation_ | 403 | invalSignature ||
         | Device registration does not exist (_x-device-identifier_)| 404| noResource | also if device is not associated to requestor kvnr |
         | Device registration not confirmed (_status_ == _pending_) | 409 | statusMismatch | confirm pending device registration before retry |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -788,7 +800,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The user session and all related temporary data is terminated / deleted ||
+        | The user session and all related temporary data is terminated / deleted | successful operation only |
        
       responses:
         '204':

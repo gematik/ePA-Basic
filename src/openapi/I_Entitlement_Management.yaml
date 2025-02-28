@@ -45,10 +45,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.5.0
+  version: 1.5.1
 
   # version history:
   # ----------------
+  # version 1.5.1
+  #   - additional error condition for missing device registration 
   # version 1.5.0
   #   - additional error 423 locked for setEntitlementPs if rate limit is reached 
   #   - added hcv to jwt
@@ -689,6 +691,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -753,6 +756,7 @@ paths:
         | Successful operation | 201 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -827,6 +831,7 @@ paths:
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
@@ -880,6 +885,7 @@ paths:
         | Successful operation | 204 |||
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
