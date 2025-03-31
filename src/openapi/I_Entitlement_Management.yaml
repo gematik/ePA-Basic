@@ -45,12 +45,16 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.5.1
+  version: 1.5.2
 
   # version history:
   # ----------------
   # version 1.5.2
   #   - added schema definition for error code 423
+  #   - added PoPP based setEntitlementPs operation
+  #   - changed SecureDataStorage to SecureAdminStorage
+  #   - correction in example setEntitlementPs
+  #   - clarification regarding base64 encoding in entitelemnt jwt
   # version 1.5.1
   #   - additional error condition for missing device registration 
   # version 1.5.0
@@ -150,7 +154,7 @@ tags:
 
      The _validTo_ attribute:</br>
      _validTo_ shall be set to the end of the last day of the desired validity referring the
-     german timezone./br>
+     german timezone.</br>
      example: _validTo_ of an entitlement with end of validity equal the next but one day issued at 2025-01-01 (any point in time)
      shall be 2025-01-03T22:59:59Z or 2025-01-03T23:59:59+01:00 (MEZ) and if issued at 2025-07-01 (any point in time)
      2025-07-03T21:59:59Z or 2025-07-03T23:59:59+02:00 (MESZ)
@@ -164,11 +168,15 @@ tags:
      An Entitlement addresses one particular user of a health record. A granted entitlement is required for
      any user and enables general access to health care related data and services for a period of time.
 
-     Entitlements are set by provision of a proof of audit as prepared by the VSDM Service of the TI in a patient
-     presence situation. This proof of audit substitutes the (not yet) existing entitlement granting access to 
-     the health care operation.
-     A valid proof of audit shall be signed by an smc-b associated to the health care institution demanding an 
-     entitlement. 
+     Entitlements can be set in two ways:
+      - v1: by provision of a proof of audit as prepared by the VSDM Service of the TI in a patient 
+        presence situation. A valid proof of audit shall be signed by an smc-b associated to the health care institution demanding an 
+        entitlement.
+      - v2: by provision of a proof of audit using the TI's *Proof of Patient Presence (PoPP)*. A local PoPP-client triggers the creation of a PoPP-token via the PoPP service.
+        This PoPP-token is then used to create a new entitlement.
+
+     The proof of audit substitutes the (not yet) existing entitlement granting access to the health care operation.</br>
+     v1 will in the foreseeable future be deprecated.
 
      **Allowed usergroups for entitlements with proof of audit:**
      Entitlements can only be set for particular users of defined roles. The following list of allowed roles (professionOid)
@@ -200,6 +208,37 @@ tags:
      example: _validTo_ for oid_öffentliche_apotheke of an entitlement issued at 2025-01-01 (any point in time)
      is 2025-01-03T22:59:59Z or 2025-01-03T23:59:59+01:00 (MEZ) and if issued at 2025-07-01 (any point in time)
      2025-07-03T21:59:59Z or 2025-07-03T23:59:59+02:00 (MESZ)
+
+     **Rate limiting:**
+     Entitlements for users can not be set in an unlimited amount. For each health record a limit for successful 
+     setEntitlementPs* operations apply. Any exceeding of this rate limit causes a failure.
+     
+     A rate limit applies for 
+     - maximum amount of entitlements per hour  
+     - maximum amount of entitlements per month
+     and is counted per role of the user (oid), rather than per institution (telematik-Id).
+
+     The following lists are for information only and may be incomplete, the normative requirement is 
+     defined in A_27290-* and A_27291-*.
+
+     | Role</br>[professionOID] | limit </br>per hour | limit </br>per month |
+     |--------------------------|---------------------|----------------------|
+     | oid_praxis_arzt | 200 | 10.000 |
+     | oid_krankenhaus | 1.000 | 200.000 |
+     | oid_institution-vorsorge-reha | 1.000 | 200.000 |
+     | oid_zahnarztpraxis | 200 | 10.000 |
+     | oid_öffentliche_apotheke | 200 | 25.000 |
+     | oid_praxis_psychotherapeut | 100 | 10.000 |
+     | oid_institution-pflege | 100 | 10.000 |
+     | oid_institution-geburtshilfe | 100 | 10.000 |
+     | oid_praxis-physiotherapeut | 100 | 10.000 |
+     | oid_praxis-ergotherapeut | 100 | 10.000 |
+     | oid_praxis-logopaede | 100 | 10.000 |
+     | oid_praxis-podologe | 100 | 10.000 |
+     | oid_praxis-ernaehrungstherapeut | 100 | 10.000 |
+     | oid_institution-oegd | 100 | 10.000 |
+     | oid_institution-arbeitsmedizin | 100 | 10.000 |
+
 
   - name: UserBlocking
     description: |
@@ -381,7 +420,7 @@ paths:
        </br>
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
-       | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement is replaced |
+       | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement is replaced |
        | Entitlement notification is sent | if applicable, for representative entitlement only |
        | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
@@ -570,7 +609,10 @@ paths:
        **Client**:</br>
        A client shall use this operation in a patient presence situation only, i.e. in case
        the vsdm update service provides a proof of audit as result of a validation procedure
-       of a physical health insurance card (eGK) of the health record owner.
+       of a physical health insurance card (eGK) of the health record owner.    
+
+       Remark on used jwt: Always consider the required encoding of the payload part according to 
+       A_27352-* (base64 encoding for _hcv_ and _auditEvidenc_).
 
 
        **Provider**:</br>
@@ -638,7 +680,7 @@ paths:
        </br>
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
-       | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement with earlier _validTo_ is replaced |
+       | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement with earlier _validTo_ is replaced |
        | The user addressed by the new entitlement is entitled | successful operation only |
        | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.1 |
@@ -652,6 +694,113 @@ paths:
             examples:
               Request:
                 $ref: '#/components/examples/Set_SingleEntitlement'
+
+      responses:
+        '201':
+          description: Created. User is entitled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidToResponseType'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '423':
+          $ref: '#/components/responses/Error423Locked'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v2/ps/entitlements:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+    post:
+      tags:
+        - Entitlements
+      operationId: setEntitlementPsV2
+      summary: (setEntitlementPsV2) Set a single entitlement using PoPP-token.
+      description: |
+       Set an entitlement with predefined validity period for the requesting user in a 
+       treatment situation.</br>
+       This operation is limited to users of the "Allowed usergroups for entitlements with proof of audit".
+       
+       **Client**:</br>
+       A client shall use this operation in a patient presence situation only, i.e. in case
+       a local PoPP-client retrieved a valid PoPP-token for the health record owner.
+
+
+       **Provider**:</br>
+       This operation does not require an existing entitlement for the requesting user. Instead,
+       an entitlement for this user shall be the result of this operation.
+
+       The lack of an existing entitlement for this operation is substituted by verifiable
+       evidence (PoPP-token) associated to the health record owner acting as health record owner's explicit
+       permission for the requesting user to establish a new entitlement.
+       
+       The received Popp-token shall be passed to the HSM for entitlement verification, using rule _rr3_.
+
+       The HSM rule verifies PoPP-token signature, _actorID_, _kvnr_ (associated health record) and claims
+       in a CMAC secured result _actorId_, _kvnr_ and _validTo_ (_validTo_ is applied by HSM according to 
+       user role). HSM verifies also consistence of requestor properties vs claims in PoPP-token
+       and audit evidence.
+
+       The CMAC secured result shall be completed with the following data:
+       - _oid_ of the entitled user (from PoPP-token or request context)
+       - _displayName_ of the entitled user (from PoPP-token or request context)
+       - _issued-at_ current system time
+       - _issued-actorId_ of requestor (from request context)
+       - _issued-displayName_ of requestor (from request context)
+       
+       The completed entitlement shall NOT be stored and cause operation abortion in cases:
+       - _oid_ is not in the list of allowed usergroups (role)
+       - _actorId_ is referenced by a Blocked User Policy assignment
+       - _x-insurantid_ does not match _kvnr_ from hsm rule _rr3_
+
+       If an existing and stored entitlement addressing the same user exists and if this stored
+       entitlement indicates a _validTo_ which is in the future of the new entitlement's _validTo_, 
+       then the existing entitlement shall be kept, else the completed new entitlement shall be stored, 
+       encrypted by SecureAdminStorageKey of the health record.</br>
+       If the new entitlement is stored, a possibly existing entitlement is deleted automatically.</br>
+       All above are success cases for this operation.
+       The response of the operation shall return the current _validTo_ setting as information.
+
+       The addressed user of the request shall be entitled after successful operation.
+       
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 201 || even if an existing entitlement is kept due to longer validity |
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
+       | HSM verification failed | 403 | invalidToken ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
+       | Rate limiting | 423 | locked||
+       | to many failed attempts | 423 | locked | _kvnr_ check limit |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement with earlier _validTo_ is replaced |
+       | The user addressed by the new entitlement is entitled | successful operation only |
+       | A log-entry for the operation exists | successful operation only |
+       | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.1 |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntitlementRequestTypeV2'
+            examples:
+              Request:
+                $ref: '#/components/examples/Set_SingleEntitlementV2'
 
       responses:
         '201':
@@ -772,7 +921,7 @@ paths:
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | The policy assignment is extended with the timestamp and stored in SecureDataStorage ||
+        | The policy assignment is extended with the timestamp and stored in SecureAdminStorage ||
         | An existing entitlement for the addressed user of the assignment is deleted ||
         | An eMail is sent to the insurant, including information about the blocked user policy change| if eMail address is available |
         | A log-entry for the operation exists | all operation results |
@@ -1060,13 +1209,23 @@ components:
             - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
             - "hcv": optional if _enforce_hcv_check_ == false; hash check value generated by PS according to A_27352-*
           - signature contains token signature
+
+          ! Caution: _auditEvidence_ and _hcv_ value field shall be base64 encoded !
       type: object
       properties:
         jwt:
           type: string
           format: application/jwt
           pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
-          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiYXVkaXRFdmlkZW5jZSI6IjNqVVNtSFc1SnpvYmcwRk84Z0o1WVllREFTandQaG1DTmdtL2JraWttL0JrQ1Z6dEhDdFNndUFEc0V4TTczUT0iLCJoY3YiOiI2NTQ1NDkxZDE0In0.onKNsnrNniUjF2zlnjIRMU93kfFsm0aSbudXJijnDT8amDfhAVd-Ed0ATNdvGgDizhLyisezmiPxkouhpHqY3g"
+          example: "eyJ0eXAiOiJKV1QiLCJ4NWMiOlsiTUlJRHBEQ0NBMHVnQXdJQkFnSUhBVjFRYkVDUDlUQUtCZ2dxaGtqT1BRUURBakNCbFRFTE1Ba0dBMVVFQmhNQ1JFVXhHakFZQmdOVkJBb01FV2RsYldGMGFXc2dUazlVTFZaQlRFbEVNVWd3UmdZRFZRUUxERDlKYm5OMGFYUjFkR2x2YmlCa1pYTWdSMlZ6ZFc1a2FHVnBkSE4zWlhObGJuTXRRMEVnWkdWeUlGUmxiR1Z0WVhScGEybHVabkpoYzNSeWRXdDBkWEl4SURBZUJnTlZCQU1NRjBkRlRTNVRUVU5DTFVOQk5UY2dWRVZUVkMxUFRreFpNQjRYRFRJME1USXdNekF3TURBd01Gb1hEVEk1TVRJd01qSXpOVGsxT1Zvd2dlUXhDekFKQmdOVkJBWVRBa1JGTVE0d0RBWURWUVFIREFWRmMzTmxiakVPTUF3R0ExVUVFUXdGTkRVeE5EUXhJREFlQmdOVkJBa01GMFp5YjJodWFHRjFjMlZ5SUZOMGNtSERuMlVnTWpVek1TNHdMQVlEVlFRS0RDVlFjbUY0YVhNZ1VHVmxjaUJIY21GbUlIWnZiaUJOdzd4c2JHVnlUazlVTFZaQlRFbEVNUkF3RGdZRFZRUUVEQWROdzd4c2JHVnlNUTB3Q3dZRFZRUXFEQVJRWldWeU1SSXdFQVlEVlFRTURBbFFjbTltTGlCRWNpNHhMakFzQmdOVkJBTU1KVkJ5WVhocGN5QlFaV1Z5SUVkeVlXWWdkbTl1SUUzRHZHeHNaWEpVUlZOVUxVOU9URmt3V2pBVUJnY3Foa2pPUFFJQkJna3JKQU1EQWdnQkFRY0RRZ0FFRUlaZy9xWWNLZmdlWjVrd1lpRHN5Rk5Dazk3S3pHZXJQK29RejVGZHIrd1o3enZKejV2MTBsckhVRS9lSUlYMFdudzRxdU1QUlIyMWU5ZzgwbC84NXFPQ0FUSXdnZ0V1TUE0R0ExVWREd0VCL3dRRUF3SUhnREE3QmdnckJnRUZCUWNCQVFRdk1DMHdLd1lJS3dZQkJRVUhNQUdHSDJoMGRIQTZMeTlsYUdOaExtZGxiV0YwYVdzdVpHVXZaV05qTFc5amMzQXdId1lEVlIwakJCZ3dGb0FVdGU5MWZwbWFGOG5UZHk5YkVjV0VNeThGbkZFd0hRWURWUjBPQkJZRUZHM0pQVm41Y2tRb0Nhclg4WTlyM1UrTHR4aDFNQk1HQTFVZEpRUU1NQW9HQ0NzR0FRVUZCd01DTUNBR0ExVWRJQVFaTUJjd0NnWUlLb0lVQUV3RWdTTXdDUVlIS29JVUFFd0VUVEFNQmdOVkhSTUJBZjhFQWpBQU1Gb0dCU3NrQ0FNREJGRXdUekJOTUVzd1NUQkhNQllNRkVKbGRISnBaV0p6YzNURHBIUjBaU0JCY25wME1Ba0dCeXFDRkFCTUJESVRJakV0VTAxRExVSXRWR1Z6ZEd0aGNuUmxMUzA0T0RNeE1UQXdNREF4TmpNNU56SXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdFbitici9hem8yNmhhQXBYUHRRd09kYnd4MkNLbUZCdG5LMzRJZHRlRUVzQ0lCQmgyaWJkVmVqNzhqb0VYem1sNHhaSTlVYlRZcW83YkZlNU9GMnZYSzNkIl0sImFsZyI6IkVTMjU2In0.eyJpYXQiOjE3NDMzODAxMzUsImV4cCI6MTc0MzM4MTMzNSwiYXVkaXRFdmlkZW5jZSI6IjNRaXcvT2RtQlhuLzdLYnpNVXV6bVpSK1E5NTJOR29takFQajNKNS9rTC9tNnQxR0JhLzlLZWVrMHorYTVIQT0iLCJoY3YiOiJTTENBd3ZrPSJ9.LBoOOQWAqtwCLdZFy4EkgtMSx9anvXgyhZxamhjbbOMg9GE6ngoA9oVCqN28LLjUA02qBv-7bhVrtQl0w8PQ7g"
+    EntitlementRequestTypeV2:
+      description: |
+        A Proof of Patient Presence (PoPP) token exactly as received from PoPP Service of TI. 
+      type: object
+      properties:
+        popp:
+          type: string
+          example: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0g.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0=.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ=="
     EntitlementRequestRepType:
       allOf:
         - $ref: '#/components/schemas/EntitlementRequestType'
@@ -1273,8 +1432,12 @@ components:
     Set_SingleEntitlement:
       summary: An entitlement request (dummy data).
       value:
-        jwt: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuY2guc2lnIn0.eyJpYXQiOjE3NjQ1NzYwMDAsImV4cCI6MTc2NDU3NzIwMCwiYXVkaXRFdmlkZW5jZSI6IjNqVVNtSFc1SnpvYmcwRk84Z0o1WVllREFTandQaG1DTmdtL2JraWttL0JrQ1Z6dEhDdFNndUFEc0V4TTczUT0iLCJoY3YiOiI2NTQ1NDkxZDE0In0.KO9VDY08ZKVuKEAbq1EkjkX9rWTSC9ekRvNQWSIqQGpwPeoOSnPA1gLnf05GHNy5S1Iux4b3ZYKjFgPLHlkMEA"
+        jwt: "eyJ0eXAiOiJKV1QiLCJ4NWMiOlsiTUlJRHBEQ0NBMHVnQXdJQkFnSUhBVjFRYkVDUDlUQUtCZ2dxaGtqT1BRUURBakNCbFRFTE1Ba0dBMVVFQmhNQ1JFVXhHakFZQmdOVkJBb01FV2RsYldGMGFXc2dUazlVTFZaQlRFbEVNVWd3UmdZRFZRUUxERDlKYm5OMGFYUjFkR2x2YmlCa1pYTWdSMlZ6ZFc1a2FHVnBkSE4zWlhObGJuTXRRMEVnWkdWeUlGUmxiR1Z0WVhScGEybHVabkpoYzNSeWRXdDBkWEl4SURBZUJnTlZCQU1NRjBkRlRTNVRUVU5DTFVOQk5UY2dWRVZUVkMxUFRreFpNQjRYRFRJME1USXdNekF3TURBd01Gb1hEVEk1TVRJd01qSXpOVGsxT1Zvd2dlUXhDekFKQmdOVkJBWVRBa1JGTVE0d0RBWURWUVFIREFWRmMzTmxiakVPTUF3R0ExVUVFUXdGTkRVeE5EUXhJREFlQmdOVkJBa01GMFp5YjJodWFHRjFjMlZ5SUZOMGNtSERuMlVnTWpVek1TNHdMQVlEVlFRS0RDVlFjbUY0YVhNZ1VHVmxjaUJIY21GbUlIWnZiaUJOdzd4c2JHVnlUazlVTFZaQlRFbEVNUkF3RGdZRFZRUUVEQWROdzd4c2JHVnlNUTB3Q3dZRFZRUXFEQVJRWldWeU1SSXdFQVlEVlFRTURBbFFjbTltTGlCRWNpNHhMakFzQmdOVkJBTU1KVkJ5WVhocGN5QlFaV1Z5SUVkeVlXWWdkbTl1SUUzRHZHeHNaWEpVUlZOVUxVOU9URmt3V2pBVUJnY3Foa2pPUFFJQkJna3JKQU1EQWdnQkFRY0RRZ0FFRUlaZy9xWWNLZmdlWjVrd1lpRHN5Rk5Dazk3S3pHZXJQK29RejVGZHIrd1o3enZKejV2MTBsckhVRS9lSUlYMFdudzRxdU1QUlIyMWU5ZzgwbC84NXFPQ0FUSXdnZ0V1TUE0R0ExVWREd0VCL3dRRUF3SUhnREE3QmdnckJnRUZCUWNCQVFRdk1DMHdLd1lJS3dZQkJRVUhNQUdHSDJoMGRIQTZMeTlsYUdOaExtZGxiV0YwYVdzdVpHVXZaV05qTFc5amMzQXdId1lEVlIwakJCZ3dGb0FVdGU5MWZwbWFGOG5UZHk5YkVjV0VNeThGbkZFd0hRWURWUjBPQkJZRUZHM0pQVm41Y2tRb0Nhclg4WTlyM1UrTHR4aDFNQk1HQTFVZEpRUU1NQW9HQ0NzR0FRVUZCd01DTUNBR0ExVWRJQVFaTUJjd0NnWUlLb0lVQUV3RWdTTXdDUVlIS29JVUFFd0VUVEFNQmdOVkhSTUJBZjhFQWpBQU1Gb0dCU3NrQ0FNREJGRXdUekJOTUVzd1NUQkhNQllNRkVKbGRISnBaV0p6YzNURHBIUjBaU0JCY25wME1Ba0dCeXFDRkFCTUJESVRJakV0VTAxRExVSXRWR1Z6ZEd0aGNuUmxMUzA0T0RNeE1UQXdNREF4TmpNNU56SXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdFbitici9hem8yNmhhQXBYUHRRd09kYnd4MkNLbUZCdG5LMzRJZHRlRUVzQ0lCQmgyaWJkVmVqNzhqb0VYem1sNHhaSTlVYlRZcW83YkZlNU9GMnZYSzNkIl0sImFsZyI6IkVTMjU2In0.eyJpYXQiOjE3NDMzODAxMzUsImV4cCI6MTc0MzM4MTMzNSwiYXVkaXRFdmlkZW5jZSI6IjNRaXcvT2RtQlhuLzdLYnpNVXV6bVpSK1E5NTJOR29takFQajNKNS9rTC9tNnQxR0JhLzlLZWVrMHorYTVIQT0iLCJoY3YiOiJTTENBd3ZrPSJ9.LBoOOQWAqtwCLdZFy4EkgtMSx9anvXgyhZxamhjbbOMg9GE6ngoA9oVCqN28LLjUA02qBv-7bhVrtQl0w8PQ7g"
 
+    Set_SingleEntitlementV2:
+      summary: An entitlement request using PoPP (dummy data).
+      value:
+        jwt: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0g.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0=.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ=="
     Get_AllPolicyAssignments:
       summary: Get all Blocked User Policy assignments.
       value:

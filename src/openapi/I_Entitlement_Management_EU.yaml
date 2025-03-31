@@ -47,6 +47,7 @@ info:
   # ----------------
   # version 1.0.4
   #  - in operation setEntitlementEu the HSM rule rr1 is added
+  #   - changed SecureDataStorage to SecureAdminStorage
   # version 1.0.3
   #   - additional error condition for missing device registration 
   # version 1.0.2
@@ -191,7 +192,7 @@ paths:
        </br>
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
-       | The valid and completed entitlement is stored in SecureDataStorage | a possible existing entitlement with same _oid_ is replaced |
+       | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement with same _oid_ is replaced |
        | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 

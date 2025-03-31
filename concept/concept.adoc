@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 21.02.2025
-:revnumber: 3.0.5
+// :revdate: tt.mm.2025
+:revnumber: 3.1.2
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.0.5 Release, 21.02.2025
+//Version: 3.1.2 Release, tt.mm.2025
 endif::[]
 
 
@@ -123,11 +123,11 @@ endif::[]
 |3.1.0
 |14.08.2024
 |
-|Veröffentlichung; Hinweis: Das ePA Release 3.1.0 wird nicht fortgeführt und ist nicht zulassungsfähig.
+|Veröffentlichung
 |gematik
 
-|3.0.5
-|28.02.2025
+|3.1.2
+|31.03.2025
 |
 |Veröffentlichung
 |gematik
@@ -268,6 +268,14 @@ Das *Forschungsdatenzentrum* (FDZ) ist der Empfänger der pseudonymisierten Date
 :sectnums:
 
 Der *NCPeH-Fachdienst* ermöglicht die Bereitstellung der Gesundheitsdaten (z.B. ePKA) für autorisierte Leistungserbringer im EU-Ausland (LE-EU).
+
+[#_pushgateway]
+:sectnums!:
+[discrete]
+==== Push Gateway
+:sectnums:
+
+Das *Push Gateway* besitzt einen anwendungsübergreifenden Endpunkt, an den Push-Notifications übermittelt werden. Das Push Gateway leitet die Informationen der Push-Notification an den Push Provider weiter. Es wird vom Hersteller des ePA-FdV bereitgestellt, und es kann weitere Endpunkte für Kassendienste geben, die ebenfalls über dieses Push Gateway Notifications versenden.
 
 :sectnums!:
 [discrete]
@@ -410,7 +418,9 @@ include::chapters/device_management.adoc[]
 include::chapters/email_management.adoc[]
 include::chapters/audit_event_service.adoc[]
 include::chapters/relocation_service.adoc[]
+include::chapters/data_submission.adoc[]
 include::chapters/eu_access.adoc[]
+include::chapters/push_notification.adoc[]
 endif::[]
 ifdef::env-github[]
 link:./chapters/account_creation.adoc[Anlage einer Akte]
@@ -427,6 +437,12 @@ link:./chapters/audit_event_service.adoc[Audit Event Service]
 
 link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
 
+link:./chapters/data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
+
+link:./chapters/eu_access.adoc[EU-Zugriff]
+
+link:./chapters/push_notification.adoc[Push Notification Management]
+
 endif::[]
 
 <<<
@@ -436,14 +452,32 @@ endif::[]
 In diesem Kapitel werden technische Konzepte zu verschiedenen Medical Services der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
 
 
-In den folgenden Links werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
+In den folgenden Links oder Kapiteln werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
 
+[#_documentservices]
+=== Dokumentenspezifische Services
+
+Die ePA für alle unterstützt eine dokumentenzentrierte Arbeit über zwei Dienste.
+
+==== XDS Document Service
+
+Zentraler Teil dieser Services ist der *XDS Document Service*, der in
 ifndef::env-github[]
-link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.0/concept/gemKPT_ePAfuerAlleXdsDoc_V3.1.0.pdf[Dokumentenmanagement (XDS Document Service)]
+link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.2/concept/gemKPT_ePAfuerAlleXdsDoc_V3.1.2.pdf[Dokumentenmanagement (XDS Document Service)]
 endif::[]
 ifdef::env-github[]
-link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.0/concept/concept.adoc[Dokumentenmanagement (XDS Document Service)]
+link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.2/concept/concept.adoc[Dokumentenmanagement (XDS Document Service)]
 endif::[]
+beschrieben wird.
+
+// MHD Service
+ifndef::env-github[]
+include::chapters/mhd_service.adoc[]
+endif::[]
+ifdef::env-github[]
+link:./chapters/mhd_service.adoc[MHD Service]
+endif::[]
+
 
 [#_versorgungsprozesse]
 === Versorgungsspezifische Services
@@ -451,10 +485,10 @@ endif::[]
 Die ePA unterstützt verschiedene Versorgungsprozesse mittels dedizierter Medical Services. Initial unterstützt die Fachanwendung ePA den *digital gestützten Medikationsprozess* (dgMP) über einen FHIR Data Service.
 
 ifndef::env-github[]
-link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.0/concept/gemKPT_ePAfuerAlleMedSvc_V3.1.0.pdf[Medikationsprozess (Medication Service)]
+link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.2/concept/gemKPT_ePAfuerAlleMedSvc_V3.1.2.pdf[Medikationsprozess (Medication Service)]
 endif::[]
 ifdef::env-github[]
-link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.0/concept/concept.adoc[Medikationsprozess (Medication Service)]
+link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.2/concept/concept.adoc[Medikationsprozess (Medication Service)]
 endif::[]
 
 <<<
@@ -482,13 +516,15 @@ endif::[]
 
 *F*
 
+* FDZ – Forschungsdatenzentrum Gesundheit beim BfArM
+
 * FHIR – Fast Healthcare Interoperability Resources – International etablierter IT-Standard für die Beschreibung von u.a. medizinischen Daten
 
 * FMC – Fundamental Modeling Concepts
 
 *G*
 
-* GesundheitsID - Digitale Identität
+* GesundheitsID – Digitale Identität
 
 *H*
 
@@ -512,17 +548,22 @@ endif::[]
 
 * LEI – Leistungserbringerinstitution
 
-//*M*
+*M*
+
+* MHD – Mobile Access to Health Documents
 
 *N*
 
-* NCPeH - National Contact Point for eHealth
+* NCPeH – National Contact Point for eHealth
 
 *O*
 
+* OCR – Optical Character Recognition
 * ÖGD – Öffentlicher Gesundheitsdienst
 
-//*P*
+*P*
+
+* PoPP – Proof of Patient Presence
 
 //*Q*
 
@@ -530,7 +571,7 @@ endif::[]
 
 *S*
 
-* Sektoraler Identity Provider - Sektoraler IdP
+* Sektoraler Identity Provider – Sektoraler IdP
 
 *T*
 
@@ -541,6 +582,8 @@ endif::[]
 *V*
 
 * VAU – Vertrauenswürdige Ausführungsumgebung
+
+* VST – Vertrauensstelle Elektronische Patientenakte vom RKI
 
 * VZD – Verzeichnisdienst
 
