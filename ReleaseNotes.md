@@ -3,6 +3,11 @@
 # Release Notes ePA Basic
 ## information
 This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
+## Release 3.0.5-2
+### changes
+- added schema definition for error code 423 (C_12222)
+- added HSM rule in setEntitlementEu (C_12217)
+- removed requirement to check state and clientid in URI-PAR (C-12226)
 ## Release 3.0.5-1
 ### changes
 - completed missing changes regarding status code for missing device registration in several *.yaml files (C_11972)

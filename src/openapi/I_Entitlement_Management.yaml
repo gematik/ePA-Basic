@@ -49,6 +49,8 @@ info:
 
   # version history:
   # ----------------
+  # version 1.5.2
+  #   - added schema definition for error code 423
   # version 1.5.1
   #   - additional error condition for missing device registration 
   # version 1.5.0
@@ -666,6 +668,8 @@ paths:
           $ref: '#/components/responses/Error404NotFound'
         '409':
           $ref: '#/components/responses/Error409Conflict'
+        '423':
+          $ref: '#/components/responses/Error423Locked'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
@@ -954,6 +958,14 @@ components:
             resourceMismatch:
               value:
                 errorCode: resourceMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error423Locked:
+      description: Locked.
+      content:
+        application/json:
+          example:
+            errorCode: locked
           schema:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:

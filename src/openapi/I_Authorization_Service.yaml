@@ -36,10 +36,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.6.0
+  version: 1.6.1
 
   # version history:
   # ----------------
+  # version 1.6.1
+  #   - removed ambiguitous requirement to check _state_ and _clientid_ in returend URI-PAR in sendAuthorizationRequestFdv
   # version 1.6.0
   #   - reject login attempts when user session already established in sendAuthorizationRequestSc and sendAuthorizationRequestFdv 
   #   - added oid_ncpeh to list of allowed roles
@@ -580,8 +582,6 @@ paths:
 
         _x-authorize-representative_ and _x-authorize-egk_ both should not be set to _true_ at the same time.
 
-        The authorization service' state value and clientid used for the PAR shall occur in the URI-PAR response of the IDP.
-       
         This operation shall be rejected if the corresponding user session is already authorized. Repeated authorization
         attempts are not supported.
 
@@ -590,7 +590,6 @@ paths:
         | Successful operation | 302 |||
         | Request does not match schema | 400 | malformedRequest | also if both "x-authorize"-parameters are set to _true_ |
         | Invalid request | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
-        | state or clientid value mismatch | 403 | invalData | returned URI-PAR does not contain expected state or clientid value |
         | unregistered redirecturi | 403 | invalRedir | redirecturi in _x-redirecturi_ is not known, registration required |
         | Invalid URI (x-idp-iss) | 404 | noResource | |
         | Repeated authorization attempt | 409 | statusMismatch | when user session is already authorized only |
