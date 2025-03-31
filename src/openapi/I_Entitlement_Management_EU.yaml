@@ -45,6 +45,8 @@ info:
 
   # version history:
   # ----------------
+  # version 1.0.4
+  #  - in operation setEntitlementEu the HSM rule rr1 is added
   # version 1.0.3
   #   - additional error condition for missing device registration 
   # version 1.0.2
@@ -144,7 +146,7 @@ paths:
        
        **Provider**:</br>
        Requests to entitle a role other than oid_ncpeh shall be rejected.
-       The received JWT shall be passed to the HSM for entitlement verification, using rule _tbd_.
+       The received JWT shall be passed to the HSM for entitlement verification, using rule rr1.
        The validity of an existing entitlement will be extended by setting a new entitlement.
        In case of one existing valid entitlement no further entitlements with role oid_ncpeh are allowed.
 
