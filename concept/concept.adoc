@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 21.02.2025
-:revnumber: 3.0.5
+// :revdate: 09.05.2025
+:revnumber: 3.0.5-2
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.0.5 Release, 21.02.2025
+//Version: 3.0.5-2 Release, 09.05.2025
 endif::[]
 
 
@@ -130,6 +130,12 @@ endif::[]
 |28.02.2025
 |
 |Veröffentlichung
+|gematik
+
+|3.0.5-2
+|09.05.2025
+|
+|Ergänzung der Deny-Liste zum Ausschluss von Telematik-Ids
 |gematik
 
 |===
@@ -314,6 +320,7 @@ Die Zugangssteuerung im ePA-Aktensystem setzt durch, dass ausschließlich über 
 
 Zugreifende Nutzer der ePA werden mittels Identity Provider (IdP) der Telematikinfrastruktur (TI) authentifiziert. Dies bewerkstelligt ein *Authorization Service* innerhalb der VAU, der die Kommunikation zu den IdP (*IDP-Dienst* und *Sektoraler IdP*) steuert. Nach einer erfolgreichen Authentisierung wird eine *User Session* etabliert. Im Rahmen dieser Session kann ein Nutzer verschiedene Befugnisse in Akten wahrnehmen.
 
+Da in der TI die Möglichkeit besteht, dass eine LEI aufgrund sektoraler Vorgaben z.B. bei einer Praxisauflösung temporär im Besitz einer gültigen SMC-B bleibt und diese zur Authentisierung ggü. dem *IDP-Dienst* nutzen könnte obwohl sie nicht mehr zugriffsberechtigt auf die ePA für alle ist, gibt es eine Möglichkeit, deren Telematik-ID über eine Deny-List vom Zugriff auf die ePA auszuschließen. Mittelfristig soll dies aber anwendungsübergreifend im *IDP-Dienst* geschehen.
 
 [#_befugnis]
 ==== Zugangssteuerung über Befugnisse

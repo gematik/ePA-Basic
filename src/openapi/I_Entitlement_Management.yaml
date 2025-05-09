@@ -45,10 +45,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.5.1
+  version: 1.5.3
 
   # version history:
   # ----------------
+  # version 1.5.3
+  #   - added error condition for deny list in setEntitlementPs
   # version 1.5.2
   #   - added schema definition for error code 423
   # version 1.5.1
@@ -605,6 +607,8 @@ paths:
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - _oid_ is not in the list of allowed usergroups (role)
        - _actorId_ is referenced by a Blocked User Policy assignment
+       - _actorId_ is referenced by a Deny List assignment
+
        - if _enforce_hcv_check_ == true or _hcv_ value of JWT and _hcv_ from hsm rule _rr3_ are both available:
           - _hcv_ value of JWT does not match _hcv_ from hsm rule _rr3_
        - _x-insurantid_ does not match _kvnr_ from hsm rule _rr3_
@@ -630,6 +634,7 @@ paths:
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
        | hcv value of jwt does not exist | 409 | hcvMissing ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
+       | request claims _actorId_ and _actorId_ is referenced by a Deny List assignment | 409 | requestMismatch ||
        | Rate limiting | 423 | locked||
        | to many failed attempts | 423 | locked | _hcv_ check limit |
        | to many failed attempts | 423 | locked | _kvnr_ check limit |

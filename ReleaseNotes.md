@@ -3,6 +3,9 @@
 # Release Notes ePA Basic
 ## information
 This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
+## Release 3.0.5-3
+### changes
+- added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
 ## Release 3.0.5-2
 ### changes
 - added schema definition for error code 423 (C_12222)
