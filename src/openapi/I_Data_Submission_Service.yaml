@@ -1,0 +1,469 @@
+openapi: 3.0.3
+info:
+  title: I_Data_Submission_Service
+  description: |
+    This interface provides access to the **Data Submission Service** of a health record system.
+    
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prerequisites**:</br>
+    Operations of this interface mandate a mutual authenticated VAU-channel between health record system 
+    and a client based on an identity C.FD.AUT with role oid_epa_fdz (the research data center FDZ).
+    
+    **Retry interval**:</br>
+    The following retry interval is suggested in case of an error response:<br>
+    - '500' Internal Error
+      - approx. 10 minutes
+
+
+  contact:
+    name: gematik GmbH
+    url: 'https://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
+
+  version: 1.0.0
+
+  # version history:
+  # ----------------
+  # version 1.0.0
+  #   - first version
+  # version 0.0.1
+  #   - initial version for review
+
+servers:
+- url: https://epa-hst1.prod.epa4all.de
+
+tags:
+- name: Data Submission
+  description: | 
+   The Data Submission Service provides pseudonymized medical data and consent decision information regarding the 
+   permitted purposes of use of this data (in accordance with SGB V §303) for download by the Research Data Center (FDZ).
+   
+   The provided data originates from several health records hosted by the health record system. Any time new data which
+   meets the criterias for data submission is applied to a health record, this data also gets collected 
+   and prepared for submission by the data submission service to the FDZ.
+
+   ##### Data accepted for submission
+   1. medical data (fhir resources) which are released for pseudonymiszation
+   2. changed consents regarding data usage purposes
+   3. changed general consent regarding data submission at all (withdrawal of consent, this will also stop any data 
+   submission from this particular health record until renewal of consent)   
+   
+   Amounts of collected data are prepared in packages ("Datenpakete FDZ", as ndjson files) for download by the research data 
+   center (FDZ), called submissions. Any particular submission transfers a single package (file) and has its own and unique 
+   submissionId for identification.
+
+   Each of the pseudonymous data contained in a submission package is equipped with a working number ("Arbeitsnummer" AN 
+   or "job-number-identifier") for delivery.
+
+   The delivery pseudonyms, the working numbers and the submissionId all result from a delivery of the data submission service 
+   to the trust office ("Vertrauensstelle" VST). This delivery also announces the submission download link (i.e. a complete 
+   address) for the subsequent download of the data package by the FDZ.
+
+   The preparation of data, number generation and VST notification all is defined in detail in:</br>
+   - gematik: gemspec_Aktensystem_ePAfueralle, chapter "Data Submission Service" (https://gemspec.gematik.de/releases/)
+   - RKI (Robert Koch Institut): Vertrauensstelle Elektronische Patientenakte - Pseudonymisierungskonzept zur Datenausleitung ePA zu Forschungszwecken, Version 2.0 2024-07-12 (no available online)
+
+   ### The download package file:
+   The getSubmissionPackage operation always provides a single file for download.
+
+   The file name is defined as "Datenausleitung-AS-FDZ-submissionId.ndjson". The format is newline delimited json
+   with a single resource per newline. The resources itself therefor shall not contain any newline statement.
+
+   Each of the contained resources has a working number (job-number-identification) applied. The resources shall appear
+   in an ordered sequence within the file, sorted in ascending or descending order related to the working number value.
+   The ordering shall disguise the order of data input to the Data Submission Service.
+
+   The file typically and preferrable contains data of several insurants/ health records.
+
+   The file may also contain information about withdrawal of the general consent regarding data submission 
+   (consent decision for function "data-submission" of class "secondaryData" set to "deny")."
+   
+   The file may also contain information about the permitted or denied usage purposes as decided by an insurant. If contained,
+   all purposes (the whole set of purposes) shall be included.
+
+   The consent related resources shall only apply in a submission in case of changes to the consent decisions. 
+   Purpose consents shall be included (whole set) even if only a single decision for a purpose has changed. 
+
+   If a withdrawal of the general consent for data submission is included, no further purpose consent or 
+   medical data resources for the releated insurant (health record) shall be part of the submission file.
+
+
+   #### Structure of package file:
+   (the following example uses newlines for illustration only, the ndjson compatible example will not have any newline 
+   (unescaped "\n" character) between the '-- newline --' separators. The separators itself and empty lines shall 
+   also not appear in a final file)."
+  
+   Example submission including one pseudonymized medical data resource, two consent purpose resources 
+   and one general consent withdrawel resource in descending order.
+
+   **Datenausleitung-AS-FDZ-84026502c9d708feb46dafd249ce5b5f83390f54ac3b1e86ed53423fb81270ec.ndjson)**
+   ```json
+    { 
+        "resourceType": "DataUsagePurposes",
+        "subject": {
+            "identifier": { 
+                "system": "https://gematik.de/fhir/epa-research/sid/job-number-identifier",
+                "value": "d4630e17d411b5aba06323fa6674e187def7b7e02f5dd9ffb734dbbbe00f8d9b"
+                }
+            }, 
+        "purposes": {
+            "Purpose1": {
+                "decision": "permit"}, 
+            "Purpose2": {
+                "decision": "permit"}, 
+            "Purpose3": {
+                "decision": "permit"}, 
+            "Purpose4": {
+                "decision": "permit"}, 
+            "Purpose5": {
+                "decision": "permit"}, 
+            "Purpose6": {
+                "decision": "deny"}, 
+            "Purpose7": {
+                "decision": "deny"}, 
+            "Purpose8": {
+                "decision": "deny"}, 
+            "Purpose9": {
+                "decision": "deny"}, 
+            "Purpose10": {
+                "decision": "permit"}
+        } 
+    }
+        
+    -- newline --
+
+    { 
+        "resourceType": "DataSubmissionConsentDecision",
+        "subject": {
+            "identifier": { 
+                "system": "https://gematik.de/fhir/epa-research/sid/job-number-identifier",
+                "value": "c9c03e8dfe139bab40ab1e7fda0584fd6833f64d0108ee597564bc35a5057496"
+                }
+            }, 
+        "functionId": "data-submission", 
+        "decision": "deny"
+    }
+   
+    -- newline --
+
+    { "resourceType": "MedicationRequest",
+      "id": "bf1b08e5-5cfe-4ec0-b6b3-580d4bdc7975",
+      "meta": {
+        "profile":  [
+          "https://gematik.de/fhir/epa-research/StructureDefinition/epa-research-medication-request
+            ],
+          "tag": [ {
+            "system": "https://gematik.de/fhir/epa-research/sid/source-profile",
+            "code": "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-request"
+            } ]     
+        },
+        "subject": {
+          "identifier": {
+            "system": "https://gematik.de/fhir/epa-research/sid/job-number-identifier",
+            "value": "2807adeaa5cef9b54e2fa75f31cbd48ff14f344cc2a501bbdbcefa112662db50"
+          }
+      },
+      "dispenseRequest": {
+          "quantity": {
+              "system": "http://unitsofmeasure.org",
+              "code": "{Package}",
+              "value": 3
+          }
+      },
+      "status": "active",
+      "intent": "plan",
+      "medicationReference": {
+          "reference": "ExampleEpaMedication1"
+        },
+      "authoredOn": "2024-07-01",
+      "requester": {
+          "reference": "PractitionerRole/ExampleConfidentialMedicationRequest1Requester"
+        } 
+    }
+    
+    -- newline --
+
+    { 
+        "resourceType": "DataUsagePurposes",
+        "subject": {
+            "identifier": { 
+                "system": "https://gematik.de/fhir/epa-research/sid/job-number-identifier",
+                "value": "09fb89c7545c091983b050a2130b88c3d58c3c36ac5fd2b8472c592cc2da5dea"
+                }
+            }, 
+        "purposes": {
+            "Purpose1": {
+                "decision": "deny"}, 
+            "Purpose2": {
+                "decision": "permit"}, 
+            "Purpose3": {
+                "decision": "permit"}, 
+            "Purpose4": {
+                "decision": "permit"}, 
+            "Purpose5": {
+                "decision": "permit"}, 
+            "Purpose6": {
+                "decision": "permit"}, 
+            "Purpose7": {
+                "decision": "deny"}, 
+            "Purpose8": {
+                "decision": "permit"}, 
+            "Purpose9": {
+                "decision": "permit"}, 
+            "Purpose10": {
+                "decision": "permit"}
+        } 
+    }
+    ``` 
+
+   #### Schema for additional resources:
+   Fhir medical resources are formatted according to their structure definitions for privacy enhanded resources.
+
+   The consent decision and the purposes are submitted according to structures similar
+   to formats used by the consent decision management operations. Both are wrapped in a "fhir-resource style" json
+   definition to apply a similar structure as used for real fhir resources, unifying the access to the working
+   numbers of data submission content in a file. 
+
+   ##### Schema for the general consent decision
+   ```json
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",  
+      "$id": "https://gematik.de/schema-research-consent.json",  
+      "title": "Data Submission Consent",  
+      "description": "Consent decision for data-submission",  
+      "type": "object",
+      "properties": {
+        "resourceType": {
+          "type": "string",
+          "enum": ["DataSubmissionConsentDecision"]
+          },
+        "subject": {
+          "type": "object",
+          "properties": {
+            "identifier": {
+              "type": "object",
+              "properties": {
+                "system": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": ["system", "value"]
+            }
+          },
+          "required": ["identifier"]
+        },
+        "functionId": {
+          "type": "string",
+          "enum": ["data-submission"]
+          },
+        "decision": {
+          "type": "string",
+          "enum": ["deny"]
+          }
+      },
+      "required": ["resourceType", "subject", "functionId", "decision"]
+    }
+   ```
+   
+   ##### Schema for the purposes consent decisions
+   ```json
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",  
+      "$id": "https://gematik.de/schema-research-purposes.json",  
+      "title": " Data Usage Purposes",  
+      "description": "Consent decision for data usage purposes",  
+      "$defs": {
+        "PurposeType": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": ["deny", "permit"]
+            }
+          },
+          "required": ["decision"]
+        }
+      },
+    "type": "object",
+      "properties": {
+        "resourceType": {
+          "type": "string",
+          "enum": ["DataUsagePurposes"]
+        },
+        "subject": {
+          "type": "object",
+          "properties": {
+            "identifier": {
+              "type": "object",
+              "properties": {
+                "system": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": ["system", "value"]
+            }
+          },
+          "required": ["identifier"]
+        },
+        "purposes": {
+          "type": "object",
+          "properties": {
+              "Purpose1": { "$ref": "#/$defs/PurposeType" },
+              "Purpose2": { "$ref": "#/$defs/PurposeType" },
+              "Purpose3": { "$ref": "#/$defs/PurposeType" },
+              "Purpose4": { "$ref": "#/$defs/PurposeType" },
+              "Purpose5": { "$ref": "#/$defs/PurposeType" },
+              "Purpose6": { "$ref": "#/$defs/PurposeType" },
+              "Purpose7": { "$ref": "#/$defs/PurposeType" },
+              "Purpose8": { "$ref": "#/$defs/PurposeType" },
+              "Purpose9": { "$ref": "#/$defs/PurposeType" },
+              "Purpose10": { "$ref": "#/$defs/PurposeType" }
+          },
+          "required": ["Purpose1", "Purpose2", "Purpose3", 
+                      "Purpose4", "Purpose5", "Purpose6", 
+                      "Purpose7", "Purpose8", "Purpose9", 
+                      "Purpose10"]
+        }
+      }
+    }  
+   ```
+
+externalDocs:
+  description: 'further information: follow the link and choose ePA-3.1'
+  url: https://fachportal.gematik.de/anwendungen/elektronische-patientenakte-fuer-alle
+
+paths:
+  /epa/submission/api/v1/submissions/{submissionId}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/submissionId'
+      tags:
+      - Data Submission
+      operationId: getSubmissionPackage
+      summary: "(getSubmissionPackage) Returns a file with pseudonymizized content for data submission."
+      description: |
+        Retrieve a single file containing all data for a particular submission addressed by _submissionId_.</br>
+        This operation is limited to users of role oid_epa_fdz.
+
+
+        **Client:**</br>
+        The client is always the research data center ("Forschungsdatenzentrum Gesundheit", FDZ). The client 
+        should invoke the file download immediately after receiption of a new _submissionId_ (resp. a download link) 
+        from the trust office (VST).
+        
+        **Provider:**</br>
+        The file associated to _submissionId_ shall be returned. The file shall always be named
+        "Datenausleitung-AS-FDZ-**submissionId**.ndjson" and contain only data in newline delimited 
+        json format.
+
+        The file associated to _submissionId_ shall be deleted without remains after
+        - a successful delivery of the data (i.e. succesful download of file), or
+        - 72 hours waiting time (i.e. without any attempt to donwload)
+
+        The path parameter _submissionId_ shall be valid as soon as the associated file is prepared for 
+        a download and before sending the submission information (including the download link) to the VST).
+        The path parameter _submissionId_ shall be invalid as soon as the file is deleted.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | VAU channel not established | 403 | accessDenied ||
+        | Requestor role is not _oid_epa_fdz_ | 403 | invalidOid ||
+        | unknown _submissionID_ | 404 | noResource | _submissionId_ not known or outdated |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The package file is deleted | after successful operation or after end of deployment period  |
+
+      responses:
+        "200":
+          description: Success
+          content:
+            application/fhir+ndjson:
+              schema:
+                description: |
+                 A file containing all pseudonymized fhir resources and consent decision changes of a particular submission.
+                 The file name is always 'Datenausleitung-AS-FDZ-<submissionID-Hex>.ndjson'. 
+                type: string
+                format: binary
+              example: Datenausleitung-AS-FDZ-84026502c9d708feb46dafd249ce5b5f83390f54ac3b1e86ed53423fb81270ec.ndjson
+        '403':
+          $ref: "#/components/responses/Error403Forbidden"
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+
+components:
+  parameters:
+    submissionId:
+      name: submissionId
+      in: path
+      description: Identifier of a submission package.
+      required: true
+      schema:
+        $ref: '#/components/schemas/SubmissionIdType'
+  
+  responses:
+    Error403Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          example:
+            errorCode: invalidOid
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  schemas:
+    SubmissionIdType:
+      type: string
+      description: |-
+        A 256 bit identifier of a submission package. 
+      pattern: '^[a-f0-9]{64}$'
+      example: 81b1b83e2736d45db16674e527890b8adc69ff7275acf11925faf44ae57f7e2f
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode

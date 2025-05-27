@@ -2,10 +2,13 @@
 
 # Release Notes ePA Basic
 ## information
-This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
-## Release 3.0.5-3
+This version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.
+## Release 3.1.2-RC
 ### changes
-- added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
+- added MHD Service ("Volltextsche") to concept
+- added Push Notifications to concept
+- added I_Push_Notification_Management_Insurant.yaml
+- editorial corrections in I_Entitlement_Management*.yaml
 ## Release 3.0.5-2
 ### changes
 - added schema definition for error code 423 (C_12222)
