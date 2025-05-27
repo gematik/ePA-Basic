@@ -51,7 +51,12 @@ Das *Entitlement Management* löscht regelmäßig Befugnisse, bei denen das Endd
 
 Wird eine eGK in der Umgebung des zu Befugenden zum Zwecke des Lesens der Versichertenstammdaten gesteckt, wird durch das Primär-/Clientsystem auch eine Befugnis erzeugt und im *Entitlement Mangement* registriert. Die Dauer der Befugnis für Apotheken, Öffentlichen Gesundheitsdienst (ÖGD) und Institutionen der Arbeits- und Betriebsmedizin beträgt 3 Tage und für sonstige Leistungserbringerinstitutionen 90 Tage.
 
-Zum Erstellen einer Befugnis ist ein Anwesenheitsnachweis der eGK verpflichtend. Dieser wird über den Prüfungsnachweis erzeugt, der aus der Durchführung des VSDM-Anwendungsfalls "ReadVSD" im Konnektor/TI-Gateway resultiert. Damit der Prüfungsnachweis in Verbindung zur Umgebung gesetzt werden kann, wird dieser zudem mit der C.HCI.AUT-Identität der SMC-B signiert, bevor er im *Entitlement Management* registriert wird.
+Zum Erstellen einer Befugnis ist ein Anwesenheitsnachweis der eGK verpflichtend, der über zwei Wege geführt werden kann:
+
+* Es wird ein Prüfungsnachweis erzeugt, der aus der Durchführung des VSDM-Anwendungsfalls "ReadVSD" im Konnektor/TI-Gateway resultiert. Damit der Prüfungsnachweis in Verbindung zur Umgebung gesetzt werden kann, wird dieser zudem mit der C.HCI.AUT-Identität der SMC-B signiert, bevor er im *Entitlement Management* registriert wird.
+* Es wird das *Proof of Patient Presence (PoPP)* der TI genutzt. Dabei wird über den lokalen PoPP-Client die Erzeugung eines PoPP-Token am PoPP Service ausgelöst und dieses PoPP-Token dann am *Entitlement Management* registriert. Ein PoPP-Token attestiert die Anwesenheit einer eGK in einer bestimmten Umgebung.
+
+_Hinweis: Die Möglichkeit der Verwendung eines VSDM-Prüfnachweises wird zukünftig entfallen. Daher ist er in der Abbildung nicht mehr dargestellt._
 
 Eine potentiell bereits bestehende Befugnis wird durch die neue Befugnis ersetzt, falls die Dauer der alten Befugnis geringer ist als die der neu hinzuzufügenden Befugnis.
 

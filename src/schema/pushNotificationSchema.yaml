@@ -1,0 +1,180 @@
+$schema: 'http://json-schema.org/draft-07/schema#'
+type: object
+properties:
+  pushContent:
+    type: object
+    oneOf:
+      - $ref: '#/definitions/xdsPut'
+      - $ref: '#/definitions/xdsUpdate'
+      - $ref: '#/definitions/entitlePut'
+      - $ref: '#/definitions/entitlePs'
+      - $ref: '#/definitions/entitleDel'
+      - $ref: '#/definitions/constraintDel'
+
+definitions:
+  pushContentItem:
+    type: object
+    properties:
+      channelId:
+        description: Channel that triggered the push notification.
+        type: string
+      when:
+        description: Timestamp of event that triggered the push notification
+        type: string
+        format: date-time
+      actor:
+        description: Readable name of the user who triggered the push notification; _display_name_ of ID-Token of user session
+        type: string
+      insurantId:
+        type: string
+        description: The health record identifier. For today the record identifier equals the insurant id (kvnr).
+        pattern: '^[A-Z]{1}\d{9}$'
+        example: Z123456789    
+    required:
+      - channelId
+      - when
+      - actor
+      - insurantId
+
+  xdsPut:
+    description: data structure of channel to .....
+    properties:
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'xds.put'
+          title:
+            description: title of the document according to metadata DocumentEntry.title
+            type: string
+          docId:
+            description: Identifier of the document according to metadata DocumentEntry.uniqueId
+            type: string
+    required:
+    - title
+    - docId
+
+  xdsUpdate:
+    description: data structure of channel to update an existing document to the XDS document service (operation ProvideAndRegisterDocumentSet-b with document replacement)
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'xds.update'
+          title:
+            description: title of the document according to metadata DocumentEntry.title
+            type: string
+          docId:
+            description: Identifier of the document according to metadata DocumentEntry.uniqueId
+            type: string
+    required:
+    - title
+    - docId
+
+  entitlePut:
+    description: data structure of channel to add an entitlement done by representative using FdV
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'entitle.put'
+          who:
+            description: displayName of entitlement to describe who is entitled, e.g. LEI, DiGA
+            type: string
+          oid:
+            description: oid of entitlement; value of professionOID
+            type: string
+          validTo:
+            description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
+            type: string
+            format: date-time
+    required:
+    - who
+    - oid
+    - validTo
+
+  entitlePs:
+    description: data structure of channel to add an entitlement done by LEI using operation setEntitlementPs
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'entitle.ps'
+          who:
+            description: displayName of entitlement to describe who is entitled
+            type: string
+          oid:
+            description: oid of entitlement; value of professionOID
+            type: string
+          validTo:
+            description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
+            type: string
+            format: date-time
+    required:
+    - who
+    - oid
+    - validTo
+
+  entitleDel:
+    description: data structure of channel to delete an entitlement done by representative using FdV
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'entitle.del'
+          who:
+            description: displayName of entitlement to describe who was entitled
+            type: string
+          oid:
+            description: oid of entitlement; value of professionOID
+            type: string
+          validTo:
+            description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
+            type: string
+            format: date-time
+    required:
+    - who
+    - oid
+    - validTo
+
+  constraintDel:
+    description: | 
+      data structure of channel to undo (make it visible again) a restricted document or category or folder; 
+      means deleting constraint in general deny policiy of a health record; 
+      done by representative using FdV
+    allOf:
+      - $ref: '#/definitions/pushContentItem'
+      - type: object
+        properties:
+          channelId:
+            const: 'constraint.del'
+      - oneOf:
+          - properties:
+              title:
+                description: |
+                  title of the document which is now visible (was hidden before) according to metadata DocumentEntry.title
+                  of approved document
+                type: string
+              docId:
+                description: |
+                  Identifier of the document according to metadata DocumentEntry.uniqueId;
+                  rootDocumentId of deleted entry of general deny policy references the document
+                type: string
+          - properties:
+              categoryId:
+                description: categoryId of deleted entry of general deny policy
+                type: string
+          - properties:
+              folderTitle:
+                type: string
+              folderCode:
+                description: Metadata folder.folderCode of the dynamic folder that is now visible and was hidden before
+                type: string
+              folderUuid:
+                description: folderUUID of deleted entry of general deny policy
+                type: string
