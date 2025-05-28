@@ -28,6 +28,12 @@ info:
     - '500' Internal Error
       - approx. 10 minutes
 
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
   contact:
     name: gematik GmbH
     url: 'https://www.gematik.de'
@@ -36,10 +42,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.6.1
+  version: 1.7.0
 
   # version history:
   # ----------------
+  # version 1.7.0
+  #   - optional X-Request-ID in all requests and responses
   # version 1.6.1
   #   - removed ambiguitous requirement to check _state_ and _clientid_ in returend URI-PAR in sendAuthorizationRequestFdv
   # version 1.6.0
@@ -218,6 +226,7 @@ paths:
   /epa/vzd/v1/vzdToken:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Search access-token for FHIR VZD
@@ -248,6 +257,9 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content: 
              application/json: 
               schema:
@@ -258,6 +270,7 @@ paths:
   /epa/authz/v1/getNonce:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Authorization SMC-B
@@ -290,6 +303,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -309,6 +325,7 @@ paths:
   /epa/authz/v1/send_authorization_request_sc:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Authorization SMC-B
@@ -359,6 +376,7 @@ paths:
   /epa/authz/v1/send_authcode_sc:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Authorization SMC-B
@@ -437,6 +455,7 @@ paths:
   /epa/authz/v1/freshness:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Authorization BearerToken
@@ -467,6 +486,9 @@ paths:
       responses:
         '200':
           description: "OK"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -483,6 +505,7 @@ paths:
   /epa/authz/v1/send_authorization_request_bearertoken:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Authorization BearerToken
@@ -541,6 +564,7 @@ paths:
   /epa/authz/v1/send_authorization_request_fdv:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       parameters:
         - $ref: '#/components/parameters/idp-iss'
@@ -617,6 +641,7 @@ paths:
   /epa/authz/v1/send_authcode_fdv:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       parameters:
         - $ref: '#/components/parameters/deviceidentifier'
@@ -721,6 +746,9 @@ paths:
           $ref: '#/components/responses/AuthorizationResponseFdV200'
         '400':
           description: Bad Request.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               examples:
@@ -740,6 +768,9 @@ paths:
                 $ref: '#/components/schemas/ErrorType'
         '403':
           description: Forbidden
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               examples:
@@ -772,6 +803,7 @@ paths:
   /epa/authz/v1/logoutFdV:
     parameters:
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Authorization FdV
@@ -804,12 +836,20 @@ paths:
       responses:
         '204':
           description: "OK"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '500':
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   parameters:
     useragent:
       name: x-useragent
@@ -818,6 +858,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     idp-iss:
       name: x-idp-iss
       description: The issuer Identifier (URL) of the IDP to be used for user authentication
@@ -878,6 +924,9 @@ components:
   responses:
     AuthorizationResponse200:
       description: "OK, Successful login"
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -891,6 +940,9 @@ components:
               - vau-np
     AuthorizationResponseFdV200:
       description: "OK, Successful login"
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -914,6 +966,8 @@ components:
     AuthorizationResponseSC302:
       description: "Found"
       headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
         Location:
           schema:
             description: Authz EndpointURL of the Smartcard IDP and query parameters of the authorization request (clientid, response_type, 
@@ -924,6 +978,8 @@ components:
     AuthorizationResponseFdV302:
       description: "Found"
       headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
         Location:
           description: Redirect EndpointURL of the RelyingParty (IDP) and query parameters clientid, request_uri and state.
           schema:
@@ -932,6 +988,9 @@ components:
 
     Error400BadRequest:
       description: Bad Request
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -941,6 +1000,9 @@ components:
 
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -950,6 +1012,9 @@ components:
     
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -959,6 +1024,9 @@ components:
 
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -968,6 +1036,9 @@ components:
     
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -990,6 +1061,11 @@ components:
       type: string
       pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
       example: CLIENTID1234567890AB/2.1.12-45
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     DeviceIdentifierType:
       description: A device identifier
       type: string

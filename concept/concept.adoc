@@ -126,10 +126,16 @@ endif::[]
 |Veröffentlichung
 |gematik
 
-|3.1.2
+|3.1.2 RC
 |31.03.2025
 |
 |Veröffentlichung
+|gematik
+
+|3.1.2
+|28.05.2025
+|
+|Ergänzung der Deny-Liste zum Ausschluss von Telematik-Ids
 |gematik
 
 |===
@@ -304,7 +310,7 @@ Die *Vertrauenswürdige Ausführungsumgebung (VAU)* erlaubt es, sensible medizin
 Die Daten der ePA werden in zwei unterschiedlichen sicheren Speicherbereichen verschlüsselt persistiert:
 
 * Den *Secure Data Storage*, in dem die Fachdaten der ePA, zugehörige Informationen und Konfigurationsdaten gespeichert werden und
-* den *Secure Entitlement Storage*, in dem Befugnisse der ePA gespeichert werden.
+* den *Secure Admin Storage*, in dem Befugnisse der ePA gespeichert werden.
 
 Die Speicherbereiche werden durch getrennte versichertenindividuelle, kryptographische Schlüssel gesichert.
 
@@ -322,6 +328,7 @@ Die Zugangssteuerung im ePA-Aktensystem setzt durch, dass ausschließlich über 
 
 Zugreifende Nutzer der ePA werden mittels Identity Provider (IdP) der Telematikinfrastruktur (TI) authentifiziert. Dies bewerkstelligt ein *Authorization Service* innerhalb der VAU, der die Kommunikation zu den IdP (*IDP-Dienst* und *Sektoraler IdP*) steuert. Nach einer erfolgreichen Authentisierung wird eine *User Session* etabliert. Im Rahmen dieser Session kann ein Nutzer verschiedene Befugnisse in Akten wahrnehmen.
 
+Da in der TI die Möglichkeit besteht, dass eine LEI aufgrund sektoraler Vorgaben z.B. bei einer Praxisauflösung temporär im Besitz einer gültigen SMC-B bleibt und diese zur Authentisierung ggü. dem *IDP-Dienst* nutzen könnte obwohl sie nicht mehr zugriffsberechtigt auf die ePA für alle ist, gibt es eine Möglichkeit, deren Telematik-ID über eine Deny-List vom Zugriff auf die ePA auszuschließen. Mittelfristig soll dies aber anwendungsübergreifend im *IDP-Dienst* geschehen.
 
 [#_befugnis]
 ==== Zugangssteuerung über Befugnisse
@@ -475,7 +482,11 @@ ifndef::env-github[]
 include::chapters/mhd_service.adoc[]
 endif::[]
 ifdef::env-github[]
+==== MHD Service
+
+Der *MHD Service* bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte gespeichert sind und erlaubt die Volltextsuche in PDF/A-Dokumenten in der ePA für alle. Das entsprechende Konzept ist in 
 link:./chapters/mhd_service.adoc[MHD Service]
+beschrieben
 endif::[]
 
 
