@@ -1,0 +1,39 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_push]
+=== Push Notification Management
+Versicherte können sich über das ePA-FdV mittels Push Notification über Ereignisse in Fachdiensten, insbesondere auch über Ereignisse in ihrer Akte im ePA-Aktensystem, informieren lassen. Hierzu wird die ePA-FdV-Instanz (Installation der App auf einem konkreten Gerät des Versicherten) beim Push-Provider sowie im ePA-Aktensystem registriert. Der Versicherte kann im ePA-FdV aus den möglichen Ereignissen in Form von Channels diejenigen auswählen, für die er benachrichtigt werden möchte. Standardmäßig werden keine Push Notification gesendet.
+
+Hat der Versicherte seine ePA-FdV-Instanz für Push Nachrichten registriert und die gewünschten Channel konfiguriert, dann wird bei Ereignissen, die den abonnierten Channel seines Aktenkontos betreffen, eine Push Nachricht durch das ePA-Aktensystem erzeugt, verschlüsselt und an das Push-Gateway gesendet. Das Push-Gateway leitet die Informationen der Push-Notification an den Push Provider weiter. Der Push Provider ist ein Service des Herstellers des mobilen Betriebssystems (z.B. Google, Apple) und sendet die Push Nachricht an die vom Versicherten im ePA-Aktensystem registrierte App-Instanz und somit auf das Endgerät des Nutzers weiter, wo der Inhalt der Push Nachricht entschlüsselt und angezeigt wird.
+
+Das Feature Push Notification ist im ePA-FdV ein optionales Feature.
+
+Das Feature Push Notification als Basisleistung der Telematik Infrastruktur ist beschrieben in:
+link:https://github.com/gematik/gem-push-notifications-concept/blob/1.0.0-RC1/docs/concept.adoc[Push Notification Concept]
+
+
+
