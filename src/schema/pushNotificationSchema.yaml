@@ -37,7 +37,7 @@ definitions:
       - insurantId
 
   xdsPut:
-    description: data structure of channel to .....
+    description: data structure of channel to upload a new document to the XDS document service (operation ProvideAndRegisterDocumentSet-b)
     properties:
     allOf:
       - $ref: '#/definitions/pushContentItem'

@@ -52,7 +52,7 @@ In einer VAU dürfen nur eine maximale Anzahl von User Sessions gleichzeitig auf
 Sollen die in der VAU verarbeiteten Daten in den Systemen des Aktensystembetreibers gespeichert werden, werden sie zuvor in der VAU verschlüsselt. Hierzu werden ein:
 
 * *Secure Data Storage Key* für die medizinischen Daten und Verwaltungsdaten einer Akte sowie ein 
-* *Secure Entitlement Storage Key* für die Befugnisse 
+* *Secure Admin Storage Key* für die Befugnisse 
 
 als Persistierungsschlüssel verwendet. + 
 
@@ -66,7 +66,7 @@ Es wird durch das HSM technisch durchgesetzt, dass der Zugriff auf VAU-Schlüsse
 
 Für die Ableitung des versichertenindividuellen *Secure Data Storage Key* müssen dem HSM das IDToken des angemeldeten Nutzers und die signierte Befugnis übergeben werden. Das HSM prüft anhand der signierten Befugnis, ob der Nutzer für das Aktenkonto befugt ist. Nur für diesen speziellen Fall wird der versichertenindividuelle *Secure Data Storage Key* für die KVNR im HSM abgeleitet und über einen sicheren Kanal in die VAU übermittelt. Innerhalb der VAU werden die Daten mittels des *Secure Data Storage Key* verschlüsselt und dann außerhalb der VAU gespeichert.
 
-Für die Ableitung des versichertenindividuellen *Secure Entitlement Storage Key* prüft das HSM lediglich, dass es sich um eine attestierte VAU handelt.
+Für die Ableitung des versichertenindividuellen *Secure Admin Storage Key* prüft das HSM lediglich, dass es sich um eine attestierte VAU handelt.
 
 
 ==== Erkennen von Manipulationen an der VAU (Attestierung)

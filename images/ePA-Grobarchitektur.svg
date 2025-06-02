@@ -3217,7 +3217,7 @@
 		</g>
 		<g id="shape255-725" v:mID="255" v:groupContext="shape" transform="translate(586.729,-538.683)">
 			<title>storage.249</title>
-			<desc>Secure Entitlement Storage Key</desc>
+			<desc>Secure Admin Storage Key</desc>
 			<v:custProps>
 				<v:cp v:nameU="PSMType" v:lbl="Type" v:type="0" v:format="@" v:invis="true" v:langID="1031" v:val="VT4(storage)"/>
 				<v:cp v:nameU="FMCType" v:lbl="Type" v:type="0" v:format="@" v:invis="true" v:langID="1031" v:val="VT4(passive)"/>
@@ -3246,9 +3246,9 @@
 				<v:ud v:nameU="FMC_ST_Version" v:val="VT4(2.1.1)"/>
 			</v:userDefs>
 			<v:textBlock v:margins="rect(6.66929,7.66929,6.66929,7.66929)" v:tabSpace="42.5197"/>
-			<v:textRect cx="49.6063" cy="920.307" width="102.61" height="37.3423"/>
+			<v:textRect cx="49.6063" cy="920.307" width="80.93" height="37.3423"/>
 			<rect x="0" y="906.92" width="99.2126" height="26.7751" rx="13.3876" ry="13.3876" class="st32"/>
-			<text x="7.36" y="917.31" class="st37" v:langID="1031"><v:paragraph v:horizAlign="1"/><v:tabList/>Secure Entitlement<v:lf/><tspan
+			<text x="18.2" y="917.31" class="st37" v:langID="1031"><v:paragraph v:horizAlign="1"/><v:tabList/>Secure Admin<v:lf/><tspan
 						x="22.09" dy="1.2em" class="st20">Storage Key</tspan></text>		</g>
 		<g id="group256-729" transform="translate(1018.79,-14.5482)" v:mID="256" v:groupContext="group">
 			<title>Tabelle.256</title>

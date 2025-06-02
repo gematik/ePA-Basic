@@ -29,6 +29,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24987*.
@@ -45,10 +51,17 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.5.2
-
+  version: 1.6.0
   # version history:
   # ----------------
+  # version 1.6.0
+  #   - optional X-Request-ID in all requests and responses
+  #   - added condition for not allowed oids in setEntitlement (FdV)
+  #   - added failed kvnr check counter to setEntitlementPsV2
+  #   - clarification on optional _iat_ and _exp_ in setEntitlementPS
+  #   - validTo in setEntitlement according to RFC-3339, but without milliseconds in setEntitlement
+  # version 1.5.3
+  #   - added error condition for deny list in setEntitlementPs
   # version 1.5.2
   #   - added schema definition for error code 423
   #   - added PoPP based setEntitlementPs operation
@@ -277,6 +290,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Entitlements-ePA-FdV
@@ -311,6 +325,9 @@ paths:
       responses:
         '200':
           description: OK. Returns a list of all entitlements
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -384,6 +401,7 @@ paths:
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant
        - request claims  _actorId_ == kvnr (_oid_ == oid_versicherter), entitlement is new (i.e. does not replace any existing one) and _email_ is not in request 
        - request claims  _validTo_ which is not equal or in the future of current date
+       - request claims _oid_ which is not part of the allowed usergroups
        - request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already 
           reached and new request does not replace existing one (i.e. requests entitlement for the 6th representative)
        
@@ -414,6 +432,7 @@ paths:
        | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and requestor is not insurant | 409 | requestMismatch ||
        | request claims  _actorId_ == kvnr (_oid_ == oid_versicherter) and _email_ is not in request | 409 | noMail ||
        | request claims  _validTo_ which is not equal or in the future of current date | 409 | requestMismatch ||
+       | request claims _oid_ which is not included in the allowed usergroups | 409 | requestMismatch ||
        | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and representative limit already reached | 409 | representativeLimit | only if limit is exceeded |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -442,6 +461,9 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -467,6 +489,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/actorId'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Entitlements-ePA-FdV
@@ -510,6 +533,9 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -596,6 +622,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Entitlements
@@ -628,7 +655,9 @@ paths:
        In case of more than 5 failed comparison checks (5 checks for each counter) within 1 hour
        the operation shall be aborted. 
 
-       The received JWT shall be passed to the HSM for entitlement verification, using rule _rr3_.
+       The received JWT shall be passed to the HSM for entitlement verification, using rule _rr3_.</br>
+       (a PS originated JWT may contain the elements _iat_ and/or _exp_. Both values are optional and shall
+       be ignored if included)
 
        The HSM rule verifies JWT signature, _actorID_, encryption of _kvnr_ (associated health record) and claims
        in a CMAC secured result _actorId_, _kvnr_ and _validTo_ (_validTo_ is applied by HSM according to 
@@ -647,6 +676,8 @@ paths:
        The completed entitlement shall NOT be stored and cause operation abortion in cases:
        - _oid_ is not in the list of allowed usergroups (role)
        - _actorId_ is referenced by a Blocked User Policy assignment
+       - _actorId_ is referenced by a Deny List assignment
+
        - if _enforce_hcv_check_ == true or _hcv_ value of JWT and _hcv_ from hsm rule _rr3_ are both available:
           - _hcv_ value of JWT does not match _hcv_ from hsm rule _rr3_
        - _x-insurantid_ does not match _kvnr_ from hsm rule _rr3_
@@ -672,6 +703,7 @@ paths:
        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
        | hcv value of jwt does not exist | 409 | hcvMissing ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
+       | request claims _actorId_ and _actorId_ is referenced by a Deny List assignment | 409 | requestMismatch ||
        | Rate limiting | 423 | locked||
        | to many failed attempts | 423 | locked | _hcv_ check limit |
        | to many failed attempts | 423 | locked | _kvnr_ check limit |
@@ -698,6 +730,9 @@ paths:
       responses:
         '201':
           description: Created. User is entitled
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -719,6 +754,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Entitlements
@@ -741,6 +777,10 @@ paths:
        The lack of an existing entitlement for this operation is substituted by verifiable
        evidence (PoPP-token) associated to the health record owner acting as health record owner's explicit
        permission for the requesting user to establish a new entitlement.
+       
+       The operation shall count the number of failed comparison check of _kvnr_ for each 
+       user (telematik-id). In case of more than 5 failed comparison checks within 1 hour
+       the operation shall be aborted. 
        
        The received Popp-token shall be passed to the HSM for entitlement verification, using rule _rr3_.
 
@@ -805,6 +845,9 @@ paths:
       responses:
         '201':
           description: Created. User is entitled
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -827,6 +870,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UserBlocking
@@ -859,6 +903,9 @@ paths:
       responses:
         '200':
           description: Ok. Returns a list of policy assignments
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -939,6 +986,9 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -964,6 +1014,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/telematikid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UserBlocking
@@ -1000,6 +1051,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -1068,9 +1122,17 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -1079,6 +1141,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -1087,6 +1152,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -1095,6 +1163,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -1111,6 +1182,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error423Locked:
       description: Locked.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -1119,6 +1193,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -1141,6 +1218,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     actorId:
       name: actorId
       in: path
@@ -1196,7 +1279,7 @@ components:
             - "actorId": Telematik-Id or KVNR
             - "oid": value of professionOID
             - "displayName": name according to actorId
-            - "validTo": Expiry date-time of entitlement in format according to rfc3339
+            - "validTo": Expiry date-time of entitlement in format according to rfc3339, but the declaration of milliseconds is not permitted
           - signature contains token signature
         - Content for PS originated entitlements:</br>
           - protected_header contains:
@@ -1204,13 +1287,17 @@ components:
             - "alg": "ES256" or "PS256"
             - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
           - payload claims:
-            - "iat": issued at timestamp
-            - "exp": expiry timestamp (always iat + 20min)
+            - "iat": issued at timestamp (*)
+            - "exp": expiry timestamp (always iat + 20min) (*)
             - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
             - "hcv": optional if _enforce_hcv_check_ == false; hash check value generated by PS according to A_27352-*
           - signature contains token signature
 
+          ! Note (*): _iat_ and _exp_ are optional elements in PS originated jwts. If included, the content should be 
+          ignored.
+
           ! Caution: _auditEvidence_ and _hcv_ value field shall be base64 encoded !
+          
       type: object
       properties:
         jwt:
@@ -1225,7 +1312,7 @@ components:
       properties:
         popp:
           type: string
-          example: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0g.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0=.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ=="
+          example: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ"
     EntitlementRequestRepType:
       allOf:
         - $ref: '#/components/schemas/EntitlementRequestType'
@@ -1323,6 +1410,11 @@ components:
         For today the record identifier equals the insurant id (kvnr).
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object
