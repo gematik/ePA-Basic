@@ -34,7 +34,7 @@ footer:
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 31.03.2025
+        Stand: 28.05.2025
     center:
       content: |
         Übergreifendes Konzept +
@@ -47,7 +47,7 @@ footer:
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 31.03.2025
+        Stand: 28.05.2025
     center:
       content: |
         Übergreifendes Konzept +

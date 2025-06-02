@@ -19,6 +19,11 @@ info:
     - '500' Internal Error
       - approx. 10 minutes
 
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
 
   contact:
     name: gematik GmbH
@@ -28,10 +33,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - optional X-Request-ID in all requests and responses
   # version 1.0.0
   #   - first version
   # version 0.0.1
@@ -351,6 +358,7 @@ paths:
     get:
       parameters:
         - $ref: '#/components/parameters/submissionId'
+        - $ref: '#/components/parameters/requestid'
       tags:
       - Data Submission
       operationId: getSubmissionPackage
@@ -395,6 +403,9 @@ paths:
       responses:
         "200":
           description: Success
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/fhir+ndjson:
               schema:
@@ -413,6 +424,11 @@ paths:
 
 
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   parameters:
     submissionId:
       name: submissionId
@@ -421,10 +437,18 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/SubmissionIdType'
-  
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
   responses:
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -433,6 +457,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -441,6 +468,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -455,6 +485,11 @@ components:
         A 256 bit identifier of a submission package. 
       pattern: '^[a-f0-9]{64}$'
       example: 81b1b83e2736d45db16674e527890b8adc69ff7275acf11925faf44ae57f7e2f
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object

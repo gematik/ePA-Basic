@@ -3,6 +3,20 @@
 # Release Notes ePA Basic
 ## information
 This version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.
+## Release 3.1.2
+-  release ePA-3.1.2
+### changes
+- added condition for not allowed oids in setEntitlement (FdV) in I_Entitlement_Management.yaml
+- clarification on _iat_ and_exp_ in PS originated JWT in I_Entitlement_Management.yaml
+- validTo according to RFC3339 but without milliseconds in setEntitlement (FdV) in I_Entitlement_Management.yaml
+- added failed kvnr check counter to setEntitlementPsV2 in I_Entitlement_Management.yaml
+- added X-Request-ID as required HTTP header parameter
+- added isPrivateInsurance boolean to response of getProviderList in I_Information_Service_Accounts.
+- added new UX Use Cases to setUserExperienceResult in I_Information_Service.
+- integrate all changes from ePA-3.0.5-3
+    - added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
+- Add building of initial search index to startPackageImport in I_Health_Record_Relocation_Servioce.yaml
+- Updated concept (renamed Secure Entitlement Storage to Secure Admin Storage, added full text search to MHD description, removed data migration of ePA 2.6)
 ## Release 3.1.2 RC
 ### changes
 - added MHD Service ("Volltextsche") to concept

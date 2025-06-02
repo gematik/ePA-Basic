@@ -35,6 +35,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Request ID**:</br>QQ
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
@@ -43,10 +49,13 @@ info:
     always be skipped and no log entry shall be stored if this precondition is 
     not met.
 
-  version: 1.5.3
+  version: 1.6.0
 
   # version history:
   # ----------------
+  # version 1.6.0
+  #   - optional X-Request-ID in all requests and responses
+  #   - editorial correction: removed oid_diga from allowed userrgroups for udpMedication assignments 
   # version 1.5.3
   #   - additional error condition for missing device registration 
   #   - clarification on scope of an UdpMedication assignment (fhir medication + category emp)
@@ -128,7 +137,6 @@ tags:
       - oid_praxis-physiotherapeut
       - oid_institution-oegd
       - oid_institution-arbeitsmedizin
-      - oid_diga
       - oid_praxis-ergotherapeut
       - oid_praxis-logopaede
       - oid_praxis-podologe
@@ -140,6 +148,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: "#/components/parameters/functionid"
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     put:
       tags:
         - ConsentDecisions
@@ -255,6 +264,9 @@ paths:
       responses:
         "200":
           description: OK. Consent decision successfully updated
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               examples:
@@ -332,6 +344,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               example:
@@ -354,6 +369,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - ConsentDecisions
@@ -387,6 +403,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               example:
@@ -419,6 +438,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     put:
       tags:
         - DataUsagePurposes
@@ -477,6 +497,9 @@ paths:
       responses:
         "200":
           description: OK. DataUsagePurposes successfully updated
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -530,6 +553,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -552,6 +578,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UdpMedication
@@ -584,6 +611,9 @@ paths:
       responses:
         '200':
           description: Ok. Returns a list of policy assignments
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -665,6 +695,9 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -689,6 +722,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/telematikid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UdpMedication
@@ -724,6 +758,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -784,6 +821,9 @@ paths:
       responses:
         '204':
           description: OK. Assignment deleted
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -796,6 +836,13 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
+
   parameters:
     insurantid:
       name: x-insurantid
@@ -811,6 +858,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     functionid:
       name: functionid
       in: path
@@ -829,6 +882,9 @@ components:
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -837,6 +893,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -845,6 +904,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -853,6 +915,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -863,6 +928,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -950,6 +1018,11 @@ components:
         For today the record identifier equals the insurant id (kvnr).
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     Purpose1Type:
       description: "State of consent for purpose referring §303e SGB V clause 2 number 1: Wahrnehmung von Steuerungsaufgaben durch die Kollektivvertragspartner"
       type: object

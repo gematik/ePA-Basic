@@ -29,6 +29,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24987*.
@@ -41,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.0.3 
+  version: 1.1.0 
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - optional X-Request-ID in all requests and responses
   # version 1.0.4
   #  - in operation setEntitlementEu the HSM rule rr1 is added
   #   - changed SecureDataStorage to SecureAdminStorage
@@ -126,6 +134,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Entitlements-EU
@@ -211,6 +220,9 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -236,6 +248,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/actorId'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - Entitlements-EU
@@ -274,6 +287,9 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -303,9 +319,17 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -314,6 +338,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -322,6 +349,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -330,6 +360,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -346,6 +379,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -368,6 +404,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     actorId:
       name: actorId
       in: path
@@ -377,6 +419,11 @@ components:
         $ref: '#/components/schemas/TelematikIdType'
 
   schemas:
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     KvnrType:
       type: string
       pattern: '^[A-Z]{1}\d{9}$'

@@ -37,17 +37,23 @@ info:
     All operations of this service mandate a VAU-channel and an authorized user session.</br>
     For access by ePA-FdV a device registration for the device used is required.
 
-    **User Agent**:</br>
-    The user agent information (x-useragent) is part of any request, even if 
-    not essentially required for the operation (e.g. raw-data collection), and
-    may be considered for provider internal use.
-
     **Retry interval**:</br>
     The following retry interval is suggested in case of an error response:<br>
     - '409' Conflict.
       - approx. 24 hours
     - '500' internalError
       - 10 minutes
+
+    **User Agent**:</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use.
+
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
 
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
@@ -61,10 +67,12 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-  version: 1.0.0
+  version: 1.1.0
 
   # version history:
   # ----------------
+  # version 1.1.0
+  #   - optional X-Request-ID in all requests and responses
   # version 1.0.0
   #   - initial version
 
@@ -89,8 +97,9 @@ tags:
 paths:
   /pushers:
     parameters:
-      - $ref: '#/components/parameters/useragent'
       - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
       - Pusher Management
@@ -126,13 +135,16 @@ paths:
       responses:
         '200':
           description: The pushers for this health record.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
-                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/pusher_get.yaml#/schema'
+                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/schema'
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/pusher_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -145,8 +157,9 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
   /pushers/set:
     parameters:
-      - $ref: '#/components/parameters/useragent'
       - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     post:
       tags:
         - Pusher Management
@@ -240,17 +253,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
             examples:
               registration:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
               deletion:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
         description: The pusher information.
         required: true
       responses:
         '200':
           description: The pusher was set.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -273,8 +289,9 @@ paths:
     get:
       parameters:
         - $ref: '#/components/parameters/pushkey'
-        - $ref: '#/components/parameters/useragent'
         - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
       tags:
         - Channel Management
       operationId: getChannelsOfDevice
@@ -310,13 +327,16 @@ paths:
       responses:
         '200':
           description: The channels for the pusher with pushkey.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -383,21 +403,25 @@ paths:
           schema:
             type: string
           example: '1234567890'
-        - $ref: '#/components/parameters/useragent'
         - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
       requestBody:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_post.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/schema
             examples:
               update:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_post.yaml#/examples/update
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/examples/update
         description: The channel information.
         required: true
       responses:
         '200':
           description: The channel was set.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -450,18 +474,22 @@ paths:
         | none ||
 
       parameters:
-        - $ref: '#/components/parameters/useragent'
         - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
       responses:
         '200':
           description: The channels available for this health record.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0-RC1/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -473,6 +501,11 @@ paths:
         '500':
           $ref: '#/components/responses/Error500InternalError'
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   parameters:
     insurantid:
       name: x-insurantid
@@ -488,6 +521,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     pushkey:
       name: pushkey
       in: path
@@ -499,6 +538,9 @@ components:
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -507,6 +549,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -515,6 +560,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -531,6 +579,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -544,6 +595,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -563,6 +617,11 @@ components:
       type: string
       pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
       example: CLIENTID1234567890AB/2.1.12-45
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object
