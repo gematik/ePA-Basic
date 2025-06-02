@@ -1,9 +1,12 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" version="25.0.3">
+<mxfile host="app.diagrams.net" modified="2024-08-09T05:08:31.057Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" etag="KFs_mXfAWS88iF_Ls5IN" version="24.5.4" type="device">
   <diagram name="Seite-1" id="l7FJD7KelzXNzg7OMOdq">
-    <mxGraphModel dx="2019" dy="1300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2038" dy="2408" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="kaKPPBhv6QyS-EkI_fyc-1" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#007fff;fontColor=#007fff;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="50" y="-20" width="1850" height="1210" as="geometry" />
+        </mxCell>
         <mxCell id="kaKPPBhv6QyS-EkI_fyc-2" value="Organspende-&lt;br&gt;register" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="150" y="190" width="120" height="60" as="geometry" />
         </mxCell>
@@ -273,7 +276,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="kaKPPBhv6QyS-EkI_fyc-150" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Abkürzungen:&lt;br&gt;&lt;/font&gt;&lt;ul style=&quot;font-size: 14px;&quot;&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;TI - Telematikinfrastruktur&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;IDP - Identitiy Provider&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;SigD - Content Signaturdienst für Versicherte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;FdV - Frontend des Versicherten&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;eGK - Elektronische Gesundheitskarte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;VZD - Verzeichnisdienst&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;eH-KT - eHealth-Kartenterminal&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;SM-B - Institutionskarte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;PS - Primärsystem&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;LEI - Leistungserbringerinstitution&amp;nbsp;&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;DiGA - Digitale Gesundheitsanwendung&lt;/font&gt;&lt;/li&gt;&lt;li&gt;NCPeH -&amp;nbsp;National Contact Point for eHealth&lt;/li&gt;&lt;li&gt;ÖGD - Öffentlicher Gesundheitsdienst&lt;/li&gt;&lt;/ul&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;strokeWidth=1;" parent="1" vertex="1">
+        <mxCell id="kaKPPBhv6QyS-EkI_fyc-150" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;Abkürzungen:&lt;br&gt;&lt;/font&gt;&lt;ul style=&quot;font-size: 14px;&quot;&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;TI - Telematikinfrastruktur&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;IDP - Identitiy Provider&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;SigD - Content Signaturdienst für Versicherte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;FdV - Frontend des Versicherten&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;eGK - Elektronische Gesundheitskarte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;VZD - Verzeichnisdienst&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;eH-KT - eHealth-Kartenterminal&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;SM-B - Institutionskarte&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;PS - Primärsystem&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;WANDA - Weitere Anwendungen ...&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;LEI - Leistungserbringerinstitution&amp;nbsp;&lt;/font&gt;&lt;/li&gt;&lt;li style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;DiGA - Digitale Gesundheitsanwendung&lt;/font&gt;&lt;/li&gt;&lt;li&gt;NCPeH -&amp;nbsp;National Contact Point for eHealth&lt;/li&gt;&lt;li&gt;ÖGD - Öffentlicher Gesundheitsdienst&lt;/li&gt;&lt;/ul&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;strokeWidth=1;" parent="1" vertex="1">
           <mxGeometry x="1530" y="740" width="330" height="280" as="geometry" />
         </mxCell>
         <mxCell id="kaKPPBhv6QyS-EkI_fyc-151" value="eGK" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" parent="1" vertex="1">
@@ -602,7 +605,7 @@
             <mxRectangle width="60" height="20" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="kaKPPBhv6QyS-EkI_fyc-247" value="R3.0.5" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;" parent="kaKPPBhv6QyS-EkI_fyc-245" vertex="1">
+        <mxCell id="kaKPPBhv6QyS-EkI_fyc-247" value="R3.1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;" parent="kaKPPBhv6QyS-EkI_fyc-245" vertex="1">
           <mxGeometry x="60" width="190" height="20" as="geometry">
             <mxRectangle width="190" height="20" as="alternateBounds" />
           </mxGeometry>
@@ -1154,6 +1157,77 @@
               <mxPoint x="1365.8999999999992" y="736.4200000000001" />
             </Array>
           </mxGeometry>
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-24" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1275" y="850" width="185" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-26" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;curved=0;endArrow=none;endFill=0;" parent="1" source="1wgABnsjHsFf7cCtaf_x-22" target="1wgABnsjHsFf7cCtaf_x-23" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-22" value="Forschungsdaten-&lt;br&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;zentrum&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1304" y="882" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-23" value="Vertrauensstelle RKI" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1304" y="950" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-25" value="WANDA" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1330" y="852" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-28" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.326;exitDx=0;exitDy=0;entryX=-0.003;entryY=0.785;entryDx=0;entryDy=0;curved=0;endArrow=none;endFill=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="1wgABnsjHsFf7cCtaf_x-27" target="1wgABnsjHsFf7cCtaf_x-22" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1240" y="878" />
+              <mxPoint x="1240" y="930" />
+              <mxPoint x="1304" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-29" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.998;exitY=0.678;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=0;endArrow=none;endFill=0;exitPerimeter=0;" parent="1" source="1wgABnsjHsFf7cCtaf_x-27" target="1wgABnsjHsFf7cCtaf_x-23" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="892" />
+              <mxPoint x="1200" y="980" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-27" value="Data Submission Service" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="1050" y="865" width="99" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-39" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+          <mxGeometry x="1439" y="941" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-42" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+          <mxGeometry x="1195" y="934" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-43" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1188.5474254742542" y="943.5000000000005" as="sourcePoint" />
+            <mxPoint x="1188.5474254742542" y="948.5000000000005" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-44" value="R" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1185" y="928" width="6" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="1wgABnsjHsFf7cCtaf_x-45" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" parent="1" vertex="1">
+          <mxGeometry x="1235" y="891" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="TWeajM0d_0MuS6eklau9-2" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1434" y="939" as="sourcePoint" />
+            <mxPoint x="1434" y="934" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="TWeajM0d_0MuS6eklau9-3" value="R" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1429" y="946.5" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="RU5jipZFT5xQElPnbbpy-1" value="" style="endArrow=classic;html=1;rounded=0;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1228.5474254742542" y="904.5000000000005" as="sourcePoint" />
+            <mxPoint x="1228.5474254742542" y="909.5000000000005" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RU5jipZFT5xQElPnbbpy-2" value="R" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="1225" y="889" width="6" height="10" as="geometry" />
         </mxCell>
         <mxCell id="RU5jipZFT5xQElPnbbpy-3" value="&lt;font style=&quot;font-size: 13px;&quot;&gt;Email Management&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=2;" parent="1" vertex="1">
           <mxGeometry x="781.25" y="778" width="97.5" height="50" as="geometry" />
