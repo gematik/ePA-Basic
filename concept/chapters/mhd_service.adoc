@@ -27,7 +27,7 @@ endif::[]
 [#_mhd_service]
 ==== MHD Service
 
-Der MHD Service bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte (ePA) gespeichert sind. Zurzeit werden dabei nur die Dokumente berücksichtigt, die im XDS Document Service abgelegt wurden. Im Vergleich zur XDS Document Service-eigenen Suche erlaubt der MHD Service jedoch nicht nur die Suche auf Dokumentenmetadaten, sondern bietet auch die Möglichkeit, den Volltext von PDF/A-Dokumenten nach Suchbegriffen zu durchsuchen.
+Der MHD Service bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte (ePA) gespeichert sind. Zurzeit werden dabei nur die Dokumente berücksichtigt, die im XDS Document Service abgelegt wurden. Im Vergleich zur XDS Document Service-eigenen Suche erlaubt der MHD Service jedoch nicht nur die Suche auf Dokumentenmetadaten, sondern bietet auch die Möglichkeit, den Volltext von textbasierten Dokumententypen (zurzeit PDF/A, XML, JSON und reine Textdokumente) nach Begriffen zu durchsuchen.
 
 Die Trefferliste einer Suchanfrage enthält u.a. die Metadaten der Dokumente, die den Suchkriterien entsprechen, "Snippets", die den Kontext der Suchbegriffe im Dokument zeigen sowie einen "Score", der ein ungefähres Maß für die Güte des Suchergebnisses angibt.
 
@@ -41,8 +41,8 @@ Im Folgenden ist die Funktionalität der Volltextsuche beschrieben:
 
 Die Indizierung bzw. Indizieren bezeichnet hier die "Verfügbarmachung" des in den Dokumenten enthaltenen Textes für die Suche. Dabei ist die technische Umsetzung der Indizierung (d.h. wie festgehalten wird, welche Begriffe in welchen Dokumenten zu finden sind) nicht vorgegeben. Die Dokumente werden beim Einstellen in den XDS Document Service indiziert, d.h. sie stehen für die Metadaten- und Volltextsuche nach kurzer Zeit zur Verfügung.
 
-Es werden nur PDF/A-Dokumente indiziert. Das schließt die Erkennung von Text in Bildern in den PDF/A-Dokumenten mit ein (Optical Character Recognition "OCR"), aber nur bei Bildern, die ganze Seiten oder mindestens ein Viertel einer Seite einnehmen. Das schließt auch die Suche in Dokumenten und solchen Seiten ein, in denen alle oder einzelne Seiten um 90 oder 180 Grad gedreht sind.
-Wenn möglich werden auch PDF/A-Dokumente indiziert, die in einem anderen Dokument eingebettet sind.
+Bei der Indizierung von PDF/A-Dokumenten ist auch die Erkennung von Text in Bildern mit eingeschlossen (Optical Character Recognition "OCR"), aber nur bei Bildern, die ganze Seiten oder mindestens ein Viertel einer Seite einnehmen. Das schließt auch die Suche in Dokumenten und solchen Seiten ein, in denen alle oder einzelne Seiten um 90 oder 180 Grad gedreht sind.
+Wenn möglich werden auch PDF/A-Dokumente indiziert, die in einem anderen Dokument eingebettet sind (elektronischer Arztbrief).
 
 Dokumente werden durch die Indizierung nicht verändert (seiteneffektfrei).
 
@@ -86,11 +86,11 @@ Der *MHD Service* wird folgende über die Suche hinausgehende Funktionalitäten 
 * Abruf von Dokumenten, die durch die Suche gefunden wurden
 * Details finden sich in der Beschreibung der <<_mhd_service_schnittstellen, Schnittstellen>>.
 
-Der *MHD Service* wird die folgeden Funktionalitäten **nicht** bereitstellen:
+Der *MHD Service* wird die folgenden Funktionalitäten **nicht** bereitstellen:
 
 * Einstellen der Dokumente (Einstellen erfolgt über den *XDS Document Service*)
 * Suche nach Synonymen und semantischen ähnlichen Begriffen
-* Suche in anderen Dokumententypen als PDF/A, insbesondere keine Suche in strukturierten Dokumenten ("MIOs")
+* Suche in Dokumenten aus anderen Formaten
 * Suche in Dokumenten, die nicht im XDS Document Service gespeichert sind
 
 ===== Technische Umsetzung
