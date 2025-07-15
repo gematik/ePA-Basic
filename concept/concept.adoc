@@ -35,7 +35,7 @@ endif::[]
 :sectnums:
 
 // :revdate: tt.mm.2025
-:revnumber: 3.1.2
+:revnumber: 3.1.2-1
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -137,6 +137,13 @@ endif::[]
 |
 |Ergänzung der Deny-Liste zum Ausschluss von Telematik-Ids; Veröffentlichung
 |gematik
+
+|3.1.2-1
+|15.07.2025
+|
+|Ergänzung der XML- und JSON-Dokumente in den MHD Volltextindex; Vorveröffentlichung
+|gematik
+
 
 |===
 
@@ -410,6 +417,28 @@ Ein ePA-Client (Primärsystem, ePA-FdV, Clientsystem der Kostenträger, Ombudsst
 
 Nach erfolgreicher Aktivierung der User Session können Anfragen vom ePA-Client bzw. E-Rezept-Fachdienst an beliebige Akten gerichtet werden. Mit der ersten Anfrage an eine bestimmte Akte wird diese nach Befugnisprüfung in der User Session als *Health Record Context* geladen und Fachoperationen können beliebig ausgeführt werden.
 
+
+=== Statusmodell der Akte
+
+Eine Akte kann in ihrer Lebensphase verschiedene Status durchlaufen. Diese werden nachfolgend dargestellt. In konkreten Produkten können sich noch weitere Status ergeben, die in der Aussensicht aber immer auf einen der genannten Status zurückgeführt werden müssen.
+
+ifndef::env-github[]
+
+[#fig:statemachine]
+[plantuml, "{plantumlsimages}/statemachine", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Statusmodell einer Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{plantumlsdir}/statemachine.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/statemachine.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Statusmodell einer Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
 <<<
 
 == Basisfunktionalitäten
@@ -484,7 +513,7 @@ endif::[]
 ifdef::env-github[]
 ==== MHD Service
 
-Der *MHD Service* bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte gespeichert sind und erlaubt die Volltextsuche in PDF/A-Dokumenten in der ePA für alle. Das entsprechende Konzept ist in 
+Der *MHD Service* bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte gespeichert sind und erlaubt die Volltextsuche in PDF/A-Dokumenten in der ePA für alle. Das entsprechende Konzept ist in
 link:./chapters/mhd_service.adoc[MHD Service]
 beschrieben
 endif::[]

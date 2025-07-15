@@ -203,7 +203,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|CRUD
 
-|8
+|7
 |receipt
 |Bei Kostenträgern gespeicherte Daten über die in Anspruch genommenen Leistungen des Versicherten
 ^|RD
@@ -235,7 +235,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|10
+|9
 |care
 |Daten zur pflegerischen Versorgung des Versicherten gemäß §§ 24g, 37, 37b, 37c, 39a und 39c und der Haus- oder Heimpflege gemäß § 44 des Siebten Buches und nach dem Elften Buch
 ^|CRUD
@@ -251,7 +251,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|12
+|10
 |eau
 |Daten gemäß § 73 Abs. 2 S. 1 Nr. 9 SGB V ausgestellte Bescheinigung über eine Arbeitsunfähigkeit
 ^|CRUD
@@ -267,7 +267,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|13
+|11
 |other
 |Sonstige von Leistungserbringern für Versicherten bereitgestellte Daten, insbesondere Daten, die sich aus der Teilnahme des Versicherten an strukturierten Behandlungsprogrammen bei chronischen Krankheiten gemäß § 137f ergeben
 ^|CRUD
@@ -283,7 +283,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|14
+|12
 |rehab
 |Daten der Heilbehandlung und Rehabilitation gemäß § 27 Abs. 1 des Siebten Buches
 ^|CRUD
@@ -299,7 +299,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|15
+|13
 |transcripts
 |Elektronische Abschriften von der Patientenakte eines Primärsystems gemäß § 630g Abs. 2 BGB
 ^|CRUD
@@ -315,7 +315,7 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|16
+|14
 |health_risk_analysis
 |Ergebnisse datengestützter Auswertungen der Krankenkassen zu individuellen Gesundheitsrisiken gemäß § 25b SGB V
 ^|-
@@ -331,27 +331,11 @@ h|Versicherter/ Vertreter
 ^|-
 ^|RD
 
-|- -
-|audit
-|Protokolle von Zugriffen seitens Leistungserbringer auf die Akte des Versicherten gemäß § 309 Abs. 1 SGB V
-^|-
-^|-
-^|-
-^|-
-^|-
-^|-
-^|-
-^|R
-^|-
-^|-
-^|-
-^|R
+15.1+^h|Medical Services «FHIR Data Services»
 
-15.1+^h|Medical Service «Medication Service»
-
-
-|11
-|medication
+|15
+|medication +
+(Medication Service)
 |Verordnungs-, Dispensier- und Medikationsdaten in einer elektronischen Medikationsliste (eML) und einem elektronischen Medikationsplan (eMP)
 ^|CRUD
 ^|CRUD
@@ -363,6 +347,59 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|CU
+^|-
+^|R
+
+|16
+|demographics +
+(Patient Information Service)
+|Bereitstellung demographischer Daten des Versicherten für Medical Services
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|CU
+^|-
+^|-
+^|-
+^|-
+^|R
+
+|17
+|documents +
+(MHD Service)
+| Suche & Bereitstellung (medizinischer) Dokumente aus dem XDS Document Service
+^|R
+^|R
+^|R
+^|R
+^|R
+^|R
+^|-
+^|-
+^|-
+^|-
+^|-
+^|R
+
+15.1+^h|Basic Services
+
+|18
+|audit +
+(Audit Event Service)
+|Protokolle von Zugriffen aller Nutzer auf die Akte des Versicherten
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|-
+^|R
+^|-
+^|-
 ^|-
 ^|R
 

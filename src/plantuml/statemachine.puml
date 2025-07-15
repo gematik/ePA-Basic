@@ -1,0 +1,42 @@
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+[*] --> Unknown
+Unknown : The Health Record is not known
+Initialized : Health Record is registered \nbut not accessible to anyone \nelse but the Health Insurance
+Activated : Normal work state \nfor Health Record
+Suspended : Health Record is \nsuspended for migration
+
+Unknown --> Initialized : Initializing \nHealth Record
+
+Initialized --> Unknown : No more consent \nfor Health Record
+
+Initialized --> Initialized : Finish import of \nmigration information
+Initialized --> Activated : Set by Health Insurance or \nafter successful import \nof migration information
+
+Activated --> Unknown : No more consent \nfor Health Record
+Activated --> Suspended : Migration of \nHealth Record is \nstarted by \nHealth Insurance
+Suspended --> Activated : Stop \nmigration \ndue to fault
+
+Suspended --> Unknown : Health Record deleted \nby Health Insurance
+
+
+@enduml

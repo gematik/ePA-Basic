@@ -47,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.1.0 
+  version: 1.1.1 
 
   # version history:
   # ----------------
+  # version 1.1.1
+  #   - clarification about condition for 404 noHealthRecord and 409 statusMismatch
   # version 1.1.0
   #   - optional X-Request-ID in all requests and responses
   # version 1.0.4
@@ -190,8 +192,8 @@ paths:
        | Device registration does not exist | 403 | unregisteredDevice ||
        | Requestor is not the insurant | 403 | invalidUser ||
        | HSM verification failed | 403 | invalidToken ||
-       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+       | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+       | Health record is in state SUSPENDED| 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | invalidActorId ||
        | request claims _actorId_ == kvnr | 409 | requestMismatch ||
        | request claims _oid_ != oid_ncpeh | 409 | requestMismatch ||
@@ -273,7 +275,7 @@ paths:
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
         | Requestor is not the insurant | 403 | invalidUser ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Entitlement (_actorid_) does not exist | 404 | noResource ||
         | Entitlement claims _oid_ other thn oid_ncpeh | 409 | invaildOid ||
         | Health record is not in state ACTIVATED | 409 | statusMismatch ||
