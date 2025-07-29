@@ -36,10 +36,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.6.1
+  version: 1.6.2
 
   # version history:
   # ----------------
+  # version 1.6.2
+  #   - removed 'iat' and timing tolerance checks for client attest jwt in sendAuthCodeSc 
   # version 1.6.1
   #   - removed ambiguitous requirement to check _state_ and _clientid_ in returend URI-PAR in sendAuthorizationRequestFdv
   # version 1.6.0
@@ -385,9 +387,7 @@ paths:
         and the client attestation:
         - _clientAttest_ is valid if
           - signature is valid
-          - "iat" issued_at is the timestamp of the time of issue.
           - "exp" expiration_time is a timestamp 20 minutes in the future "iat".
-          - current time is greater or equal than 'iat' and less than 'exp' with 15 seconds tolerance ('iat' - 15s <= current time < 'exp' + 15s).          
           - user has role as in "Allowed usergroups for Authorization SMC-B" (from signature cert)
         - stored nonce shall not be outdated
         - stored nonce shall match client attestation nonce
