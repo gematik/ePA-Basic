@@ -3,6 +3,9 @@
 # Release Notes ePA Basic
 ## information
 This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
+## Release 3.0.5-4
+### changes
+- correction for 'iat' and timing tolerance used in client attest jwt in I_Authorization_Service.yaml (C_12364)
 ## Release 3.0.5-3
 ### changes
 - added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
