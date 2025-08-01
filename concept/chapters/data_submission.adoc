@@ -1,0 +1,187 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_sekundärdaten]
+=== Verarbeitung von Daten der elektronischen Patientenakten zu Sekundärnutzungszwecken 
+Die Daten der elektronischen Patientenakten sollen nach § 363 Absatz 1 SGB V für die in § 303e Absatz 2 SGB V aufgeführten Sekundärnutzungszwecke zugänglich gemacht und hierfür in pseudonymisierter Form automatisiert von den ePA-Aktensystemen an das Forschungsdatenzentrum (FDZ) nach § 303d SGB V übermittelt werden, sofern Versicherte dem nicht widerprochen haben. 
+
+image::Feature-Data-Submission.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Data Submission Service - Beteiligte Komponenten",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+Neben dem FDZ und den ePA-Aktensystemen ist die Vertrauensstelle nach § 303c SGB V im Prozess involviert. Deren Aufgabe ist es, die von den ePA-Aktensystemen erhaltenen Lieferpseudonyme in periodenübergreifende Pseudonyme umzuwandeln und diese an das FDZ zu übermitteln.
+
+Die Systeme des FDZ sowie der Vertrauensstelle werden als Weitere Anwendungen (WANDA Smart) an die Telematikinfrastruktur angebunden.
+
+==== Datenübermittlung an FDZ und Vertrauensstelle
+
+Gemäß § 363 SGB V werden die medizinischen Daten vor der Übermittlung an das FDZ in den ePA-Aktensystemen pseudonymisiert. Die pseudonymisierten medizinischen Daten werden von den ePA-Aktensystemen samt einer Arbeitsnummer an das FDZ übermittelt. An die Vertrauensstelle werden das zu den zu übermittelnden Daten gehörende Lieferpseudonym und die entsprechende Arbeitsnummer übermittelt.
+
+===== Generieren von Lieferpseudonymen und Arbeitsnummern
+
+Die ePA-Aktensysteme erzeugen pro zusammengehörigen Datensatz (verschiedene FHIR Ressourcen, die zusammen ein fachliches Konstrukt beschreiben) ein _Lieferpseudonym_ für einen Versicherten (auf Grundlage der KVNR) und eine zufällige _Arbeitsnummer_ nach den dafür vorgesehenen Vorgaben der Vertrauensstelle. Eine Arbeitsnummer muss innerhalb einer Datenlieferung eindeutig einem Versicherten zuordenbar sein, d.h. für die Daten unterschiedlicher Versicherter müssen unterschiedliche Arbeitsnummern erzeugt werden.  
+
+===== Erstellen der Datenpakete für FDZ und Vertrauensstelle
+
+Die ePA-Aktensysteme übermitteln an das FDZ sowie an die Vertrauensstelle erfolgt in Blöcken. Dies hat zur Folge, dass die in der Zwischenzeit von den ePA-Aktensystemen pseudonymisierten medizinischen Daten, erzeugten Lieferpseudonyme und Arbeitsnummern im ePA-Aktensystem bis zum nächsten Lieferzeitpunkt in Form von *Datenpaketen* für das FDZ und die Vertrauensstelle gespeichert werden müssen. 
+
+* Ein Datenpaket für das FDZ enthält alle pseudonymisierten medizinischen Daten samt Arbeitsnummern für Daten, die seit der letzten Datenlieferung neu in die Aktenkonten eingestellt und vom ePA-Aktensystem pseudonymisiert wurden. 
+
+* Ein Datenpaket für die Vertrauensstelle enthält alle Lieferpseudonyme samt Arbeitsnummern für Daten, die seit der letzten Datenlieferung neu in die Aktenkonten eingestellt und vom ePA-Aktensystem pseudonymisiert wurden. Die Arbeitsnummern zu einem Lieferpseudonym für einen Versicherten müssen diesselben sein, die im Datenpaket für das FDZ den pseudonymisierten medizinschen Daten des Versicherten zugeordnet sind.
+
+Die Datenpakete für das FDZ und die Vertrauensstelle müssen bis zum nächsten Lieferzeitpunkt im ePA-Aktensystem verschlüsselt gespeichert werden. Der dafür genutzte Schlüssel darf ausschließlich über eine VAU zugreifbar sein. 
+
+Die Verfügbarkeit der Systeme des FDZ und der Vertrauensstelle muss so gewählt sein, dass die ePA-Aktensysteme die Datenpakete innerhalb von drei Tagen übermitteln können, so dass die Datenpakte für maximal 72h in den ePA-Aktensystemen gespeichert werden müssen und dann sicher gelöscht werden. Widerspruchsinformationen werden dabei nicht verworfen, sondern in das nächste Datenpaket übernommen.
+
+===== Pseudonymisierung von Daten
+
+Nach § 363 Absatz 2 Satz 2 SGB V sollen ausschließlich Daten an das FDZ übermittelt werden, die zuverlässig automatisiert pseudonymisiert werden können. In der derzeitigen Ausbaustufe der ePA werden die Daten zu E-Rezepten und Dispensierinformationen pseudonymisiert und an das FDZ übermittelt. Alle sonstigen Daten der elektronischen Patientenakten werden nicht an das FDZ übermittelt.
+
+Die Pseudonymisierung der medizinischen Daten erfolgt im ePA-Aktensystem nach _datenspezifischen Pseudonymisierungsregeln_. Die datenspezifischen Pseudonymisierungsregeln sind je Datentyp jeweils zuvor festzulegen. 
+
+Da die medizinischen Daten für die Pseudonymisierung im Klartext verarbeitet werden, muss diese vollständig innerhalb einer Vertauenswürdigen Ausführungsumgebung (VAU) erfolgen. Der Hersteller des ePA-Aktensystems kann die Psuedonymisierung in speziell dafür vorgesehenen VAU-Instanzen durchführen lassen ("Pseudonymisierungs-Service-VAU"). 
+
+Die Pseudonymisierung von in das ePA-Aktensystem eingestellten medizinischen Daten kann zeitlich nachgelagert zum Empfang der Daten erfolgen, um die Pseudonymisierung z.B. in Betriebsrandzeiten durchzuführen. Bei einer zeitlich nachgelagerten Pseudonymisierung muss jedoch weiterhin durch technische Sicherheitsmaßnahmen gewährleistet werden, dass kein unautorisierter Zugriff auf die Daten erfolgen kann, auch nicht durch einen einzelnen Innentäter beim Betreiber des ePA-Aktensystems. Zugriffe auf die zu pseudonymisierenden medizinischen Daten dürfen ausschlielich über eine VAU möglich sein.
+
+Werden Daten aus FHIR Data Services übermittelt, müssen diese eine geschlossene Einheit mit vollständig auflösbaren Referenzen bilden.
+
+===== Übermittlung der Datenpakete
+
+Die von den ePA-Aktensystemen für die Übermittlung der Datenpakete an die Vertrauensstelle und das FDZ zu nutzenden Schnittstellen werden durch die Vertrauensstelle bzw. das FDZ festgelegt und vorgegeben.
+
+Die Schnittstellen der Vertrauensstelle und des FDZ sind asynchrone Schnittstellen. Damit die Vertrauensstelle und das FDZ dem ePA-Aktensystem den (Miss-)Erfolg ihrer Verarbeitungen signalisieren können, wird eine entsprechende Schnittstelle am ePA-Aktensystem eingeführt.
+
+Die Kommunikationsstrecken zwischen einem ePA-Aktensystem und der Vertrauensstelle sowie zwischen einem ePA-Aktensystem und dem FDZ werden durch eine serverseitig authentisierte TLS-Verbindung geschützt. Die Übermittlung der Datenpakete erfolgt über einen beidseitig authentisierten und verschlüsselten Kanal auf Anwendungsebene zwischen einem ePA-Aktensystem und dem Service der Vertrauensstelle bzw. des FDZ. Für die benötigten kryptographischen Identitäten zur Authentisierung der Vertrauensstelle bzw. des FDZ sind kryptographische Identitäten der Komponenten-PKI der Telematikinfrastruktur zu nutzen. 
+
+Das Squenzdiagramm der folgenden Abbildung zeigt den Ablauf der Übermittlung der Datenpakete an die Vertrauenstelle bwz. das FDZ.
+
+ifndef::env-github[]
+
+[#fig:data-submission]
+[plantuml, "{diagramsdir}/datasubmission", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf der Übermittlung von Daten zur Sekundärnutzung durch das FDZ",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/datasubmission.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/datasubmission.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf der Übermittlung von Daten zur Sekundärnutzung durch das FDZ",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+Der Ablauf stellt sicher, dass die ePA-Aktensysteme ein Datenpaket erst an das FDZ übermitteln, nachdem das zugehörige Datenpaket für die Vertrauensstelle erfolgreich an die Vertrauensstelle übermittelt wurde, die Überführung der Lieferpseudonyme in periodenübergreifende Pseuonyme in der Vertrauensstelle erfolgreich durchgeführt werden konnte und die periodenübergeifenden Pseudonyme von der Vertrauensstelle erfolgreich an das FDZ übermittelt wurden.
+
+Im Einzelnen ist der Ablauf wie folgt:
+
+* _create package_vst and package_fdz_: Das ePA-Aktensystem erstellt das Datenpaket package_vst für die Vertrauensstelle (enthält die Arbeitsnummern und Lieferpseudonyme) sowie das Datenpaket package_fdz für das FDZ (enthält die pseudonymisierten medizinischen Daten samt Arbeitsnummern).
+* _send package_vst with submissionID=x_: Das ePA-Aktensystem generiert einen zufälligen und Aktensystemübergreifend eindeutigen Identifier für die Lieferung (submissionID) und übermittelt das Datenpaket package_vst samt der submissionID an die Vertrauensstelle.
+* _translate LP to PÜP_: Die Vertrauensstelle überführt alle Lieferpseudonyme (LP) im Datenpaket package_vst in die zugehörigen periodenübergreifenden Pseudonyme (PÜP). 
+* _create package_püp with AN and PÜP_: Die Vertrauensstelle erstellt ein Datenpaket package_püp mit den periodenübergreifenden Pseudonymen samt den zugehörigen Arbeitsnummern.
+* _send package_püp with submissionID=x_: Die Vertrauensstelle übermittelt das Datenpaket package_püp zusammen mit der submissionID an das FDZ.  
+* _ready for data submissionID=x_: Nachdem das FDZ das Datenpaket package_püp von der Vertrauensstelle erfolgreich empfangen hat, signalisiert das FDZ  dem ePA-Aktensystem seine Bereitschaft, die pseudonymisierten medizinischen Daten für die Lieferung mit der mitgegebenen submissionID empfangen zu können. 
+* _send package_fdz for submissionID=x_: Das ePA-Aktensystem sendet das zur Lieferung submissionID=x gehörende Datenpaket package_fdz an das FDZ. Wurde das package_fdz erfolgreich an das FDZ übermittelt, löscht das ePA-Aktensystem die Datenpakete package_vst und package_fdz.
+
+In obigen Ablauf kann es zu Fehlern kommen. Die folgende Tabelle zeigt die entsprechenden Reaktionen.
+
+[caption="Tabelle {counter:table-number}: "]
+.FDZ-Fehler
+[width="100%",cols="30%,70%,options="header",]
+|===
+|*Fehler*
+|*Reaktion*
+
+|FDZ meldet kein "ready for data" 
+|Sollte bis zu einem definierten Timeout keine erfolgreiche Meldung durch das FDZ erfolgen, startet das ePA-Aktensystem dem Prozess erneut und sendet das Datenpaket package_vst mit derselben submissionID an die Vertrauensstelle.
+
+|===
+
+Um die Signalisierung vom FDZ in Richtung des Aktensystems zu ermöglichen, muss dem FDZ bekannt sein, mit welchem ePA-Aktensystem es interagieren. Das kann z.B. durch Callback-Links im Request oder eindeutige Identifier für das ePA-Aktensystem in der SubmissionID gelöst werden.
+
+===== Widerspruchsfrist für die Übermittlung von Daten an das FDZ
+
+Da die Übermittlung von Daten zur Sekundärnutzung durch das FDZ im opt-out stattfindet und die Versicherten genug Zeit haben müssen, ihren Widerspruch zu formulieren, startet die Übermittlung von Daten an das FDZ erst nach einer angemessenen Frist, die durch die Kostenträger festgelegt wird. Erst nach Ablauf dieser Frist werden alle neu anfallenden Daten an das FDZ übermittelt.
+
+Dies soll dem Versicherten ausreichend Zeit geben, seinen Widerspruch formulieren zu können.
+
+==== Widerspruch 
+Bei Anlage eines Aktenkontos für einen Versicherten ist die Übermittlung der Daten an das FDZ standardmäßig vorgesehen (opt-out). Ein Widerspruch dagegen erfolgt über das *Consent Management*.
+Versicherte oder vom Versicherten befugte Vertreter können unter Nutzung eines ePA-FdVs jederzeit bestimmten Sekundärnutzungszwecken nach § 303e Absatz 2 SGB V widersprechen. Diese Widersprüche können mitels ePA-FdV jederzeit wieder zurückgenommen werden.
+Versicherte können die Widersprüche bzw. die Rücknahme von Widersprüchen zudem jederzeit gegenüber der Ombudsstelle gemäß § 342a SGB V erklären. Die Ombudsstelle setzt die vom Versicherten gewünschten Widerspruchsänderungen dann im Aktenkonto des Versicherten um. Widersprüche gegen bestimmte Sekundärnutzungszwecke nach § 303e Absatz 2 SGB V können nur erklärt werden, wenn kein Widerspruch gegen die Übermittlung von Daten an das FDZ vorliegt.
+
+Die aktuellen Widersprüche eines Versicherten werden in dessen Aktenkonto im Widerspruchsmanagement (Consent Management) gespeichert und können darüber verwaltet werden. Neben dem Widerspruch gegen die Übermittlung insgesamt, müssen auch die einzelnen Sekundärnutzungszwecke nach § 303e Absatz 2 SGB V über das Widerspruchsmangement verwaltbar sein.
+
+Das ePA-Aktensystem übermittelt Widerspruchsänderungen analog zur Übermittlung der pseudonymisierten medizinischen Daten ans FDZ, d.h. für einen Versicherten wird vom ePA-Aktensystem das Lieferpseudonym des Versicherten berechnet und eine zufällige Arbeitsnummer erzeugt. Das Lieferpseudonym und die Arbeitsnummer werden an die Vertrauensstelle übermittelt, die Widersprüche mit Arbeitsnummer an das FDZ. 
+
+Widersprüche werden vom ePA-Aktensystem mit der nächsten regulären Datenlieferung übermittelt, d.h. die Übermittlung der Widersprüche ans FDZ erfolgt in der Regel zeitversetzt und nicht unmittelbar nach Eingang der Widerspruchsänderung im ePA-Aktensystem. 
+
+Die folgende Tabelle beschreibt die Auswirkungen von Widerspruchsänderungen.
+
+[caption="Tabelle {counter:table-number}: "]
+.Auswirkungen bei Widerspruchsänderung
+[width="100%",cols="20%,80%,options="header",]
+|===
+|*Widerspruchsänderung*
+|*Auswirkungen*
+
+|Widerspruch gegen einzelne Sekundärnutzungszwecke nach § 303e Absatz 2 SGB V bzw. deren Rücknahme
+|Das ePA-Aktensystem übermittelt die Änderungen bei den Widersprüchen zu den Sekundärnutzungszwecken nach § 303e Absatz 2 SGB V an das FDZ. Das ePA-Aktensystem übermittelt weiterhin unverändert Daten an das FDZ. Die vom Versicherten geäußerte Änderung der Zweckbeschränkung ist vom FDZ durchzusetzen.
+
+|===
+
+
+Alle Widerspruchsänderungen werden für den Versicherten mit Datum und Uhrzeit im Audit Event Service protokolliert. Ein Protokolleintrag für eine Widerspruchsänderung enthält zudem die Information, wer die Widerspruchänderung im Aktenkonto durchgeführt hat (Versicherter, Vertreter, Ombudsstelle), welche Widersprüche geändert wurden (insgesamt bzw. spezielle Sekundärnutzungszwecke nach § 303e Absatz 2 SGB V) und die Art der Änderung (Widerspruch gesetzt, Widerspruch zurückgenommen).
+
+==== Testintegration
+Da die Dienste VST und FDZ als WANDA Smart an die Telematikinfrastruktur angebunden sind und keinen Zugang zur Testumgebung der TI haben, erfolgt der Integrationstest mit diesen Diensten in der Referenzumgebung der TI (RU). Beide Dienste müssen dort in einer produktivanalogen Version angebunden sein. D.h. sie entsprechen in Aufbau und Funktionalität dem Produkt, dass später in der Produktivumgebung (PU) zum Einsatz kommt.
+Auch die eigenverantwortlichen Tests der Aktensysteme erfolgen gegen die Instanzen von VST und FDZ in der RU.
+Für den Integrationstest der Dienste in der RU müssen VST und FDZ in den Instanzen in der RU Einsicht im Klartext in die übermittelten Daten haben. So wird die Korrektheit der Abläufe verifiziert.
+ 
+*Test- und Referenzobjekte von FDZ und VST*
+
+In der Phase der eigenverantwortlichen Tests der ePA-Aktensysteme werden frühzeitig Testobjekte für FDZ und VST durch BfArM und RKI in der RU benötigt. Die Objekte müssen dauerhaft in der RU zur Verfügung stehen, u.a. um
+Regressionstests zu ermöglichen. Mit diesen Objekten sollen auch die Connectathons vorbereitet und durchgeführt werden.
+ 
+*Connectathons*
+
+Als ein Baustein der Interoperabilitätstests im Rahmen der EvTs sollen Connectathons mit den zwei ePA-Herstellern durchgeführt werden. Hierfür wird ein gemeinsam definierter Testumfang in Form eines Drehbuchs festgelegt.
+Teilnehmer:  Hersteller ePA Aktensystem und E-Rezept-Fachdienst, Betreiber VST und FDZ, gematik
+ 
+*Zulassungstest gematik*
+
+Die gematik plant keine eigenen E2E-Zulassungstests für die ePA-Aktensysteme in Bezug auf die Datenfreigabe zu
+Sekundärnutzungszwecken. Test- und Referenzobjekte seitens FDZ und VST werden daher in der TU nicht benötigt.
+
+==== Betriebliche Integration
+Die Dienste VST und das FDZ Gesundheit sind als Backend-Dienste der Aktensysteme integraler Bestandteil des Features der Datenausleitung an das FDZ. Aufgrund dieser wichtigen Rolle muss eine enge betriebliche Integration in die Prozesse der Telematikinfrastruktur erfolgen. Diese umfasst insbesondere
+
+* das Probing der Dienste, um deren Betriebsbereitschaft zu erkennen
+* die Integration in die Betriebsprozesse der TI im Hinblick auf das Zusammenspiel von Aktensystem, VST und FDZ
+* angemessene Support-Zeiten (an allen 7 Tagen der Woche)
+
+Im Falle einer Störung des Prozesses oder von TI-Services ist das Incident-Management der gematik mindestens beobachtend und - im Falle eines unzureichenden Fortschrittes - steuernd beteiligt. Bei Störungen, welche ausschließlich in Richtung der Forschenden wirken (also nach TI-extern), ist die gematik höchstens beobachtend involviert.
+
+Die Maßnahmen sind nötig, um einen Verlust von Daten in der Ausleitung zu verhindern und dem gesetzlichen Auftrag gerecht zu werden.

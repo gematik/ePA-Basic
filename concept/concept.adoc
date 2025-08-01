@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 09.05.2025
-:revnumber: 3.0.5-2
+// :revdate: 01.08.2025
+:revnumber: 3.1.3
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.0.5-2 Release, 09.05.2025
+//Version: 3.1.3 Release, 01.08.2025
 endif::[]
 
 
@@ -123,19 +123,31 @@ endif::[]
 |3.1.0
 |14.08.2024
 |
-|Veröffentlichung; Hinweis: Das ePA Release 3.1.0 wird nicht fortgeführt und ist nicht zulassungsfähig.
+|Veröffentlichung
 |gematik
 
-|3.0.5
-|28.02.2025
+|3.1.2 RC
+|31.03.2025
 |
 |Veröffentlichung
 |gematik
 
-|3.0.5-2
-|09.05.2025
+|3.1.2
+|28.05.2025
 |
-|Ergänzung der Deny-Liste zum Ausschluss von Telematik-Ids
+|Ergänzung der Deny-Liste zum Ausschluss von Telematik-Ids; Veröffentlichung
+|gematik
+
+|3.1.2-1
+|15.07.2025
+|
+|Ergänzung der XML- und JSON-Dokumente in den MHD Volltextindex; Vorveröffentlichung
+|gematik
+
+|3.1.3
+|01.08.2025
+|6
+|Veröffentlichung zur Kommentierung; Ergänzung Elektronischer Medikationsplan und XDS Document Service
 |gematik
 
 |===
@@ -275,6 +287,14 @@ Das *Forschungsdatenzentrum* (FDZ) ist der Empfänger der pseudonymisierten Date
 
 Der *NCPeH-Fachdienst* ermöglicht die Bereitstellung der Gesundheitsdaten (z.B. ePKA) für autorisierte Leistungserbringer im EU-Ausland (LE-EU).
 
+[#_pushgateway]
+:sectnums!:
+[discrete]
+==== Push Gateway
+:sectnums:
+
+Das *Push Gateway* besitzt einen anwendungsübergreifenden Endpunkt, an den Push-Notifications übermittelt werden. Das Push Gateway leitet die Informationen der Push-Notification an den Push Provider weiter. Es wird vom Hersteller des ePA-FdV bereitgestellt, und es kann weitere Endpunkte für Kassendienste geben, die ebenfalls über dieses Push Gateway Notifications versenden.
+
 :sectnums!:
 [discrete]
 ==== Externe Services
@@ -302,7 +322,7 @@ Die *Vertrauenswürdige Ausführungsumgebung (VAU)* erlaubt es, sensible medizin
 Die Daten der ePA werden in zwei unterschiedlichen sicheren Speicherbereichen verschlüsselt persistiert:
 
 * Den *Secure Data Storage*, in dem die Fachdaten der ePA, zugehörige Informationen und Konfigurationsdaten gespeichert werden und
-* den *Secure Entitlement Storage*, in dem Befugnisse der ePA gespeichert werden.
+* den *Secure Admin Storage*, in dem Befugnisse der ePA gespeichert werden.
 
 Die Speicherbereiche werden durch getrennte versichertenindividuelle, kryptographische Schlüssel gesichert.
 
@@ -402,6 +422,28 @@ Ein ePA-Client (Primärsystem, ePA-FdV, Clientsystem der Kostenträger, Ombudsst
 
 Nach erfolgreicher Aktivierung der User Session können Anfragen vom ePA-Client bzw. E-Rezept-Fachdienst an beliebige Akten gerichtet werden. Mit der ersten Anfrage an eine bestimmte Akte wird diese nach Befugnisprüfung in der User Session als *Health Record Context* geladen und Fachoperationen können beliebig ausgeführt werden.
 
+
+=== Statusmodell der Akte
+
+Eine Akte kann in ihrer Lebensphase verschiedene Status durchlaufen. Diese werden nachfolgend dargestellt. In konkreten Produkten können sich noch weitere Status ergeben, die in der Aussensicht aber immer auf einen der genannten Status zurückgeführt werden müssen.
+
+ifndef::env-github[]
+
+[#fig:statemachine]
+[plantuml, "{plantumlsimages}/statemachine", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Statusmodell einer Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{plantumlsdir}/statemachine.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/statemachine.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Statusmodell einer Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
 <<<
 
 == Basisfunktionalitäten
@@ -417,23 +459,22 @@ include::chapters/device_management.adoc[]
 include::chapters/email_management.adoc[]
 include::chapters/audit_event_service.adoc[]
 include::chapters/relocation_service.adoc[]
+include::chapters/data_submission.adoc[]
 include::chapters/eu_access.adoc[]
+include::chapters/push_notification.adoc[]
 endif::[]
+
 ifdef::env-github[]
 link:./chapters/account_creation.adoc[Anlage einer Akte]
-
 link:./chapters/VAU.adoc[Vertrauenswürdige Ausführungsumgebung (VAU)]
-
 link:./chapters/entitlement_management.adoc[Befugnismanagement (Entitlement Management)]
-
 link:./chapters/consent_management.adoc[Widerspruchsmanagement (Consent Management)]
-
 link:./chapters/device_management.adoc[Device Management]
-
 link:./chapters/audit_event_service.adoc[Audit Event Service]
-
 link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
-
+link:./chapters/data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
+link:./chapters/eu_access.adoc[EU-Zugriff]
+link:./chapters/push_notification.adoc[Push Notification Management]
 endif::[]
 
 <<<
@@ -443,25 +484,44 @@ endif::[]
 In diesem Kapitel werden technische Konzepte zu verschiedenen Medical Services der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
 
 
-In den folgenden Links werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
+In den folgenden Links oder Kapiteln werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
+
+[#_documentservices]
+=== Dokumentenspezifische Services
+
+Die ePA für alle unterstützt eine dokumentenzentrierte Arbeit über drei Dienste.
+
+* XDS Document Service
+* Constraint Mangement
+* MHD Service
 
 ifndef::env-github[]
-link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.0/concept/gemKPT_ePAfuerAlleXdsDoc_V3.1.0.pdf[Dokumentenmanagement (XDS Document Service)]
+include::chapters/xds_doc_service.adoc[]
 endif::[]
 ifdef::env-github[]
-link:https://github.com/gematik/ePA-XDS-Document/tree/ePA-3.1.0/concept/concept.adoc[Dokumentenmanagement (XDS Document Service)]
+link:./chapters/xds_doc_service.adoc[XDS Document Service]
 endif::[]
+
+// MHD Service
+ifndef::env-github[]
+include::chapters/mhd_service.adoc[]
+endif::[]
+ifdef::env-github[]
+link:./chapters/mhd_service.adoc[MHD Service]
+endif::[]
+
 
 [#_versorgungsprozesse]
 === Versorgungsspezifische Services
 
-Die ePA unterstützt verschiedene Versorgungsprozesse mittels dedizierter Medical Services. Initial unterstützt die Fachanwendung ePA den *digital gestützten Medikationsprozess* (dgMP) über einen FHIR Data Service.
+Die ePA unterstützt verschiedene Versorgungsprozesse mittels dedizierter Medical Services. Initial unterstützt die Fachanwendung ePA den *digital gestützten Medikationsprozess* (dgMP).
+
 
 ifndef::env-github[]
-link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.0/concept/gemKPT_ePAfuerAlleMedSvc_V3.1.0.pdf[Medikationsprozess (Medication Service)]
+include::chapters/medication_service.adoc[]
 endif::[]
 ifdef::env-github[]
-link:https://github.com/gematik/ePA-Medication/tree/ePA-3.1.0/concept/concept.adoc[Medikationsprozess (Medication Service)]
+link:./chapters/medication_service.adoc[digital gestützter Medikationsprozess]
 endif::[]
 
 <<<
@@ -489,19 +549,23 @@ endif::[]
 
 *F*
 
+* FDZ – Forschungsdatenzentrum Gesundheit beim BfArM
+
 * FHIR – Fast Healthcare Interoperability Resources – International etablierter IT-Standard für die Beschreibung von u.a. medizinischen Daten
 
 * FMC – Fundamental Modeling Concepts
 
 *G*
 
-* GesundheitsID - Digitale Identität
+* GesundheitsID – Digitale Identität
 
 *H*
 
 * HSM – Hardware Security Module – Sicherer Speicher für kryptographische Schlüssel
 
-//*I*
+*I*
+
+* IHE – Integrating the Healthcare Enterprise
 
 //*J*
 
@@ -519,17 +583,24 @@ endif::[]
 
 * LEI – Leistungserbringerinstitution
 
-//*M*
+*M*
+
+* MHD – Mobile Access to Health Documents
+
+* MIO – Medizinisches Informationsobjekt
 
 *N*
 
-* NCPeH - National Contact Point for eHealth
+* NCPeH – National Contact Point for eHealth
 
 *O*
 
+* OCR – Optical Character Recognition
 * ÖGD – Öffentlicher Gesundheitsdienst
 
-//*P*
+*P*
+
+* PoPP – Proof of Patient Presence
 
 //*Q*
 
@@ -537,7 +608,7 @@ endif::[]
 
 *S*
 
-* Sektoraler Identity Provider - Sektoraler IdP
+* Sektoraler Identity Provider – Sektoraler IdP
 
 *T*
 
@@ -549,11 +620,15 @@ endif::[]
 
 * VAU – Vertrauenswürdige Ausführungsumgebung
 
+* VST – Vertrauensstelle Elektronische Patientenakte vom RKI
+
 * VZD – Verzeichnisdienst
 
 //*W*
 
-//*X*
+*X*
+
+* XDS – Cross-Enterprise Document Sharing
 
 //*Y*
 

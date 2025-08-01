@@ -1,0 +1,643 @@
+# Copyright 2024 Gematik GmbH
+#
+# Based on the OpenAPI specification of the Matrix Client-Server API https://github.com/matrix-org/matrix-spec
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+openapi: 3.0.3
+info:
+  title: I_Push_Notification_Management
+  description: |
+    This interface provides access to the service **Push Notification Management** for insurants.<br/>
+
+    **General conditions**:</br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prerequisites**:</br>
+
+    The User Session shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (kvnr)
+
+    of the current user (requestor) for evaluation in operations.
+
+    All operations of this service mandate a VAU-channel and an authorized user session.</br>
+    For access by ePA-FdV a device registration for the device used is required.
+
+    **Retry interval**:</br>
+    The following retry interval is suggested in case of an error response:<br>
+    - '409' Conflict.
+      - approx. 24 hours
+    - '500' internalError
+      - 10 minutes
+
+    **User Agent**:</br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use.
+
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
+    **Log-Entries**
+    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
+    data as defined in A_24055*.
+
+  contact:
+    name: gematik GmbH
+    url: 'http://www.gematik.de'
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+  version: 1.2.0
+
+  # version history:
+  # ----------------
+  # version 1.2.0
+  #   - added status- and error code for state MAINTENANCE
+  # version 1.1.1
+  #   - clarification about condition for 404 noHealthRecord and 409 statusMismatch
+  # version 1.2.0
+  #   - changed OperationId getChannelsOfDevice to getChannelsOfPusher
+  #   - changed paths to match common epa pattern
+  # version 1.1.0
+  #   - optional X-Request-ID in all requests and responses
+  # version 1.0.0
+  #   - initial version
+
+servers:
+  - url: https://epa-hst1.prod.epa4all.de
+
+tags:
+  - name: Pusher Management
+    description: |
+      **Pusher Management** allows insurants (excluding representatives) to manage pushers.
+      A pusher defines how to receive push notifications for a specific instance of an ePA-FdV on a device.
+
+      Generally, pushers are only valid for ePA-FdV instances on devices registered in the insurant's 
+      health record. Providers must make sure that push notifications are never sent to ePA-FdV 
+      instances on unregistered devices.
+
+  - name: Channel Management
+    description: |
+      **Channel Management** allows insurants (excluding representatives) to set channels per pusher.
+      Each channel is related to a specific event type (e.g. new document provided, channelId = xds.put).
+
+paths:
+  /epa/basic/api/v1/notification/pushers:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    get:
+      tags:
+      - Pusher Management
+      operationId: getPushers
+      summary: (getPushers) Gets the current pushers
+      description: |
+        Gets all pushers of the health record.</br>
+        This operation is limited to users of role oid_versicherter which has to be the insurant 
+        (health record owner).
+
+        **Client**:</br>
+        No recommendations.
+
+        **Provider**</br>
+        A list of all pushers registered for devices of the requestor shall be returned. The list may be empty.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
+        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+        </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: The pushers for this health record.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/schema'
+              examples:
+                response:
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/examples/response
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  /epa/basic/api/v1/notification/pushers/set:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    post:
+      tags:
+        - Pusher Management
+      operationId: updatePusher
+      summary: (updatePusher) Modify a pusher
+      description: |
+        This endpoint allows the creation, modification and deletion of pushers
+        for the health record. The behaviour of this endpoint varies depending on the
+        values in the JSON body.</br>
+        This operation is limited to users of role oid_versicherter which has to be the insurant 
+        (health record owner).
+
+        Whether a pusher shall be deleted or created/updated is communicated via the `kind` parameter.
+        `kind` == `null` indicates a deletion, `kind` != `null` a creation or update.
+
+        It is not possible to create or update pushers for ePA-FdV instances on devices other than 
+        the current device, which must be a device registered in the insurant's health record. 
+        The current device is automaticaly determined through the VAU-channel. It is however possible 
+        to delete pushers of other devices by specifying the appropriate `pushkey` and `app_id`.
+
+        In a health record, there shall only be one pusher at a time per registered device.</br>
+
+        **Client**:</br>
+
+        No recommendations.
+
+        **Provider**</br>
+
+        When performing an update or create operation (`kind` != `null`):</br>
+        - The existing pusher shall be updated if one exists for the given device. If no existing 
+        pusher is found for this device, a new one shall be created.</br>
+        Also if `app_id` and/or `pushkey` in the request differ from an existing pusher for this 
+        device, that pusher's configuration shall be updated.
+
+        When performing a deletion operation (`kind` == `null`):</br>
+        - If the request's `app_id` and `pushkey` match exactly with an existing pusher, the pusher 
+        shall be deleted.
+        - If `app_id`, `pushkey` and any other request parameter don't exactly match with an existing 
+        pusher, the request shall be rejected (-> noResource).
+        
+        As there can only be one user (the health record owner), the request body's append parameter 
+        shall only be ommited or false.
+        If the append parameter for a pusher is set to true, it shall be considered an invalid parameter 
+        (-> malformedRequest).
+
+        Each pushkey must be unique among all pushers of a health record. Request leading to an identical 
+        pushkey used for multiple ePA-FdV instances shall be considered invalid and rejected as a whole (-> malformedRequest).
+
+        The only supported kind is http. The request body's `kind` parameter shall therefore only be `http` 
+        or `null`. Any other value shall be considered an invalid parameter (-> malformedRequest).
+
+        Requests with the request body's data object containing keys other that url shall be considered invalid (-> malformedRequest).
+
+        Requests with one or more invalid parameters (e.g. invalid data.url) are to be considered 
+        invalid and rejected as a whole (-> malformedRequest).
+
+        Encryption of all ePA push notifications is mandatory. If kind is not null, the request body's 
+        encryption parameter 
+        must be present and contain all valid parameters according to schema (`method`, `time_iss_created`, 
+        `iss`, and `key_identifier`). Any request not following this rule shall be considered invalid 
+        (-> malformedRequest).
+
+        If kind is not null and the request body's encryption parameter does not lead to a successfull 
+        derivation of encryption settings (e.g. key), the request shall be rejected (-> malformedRequest). 
+        An initially shared secret (iss) not meeting the requiremets of A_27174-* shall not lead to a 
+        successfull derivation.
+
+        If the encryption is successfuly updated for an existing pusher, the previous encryption keys 
+        and settings shall be deleted from server without delay.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Pusher does not exist in health record | 404 | noResource | delete pusher only |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | The specified pusher is already registered for a different ePA-FdV instance | 409 | requestMismatch | except for delete pusher |
+        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
+        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+        </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | A pusher is added to, updated in or removed from the health record | successful operation only |
+        | A log-entry for the operation exists | all operation results |
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
+            examples:
+              registration:
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
+              deletion:
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
+        description: The pusher information.
+        required: true
+      responses:
+        '200':
+          description: The pusher was set.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                type: object
+                description: An empty object.
+              examples:
+                response:
+                  value: {}
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  /epa/basic/api/v1/notification/channels/{pushkey}:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/pushkey'
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      tags:
+        - Channel Management
+      operationId: getChannelsOfPusher
+      summary: (getChannelsOfPusher) Gets channels for a ePA-FdV instance registration
+      description: |
+        Gets all channels and their configuration state of pusher identified by `pushkey`.</br>
+        This operation is limited to users of role oid_versicherter which has to be the insurant 
+        (health record owner).
+
+        **Client**:</br>
+        No recommendations.
+
+        **Provider**</br>
+        No recommendations.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Provided _pushkey_ does not exist in health record | 404 | noResource ||
+        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
+        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+        </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: The channels for the pusher with pushkey.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
+              examples:
+                response:
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+    post:
+      tags:
+        - Channel Management
+      operationId: updateChannelsOfPusher
+      summary: (updateChannelsOfPusher) Modify the channels for a specific ePA-FdV instance
+      description: |
+        This endpoint allows the modification of channel subscriptions for a specific ePA-FdV instance 
+        of the authenticated user identified by `pushkey`. If a channel is not present in the request, 
+        the state of the channel on the server is not changed.</br>
+        This operation is limited to users of role oid_versicherter which has to be the insurant 
+        (health record owner).
+
+        In the ePA context, the use of `not_set` is not permitted. Therefore, a channel shall only be 
+        `enabled` or `disabled` here.
+
+        **Client**:</br>
+        No recommendations.
+
+        **Provider**</br>
+        Any request providing an empty channels array in the request body shall be treated as 
+        invalid (-> malformedRequest).
+
+        Any request providing one or more channels that are not supported shall be treated as invalid 
+        (-> malformedRequest). Supported channels are defined in A_27641-*.
+
+        Any request attempting to set a channel to a state that is not supported (any state other than 
+        `enabled` or `disabled`) shall be treated as invalid (-> malformedRequest).
+
+        Invalid request shall be rejected as a whole, not changing any channel configuration.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Provided _pushkey_ does not exist in health record | 404 | noResource ||
+        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
+        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+        </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | New channel statuses are set for the specified pusher in the health record (if any) | succesful operation only |
+        | A log-entry for the operation exists | all operation results |
+
+      parameters:
+        - name: pushkey
+          in: path
+          required: true
+          description: The pushkey of the ePA-FdV instance.
+          schema:
+            type: string
+          example: '1234567890'
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/schema
+            examples:
+              update:
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/examples/update
+        description: The channel information.
+        required: true
+      responses:
+        '200':
+          description: The channel was set.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                type: object
+                description: An empty object.
+              examples:
+                response:
+                  value: {}
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+  /epa/basic/api/v1/notification/channels:
+    get:
+      tags:
+        - Channel Management
+      operationId: getChannels
+      summary: (getChannels) Gets the available channels
+      description: |
+        Gets all channels available for the health record and their default status. When a pusher is set and no channel modification is requested for this pusher, this default configuration is used.</br>
+        This operation is limited to users of role oid_versicherter which has to be the insurant 
+        (health record owner).
+
+        **Client**:</br>
+        No recommendations.
+
+        **Provider**</br>
+        No recommendations.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
+        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+        </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      responses:
+        '200':
+          description: The channels available for this health record.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
+              examples:
+                response:
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
+    pushkey:
+      name: pushkey
+      in: path
+      required: true
+      description: The pushkey of the pusher.
+      schema:
+        type: string
+      example: '1234567890'
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error403Forbidden:
+      description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: invalAuth
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          examples:
+            noHealthRecord:
+              value:
+                errorCode: noHealthRecord
+            noResource:
+              value:
+                errorCode: noResource
+            notificationNotFound:
+              value:
+                errorCode: notificationNotFound
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+            requestMismatch:
+              value:
+                errorCode: requestMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+  schemas:
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    UserAgentType:
+      description: 'Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters).'
+      type: string
+      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
+    ErrorType:
+      description: Error object with additional information about the occurred error
+      type: object
+      properties:
+        errorCode:
+          description: Error condition specifier
+          type: string
+        errorDetail:
+          description: Additional details regarding the error condition (if applicable)
+          type: string
+      required:
+        - errorCode
