@@ -1,0 +1,86 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_medication_service]
+==== Medication Service
+
+Mit der Unterstützung von Data Services über den *Fast Healthcare Interoperability Resources* (*FHIR*) Standard Release R4 (v4.0.1) in der _ePA für alle_ erweitert sich das über den XDS Document Service umgesetzte, dokumentenbasierte Verarbeitungsparadigma um eine servicebasierte Datenverarbeitung. Das bedeutet, dass bei den FHIR-basierten Services keine Dokumente im eigentlichen Sinn direkt bearbeitet oder gar eingestellt werden, sondern durch sie Management-Funktionen bereitgestellt werden, um medizinische Daten direkt im Service zu erfassen und zu aktualisieren.
+
+Die _ePA für alle_ stärkt den *digital gestützten Medikationsprozess (dgMP)* durch den Medication Service als Ausprägung eines spezialisierten FHIR Data Service. Dieser Service ermöglicht die Übergabe von Medikationsinformationen an den Versorgungsschnittstellen für die Medikationsanalyse und das Medikationsmanagement. Dies wird vornehmlich durch
+
+- die automatische Befüllung mit verordneten und abgegebenen Arzneimitteln,
+
+- der Möglichkeit der Dokumentation von Arzneimitteleinnahmen inkl. Dosierinformation,
+
+- der Bereitstellung einer Übersicht über aktuelle und zukünftig einzunehmende Arzneimittel,
+
+- der Bearbeitung von Statuswerten von Medikationen auf dem eMP sowie
+
+- das Ändern von Dosierangaben zu verordneten und abgegebenen Arzneimitteln und eMP-Medikationen
+
+erreicht. Der **Medication Service** unterstützt diese Funktionalitäten über eine HL7 FHIR-basierte Verarbeitung.
+
+
+:sectnums!:
+[discrete]
+===== Kontextbezogene Sichten für die Prozessunterstützung
+:sectnums:
+
+In einer Medikationshistorie hält der Medication Service sämtliche Medikationen vor. Über die **elektronische Medikationsliste (eML)** kann durch optionale Eingabe eines Datumsbereichs eine verlaufsbasierte Einsicht auf diese Daten vorgenommen werden.
+
+Basis für die eML sind primär Arzneimittelverordnungsdaten (nachfolgend Verschreibungsdaten) sowie Dispensierinformationen, welche ein Apothekenverwaltungssystem (AVS) dem E-Rezept-Fachdienst zur Verfügung stellt. Sofern der Versicherte dem Einstellen dieser Daten in den Medication Service nicht widersprochen hat, werden diese Daten bei Erzeugung durch Leistungserbringer über den E-Rezept-Fachdienst in den Medication Service automatisiert übertragen. Weiterhin können Nachträge zu aktuellen Einnahmen von Arzneimitteln in die eML hinzugefügt werden.
+
+Aus dgMP-Sicht erfolgt die Dokumentation einer Arzneimitteltherapie ausgehend vom **elektronischen Medikationsplan (eMP)**. Über diesen können zentral im ePA-Aktensystem bzw. Medication Service Medikationsdaten kollaborativ gepflegt werden. Verordnete Arzneimittel auf dem eMP können im anschließenden, zugehörigen Verschreibungsprozess über das E-Rezept mit Arzneimitteln auf dem eMP verknüpft werden. Die Verknüpfung eines eMP-Eintrags mit einer Verschreibung erfolgt durch die primärsystemseitige, optionale Übergabe einer Referenz des eMP-Eintrags an das E-Rezept. Die Referenz wird durch den Medication Service generiert. Der E-Rezept-Fachdienst gibt bei der nachfolgenden Übergabe der Verschreibung an den Medication Service diese optional vorhandene Referenz ebenso mit. Intern erzeugt der Medication Service bei Erhalt der Verschreibung eine Medikationsinformation für den entstehenden eML-Eintrag und verknüpft diesen mit dem assoziierten eMP-Element.
+
+:sectnums!:
+[discrete]
+===== Technische Umsetzung
+
+Der Medication Service erlaubt es, Medikationsdaten über die nachstehenden Schnittstellen der FHIR Query API und Operation API zu lesen und zu schreiben:
+
+- _Abruf der eML_: Die o.g. Medikationsdaten der eML werden über eine Operation vom Medication Service zusammengestellt und als FHIR _searchSet_-Bundle zurückgegeben. Zusätzlich wird die zugehörige Versicherteninformation (_Patient_-Instanz) aus dem Patient Service beigefügt.
+- _Nachtrag in der eML_: Zur nachträglichen Dokumentation eingenommener Arzneimittel kann über diese Operation ein neuer Eintrag in der eML erzeugt werden.
+- _Aktualisierung eines eML-Eintrags_: Eine ausschließliche Dosierungsänderung sowie die mögliche Stornierung eines Nachtrags wird über eine Aktualisierungsoperation ausgedrückt.
+- _Abruf des eMP_: Diese Operation ermöglicht den gezielten Abruf des elektronischen Medikationsplans (eMP). Er besteht aus einer Sammlung relevanter Ressourceninstanzen, die zu einem bestimmten Zeitpunkt gemeinsam gültig waren, sowie die zugehörige Versicherteninformation (_Patient_) aus dem Patient Service. Der Zeitpunkt wird über einen eMP-Chronologieeintrag festgehalten, welcher als FHIR Provenance umgesetzt ist. Optional kann durch eine Provenance-Referenz.id der Abruf des eMP somit zeitgesteuert erfolgen. Ohne Provenance-Indikator, gibt die Operation den aktuellsten Stand des Medikationsplans zurück - also die derzeit gültige Kombination aus aktiven und pausierten Medikationsdaten. Das Ergebnis ist ein Bundle vom Typ _collection_, das alle zugehörigen Ressourcendaten enthält.
+- _Abruf von eMP-Chronologieeinträgen_: Jede Änderung am eMP wird über einen eMP-Chronologieeintrag festgehalten, welcher eine versionierte Referenz zum eMP-Eintrag speichert. Über die Query API kann gezielt nach Provenance-Instanzen über bestimmte Zeiträume gesucht werden. Mit einer gegebenen Provenance-Instanz kann dann gezielt ein eMP-Abruf erfolgen.
+- _Verordnung mit dem eMP_: Diese Operation lässt sowohl das erstmalige Erfassen einer neuen Verordnung als auch das Nachtragen eines Arzneimittels im eMP zu. Bei einer neuen Verordnung schließt sich das nachträgliche Ausstellen eines E-Rezepts und Übergabe der Referenz des eMP-Eintrags an, um die o.g. Verknüpfunglogik zu bedienen.
+- _Aktualisierung eines eMP-Eintrags_: Die Aktualisierung von Dosierung, Einnahmezeitraum oder des Einnahmestatus wird über diese Aktualisierungsoperation durchgeführt.
+- _Hinzufügen und Entfernen einer eML-eMP-Verknüpfung_: Im Regelfall sollte die Verknüpfung in der zuvorgenannten Verknüpfungslogik automatisiert durch die primärsystemseitige Übergabe der Referenz eines eMP-Eintrags an das E-Rezept erfolgen. Soll dies jedoch nachträglich manuell durch den Nutzer - z.B. nach Registrierung von Nachträgen in eML und eMP - erfolgen, kann durch Übermittlung beider Eintrags-IDs mittels dieser Operatoin eine Verknüpfung hergestellt werden.
+
+
+*Fehlerbehandlung*
+
+Die Fehlerbehandlung erfolgt nach den Vorgaben von FHIR. Das bedeutet, dass der Medication Service im Fehlerfall eine FHIR _OperationOutcome_-Ressource zurückgibt, die den jeweiligen Fehler beschreibt.
+
+
+*Zugriffsschutz*
+
+Für den Zugriff auf die Medikationsdaten über den Medication Service gelten für Clients und Fachdienste die Vorgaben der Legal Policy. Sie selbst wird durch den Medication Service nicht verändert oder erweitert.
+
+
+*Sicherheit*
+
+Die Daten des Medication Service werden mit dem *Secure Data Storage Key* geschützt.

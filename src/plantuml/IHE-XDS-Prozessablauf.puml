@@ -1,0 +1,57 @@
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+box "Consumer Zone"
+participant "//XDS Document//\n//Source//" as xds_ds
+end box
+
+box "Provider Zone"
+participant "XDS Document Registry &\nXDS Document Repository" as xds_rr
+end box
+
+box "Personal Zone"
+participant "XDS Document\nConsumer" as xds_dc
+end box
+
+activate xds_ds
+xds_ds -> xds_ds : //Create Document//
+activate xds_ds
+
+deactivate xds_ds
+
+xds_ds -> xds_rr : //Provide & Register//\n//Document Set-b//\n//[ITI-41]//
+
+activate xds_rr
+
+'xds_dr -hidden-> xds_dr : dummy
+deactivate xds_rr
+deactivate xds_ds
+
+
+xds_rr <- xds_dc : Registry Stored\nQuery [ITI-18]
+activate xds_dc
+activate xds_rr
+xds_rr <- xds_dc : Retrieve Document\nSet [ITI-43]
+
+@enduml

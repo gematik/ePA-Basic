@@ -35,6 +35,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Request ID**:</br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24982*.
@@ -51,10 +57,16 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.2.1
+  version: 1.3.1
 
   # version history:
   # ----------------
+  # version 1.3.1
+  #   - editorial: removal of an unused schema
+  #   - corrections regarding record state and conditions for error codes
+  # version 1.3.0
+  #   - optional X-Request-ID in all requests and responses
+  #   - added building of initial search index to startPackageImport
   # version 1.2.1
   #   - clarification regarding required entitlement for logging
   #   - removed logging requirement for health record state changes
@@ -92,6 +104,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/x-requestid'
     post:
       tags:
         - Relocation (exporting provider)
@@ -108,7 +121,9 @@ paths:
        **Client**:</br>
        A client shall use this operation only if a relocation of a health record is requested. 
        A client receives required items (i.e. the _requestId_) by **proprietary** means from the 
-       _Information Service Account_ as consequence of a _startRelocation_ request.
+       _Information Service Account_ as consequence of a _startRelocation_ request.<br>
+       This _requestId_ is not to be confused with the X-Request-ID parameter, which is a request
+       specific UUID generated on client side.
 
        **Provider**:</br>
        The export package shall contain all transferable data of the health record services:
@@ -130,7 +145,7 @@ paths:
        The format and encryption requirements are stated in an additional repository (see: 'find more details' below)
 
        The health record status shall be set to SUSPENDED to prevent from further usage.</br>
-       _requestId_ in response shall equal _requestId_ in request.
+       _requestId_ in response shall equal _requestId_ in the request body.
        The response may be sent prior to export package finalization. 
 
        The export package preparation may be aborted/ not started in case an incident (from _Information Service Account_) with
@@ -148,8 +163,7 @@ paths:
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
        | Invalid certificate provided | 403 | invalCert | the certificate from HSM (hsm-r7) |       
-       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state ACTIVATED or SUSPENDED | 409 | statusMismatch | SUSPENDED may apply in a retry situation of comprehensive use case. |
+       | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
        | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -171,12 +185,17 @@ paths:
               type: object
               properties:
                 requestId:
-                  $ref: '#/components/schemas/RequestIdType'
+                  allOf:
+                    - $ref: '#/components/schemas/RequestIdType'
+                  description: A unique relocation request id
               required:
                 - requestId
       responses:
         '201':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               examples:
@@ -209,6 +228,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/x-requestid'
     post:
       tags:
         - Relocation (importing provider)
@@ -221,7 +241,9 @@ paths:
        **Client**:</br>
        A client shall use this operation only after reception of a downloadUrl associated to an open
        request for relocation. A client receives those required items by **proprietary** means
-       from the _Information Service Account_ as consequence of a _putDownloadUrlForExportPackage_ operation.
+       from the _Information Service Account_ as consequence of a _putDownloadUrlForExportPackage_ operation.<br>
+       The _requestId_ in this context is not to be confused with the X-Request-ID parameter, which is a request
+       specific UUID generated on client side.
 
        **Provider**:</br>
        Download the complete export package from the download point. Decrypt the package (rule 'hsm-r5') and 
@@ -239,6 +261,8 @@ paths:
 
        The completed entitlement shall be stored, encrypted by SecureAdminStorageKey of the health record.</br>
 
+       The initial search index for MHD Service shall be build from the imported data.
+
        The response may be sent prior to export package migration finalization. 
 
        The export package provider shall be notified about problems by sending an incident
@@ -254,7 +278,7 @@ paths:
 
        The migration shall be aborted and all imported (partial) data shall be deleted in case of any error.
 
-       The health record shall be set to ACTIVATED after successful data migration. 
+       The health record shall be set to ACTIVATED after successful data migration and complete build of the initial search index for MHD Service. 
        The export package provider shall be notified about successful migration via 
        _Information_Service Account_ _deleteExportPackage_ operations.
        The request (_requestId_) shall be deleted among importing providers _Information Service Account_.
@@ -266,7 +290,7 @@ paths:
        | Requestor has no valid entitlement | 403 | notEntitled ||
        | Requestor role is not _oid_kostentraeger_ | 403 | invalidOid ||
        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state INITIALIZED | 409 | statusMismatch |  (see 'Retry interval') |
+       | Health record is not in state INITIALIZED | 409 | statusMismatch ||
        | _requestId_ does not match health record identifier | 409 | requestMismatch ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -290,7 +314,9 @@ paths:
               type: object
               properties:
                 requestId:
-                  $ref: '#/components/schemas/RequestIdType'
+                  allOf:
+                    - $ref: '#/components/schemas/RequestIdType'
+                  description: A unique relocation request id
                 downloadurl:
                   $ref: '#/components/schemas/UrlType'
               required:
@@ -311,9 +337,17 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -322,6 +356,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -330,6 +367,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -338,6 +378,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -351,6 +394,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -373,17 +419,14 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    x-requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
 
   schemas:
-    RequestIdType:
-      description: A unique relocation request id
-      type: string
-      format: uuid
-      example: '3dc69bad-6711-4983-b42c-5834f569c6ec'
-    CertificateType:
-      description: A certificate in base64 encoding for export package encryption
-      type: string
-      format: byte
     UrlType:
       description: An url for the download of a prepared and encrypted export package
       type: string
@@ -401,6 +444,10 @@ components:
         For today the record identifier equals the insurant id (kvnr).
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
     ErrorType:
       description: "Error object with additional information about the occurred error"
       type: object

@@ -38,11 +38,3 @@ Im *Consent Management* werden die Widerspruchsinformationen mit Standardwerten 
 Im *Entitlement Management* sind der Versicherte selbst, der zuständige Kostenträger, die zuständige Ombudsstelle und der E-Rezept-Fachdienst als befugt hinterlegt. Die Befugnisse für den zuständigen Kostenträger und der zuständigen Ombudsstelle müssen durch diese mit deren SMC-B Zertifikatsprofil C.HCI.OSIG signiert werden. Die beiden Befugnisse werden im Aktensystem hinterlegt und beim Start der VAU ins *Entitlement Management* übernommen.
 
 Der Statusübergang zu "Activated" wird durch die Kostenträger nachfolgend separat angestoßen. Danach ist die Akte in der Versorgung nutzbar.
-
-//NOTE: Nach Start der ePA für alle ist kein Zugriff mehr über ePA2.x-Systeme (Primärsysteme) möglich, da sich die grundsätzliche Architektur des Anwendung ändert.
-
-==== Migration von "ePA 2.x"-Dokumenten
-
-Wenn schon ein aktiviertes Aktenkonto (ePA 2.x) vorliegt, sollen die dort vorliegenden Dokumente in die ePA für alle migriert werden. Dies erfolgt über das *ePA-FdV*, welches dafür weiterhin Zugriff auf das ePA 2.x Schlüsselmaterial benötigt. Das Schlüsselmaterial wird dem *XDS Document Service* übergeben, der damit die Daten der ePA 2.x in die ePA für alle importiert. Die Funktion kann Aktensystemspezifisch im Zusammenspiel mit dem zugehörigen *ePA-FdV* realisiert werden, da kein Interoperabilität zu anderen Produkten nötig ist.
-
-Schon bestehende Berechtigungen für Vertreter müssen durch das *ePA-FdV* als Befugnisse neu eingestellt werden. Die entsprechenden Informationen können im *ePA-FdV* zwischgespeichert werden, um das erneute Einrichten der Vertreter zu unterstützen.

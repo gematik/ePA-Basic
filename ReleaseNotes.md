@@ -2,13 +2,47 @@
 
 # Release Notes ePA Basic
 ## information
-This version 3.0.5 is the logically subsequent version of version 3.0.3 and incorporates the latest fixes and maintenance changes and also selected changes published for the upcoming release 3.1.0.
-## Release 3.0.5-4
+The version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.
+## Release 3.1.3 RC
 ### changes
-- correction for 'iat' and timing tolerance used in client attest jwt in I_Authorization_Service.yaml (C_12364)
-## Release 3.0.5-3
+- integrated concept parts from epa-medication and epa-xds-document
+- remark on existing entitlements in case of failed setEntitlement operations in I_Entitlement_Management.yaml (C_12372)
+- added status codes for state MAINTENANCE in serveral OpenApi definititions
+- added note regarding reuse of audit evidence in setEntitlementPs in I_Entitlement_Management.yaml (C_12356)
+- removal of 'exp' check of client attest jwt in I_Authorization_Service.yaml (C_12364)
+- add check for unregistered Device for operations getEntitlements, getEntitlement, setEntitlement, deleteEntitlement with error code unregisteredDevice in I_Entitlement_Management.yaml (C_12355)
+- add suppression of repeated authorizations in getNonce in I_Authorization_Service.yaml 
+- integrate all changes from ePA-3.0.5-4
+    - correction for 'iat' and timing tolerance used in client attest jwt in I_Authorization_Service.yaml (C_12364)
+## Release 3.1.2-1
 ### changes
-- added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
+- Clarified distinction between relocation requestid and X-Request-ID in I_Information_Service_Accounts.yaml and I_Health_Record_Relocation_Service.yaml.
+- Changed OperationId getChannelsOfDevice to getChannelsOfPusher in I_Push_Notification_Management_Insurant.yaml
+- Modified paths to match common epa pattern in I_Push_Notification_Management_Insurant.yaml
+- add error unregisteredDevice to operations getDataUsagePurposes and updateDataUsagePurposes (C_12345)
+- add error tokenReuse to operation setEntitlementPs (C_12323)
+- Clarification about health record states and associates conditions and error codes in OpenApis (C_12340)
+- Added XML and JSON documents to the the MHD fulltext search index.
+
+## Release 3.1.2
+### changes
+- added condition for not allowed oids in setEntitlement (FdV) in I_Entitlement_Management.yaml
+- clarification on _iat_ and_exp_ in PS originated JWT in I_Entitlement_Management.yaml
+- validTo according to RFC3339 but without milliseconds in setEntitlement (FdV) in I_Entitlement_Management.yaml
+- added failed kvnr check counter to setEntitlementPsV2 in I_Entitlement_Management.yaml
+- added X-Request-ID as required HTTP header parameter
+- added isPrivateInsurance boolean to response of getProviderList in I_Information_Service_Accounts.
+- added new UX Use Cases to setUserExperienceResult in I_Information_Service.
+- integrate all changes from ePA-3.0.5-3
+    - added deny list for setEntitlementPS in concept and I_Entitlement_Management.yaml (C_12262)
+- Add building of initial search index to startPackageImport in I_Health_Record_Relocation_Service.yaml
+- Updated concept (renamed Secure Entitlement Storage to Secure Admin Storage, added full text search to MHD description, removed data migration of ePA 2.6)
+## Release 3.1.2 RC
+### changes
+- added MHD Service ("Volltextsuche") to concept
+- added Push Notifications to concept
+- added I_Push_Notification_Management_Insurant.yaml
+- editorial corrections in I_Entitlement_Management*.yaml
 ## Release 3.0.5-2
 ### changes
 - added schema definition for error code 423 (C_12222)

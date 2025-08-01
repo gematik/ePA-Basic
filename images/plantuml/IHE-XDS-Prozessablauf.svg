@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="349px" preserveAspectRatio="none" style="width:643px;height:349px;background:#FFFFFF;" version="1.1" viewBox="0 0 643 349" width="643px" zoomAndPan="magnify"><defs/><g><rect fill="#DDDDDD" height="330.7891" style="stroke:#181818;stroke-width:0.5;" width="168" x="11" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="116" x="37" y="18.0669">Consumer Zone</text><rect fill="#DDDDDD" height="330.7891" style="stroke:#181818;stroke-width:0.5;" width="246" x="201" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="104" x="272" y="18.0669">Provider Zone</text><rect fill="#DDDDDD" height="330.7891" style="stroke:#181818;stroke-width:0.5;" width="168" x="469" y="6"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="106" x="500" y="18.0669">Personal Zone</text><rect fill="#FFFFFF" height="153.5313" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="90" y="82.7266"/><rect fill="#FFFFFF" height="28" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="95" y="111.8594"/><rect fill="#FFFFFF" height="30" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="319" y="206.2578"/><rect fill="#FFFFFF" height="53.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="319" y="280.5234"/><rect fill="#FFFFFF" height="53.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="548" y="280.5234"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="95" x2="95" y1="72.7266" y2="342.7891"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="324" x2="324" y1="72.7266" y2="342.7891"/><line style="stroke:#0000FF;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="553" x2="553" y1="72.7266" y2="342.7891"/><rect fill="#3483EB" height="46.5938" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="120" x="35" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" font-style="italic" lengthAdjust="spacing" textLength="106" x="42" y="45.1279">XDS Document</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" font-style="italic" lengthAdjust="spacing" textLength="49" x="70.5" y="61.4248">Source</text><rect fill="#3483EB" height="46.5938" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="198" x="225" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="182" x="233" y="45.1279">XDS Document Registry &amp;</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="184" x="232" y="61.4248">XDS Document Repository</text><rect fill="#3483EB" height="46.5938" rx="2.5" ry="2.5" style="stroke:#3483EB;stroke-width:0.5;" width="120" x="493" y="25.1328"/><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="106" x="500" y="45.1279">XDS Document</text><text fill="#FFFFFF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="72" x="517" y="61.4248">Consumer</text><rect fill="#FFFFFF" height="153.5313" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="90" y="82.7266"/><rect fill="#FFFFFF" height="28" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="95" y="111.8594"/><rect fill="#FFFFFF" height="30" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="319" y="206.2578"/><rect fill="#FFFFFF" height="53.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="319" y="280.5234"/><rect fill="#FFFFFF" height="53.2656" style="stroke:#0000FF;stroke-width:1.0;" width="10" x="548" y="280.5234"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="105" x2="147" y1="103.8594" y2="103.8594"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="147" x2="147" y1="103.8594" y2="116.8594"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="106" x2="147" y1="116.8594" y2="116.8594"/><polygon fill="#1E90FF" points="116,112.8594,106,116.8594,116,120.8594,112,116.8594" style="stroke:#1E90FF;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="112" y="98.7935">1</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="114" x="125" y="98.7935">Create Document</text><polygon fill="#1E90FF" points="307,202.2578,317,206.2578,307,210.2578,311,206.2578" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="100" x2="313" y1="206.2578" y2="206.2578"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="107" y="186.0591">2</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="118" x="120" y="170.9263">Provide &amp; Register</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="106" x="120" y="186.0591">Document Set-b</text><text fill="#000000" font-family="sans-serif" font-size="13" font-style="italic" lengthAdjust="spacing" textLength="44" x="120" y="201.1919">[ITI-41]</text><polygon fill="#1E90FF" points="340,276.5234,330,280.5234,340,284.5234,336,280.5234" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="334" x2="547" y1="280.5234" y2="280.5234"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="346" y="267.8911">3</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="98" x="359" y="260.3247">Registry Stored</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="86" x="359" y="275.4575">Query [ITI-18]</text><polygon fill="#1E90FF" points="340,320.7891,330,324.7891,340,328.7891,336,324.7891" style="stroke:#1E90FF;stroke-width:1.0;"/><line style="stroke:#1E90FF;stroke-width:1.0;" x1="334" x2="547" y1="324.7891" y2="324.7891"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="9" x="346" y="312.1567">4</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="123" x="359" y="304.5903">Retrieve Document</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="70" x="359" y="319.7231">Set [ITI-43]</text><!--MD5=[8a2bee6504cbbc941d8172d5ba016a62]
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+box "Consumer Zone"
+participant "//XDS Document//\n//Source//" as xds_ds
+end box
+
+box "Provider Zone"
+participant "XDS Document Registry &\nXDS Document Repository" as xds_rr
+end box
+
+box "Personal Zone"
+participant "XDS Document\nConsumer" as xds_dc
+end box
+
+activate xds_ds
+xds_ds -> xds_ds : //Create Document//
+activate xds_ds
+
+deactivate xds_ds
+
+xds_ds -> xds_rr : //Provide & Register//\n//Document Set-b//\n//[ITI-41]//
+
+activate xds_rr
+
+'xds_dr -hidden-> xds_dr : dummy
+deactivate xds_rr
+deactivate xds_ds
+
+
+xds_rr <- xds_dc : Registry Stored\nQuery [ITI-18]
+activate xds_dc
+activate xds_rr
+xds_rr <- xds_dc : Retrieve Document\nSet [ITI-43]
+
+@enduml
+
+@startuml
+
+skinparam Shadowing false
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+skinparam sequence {
+    ArrowColor DodgerBlue
+    ActorBorderColor DodgerBlue
+    LifeLineBorderColor Blue
+
+    ParticipantBackgroundColor #3483eb
+    ParticipantBorderColor #3483eb
+    ParticipantFontSize 14
+    ParticipantFontColor White
+
+    ActorBackgroundColor #3483eb
+    ActorFontSize 14
+    NoteBackgroundColor #3483eb
+}
+
+hide footbox
+autonumber
+
+box "Consumer Zone"
+participant "//XDS Document//\n//Source//" as xds_ds
+end box
+
+box "Provider Zone"
+participant "XDS Document Registry &\nXDS Document Repository" as xds_rr
+end box
+
+box "Personal Zone"
+participant "XDS Document\nConsumer" as xds_dc
+end box
+
+activate xds_ds
+xds_ds -> xds_ds : //Create Document//
+activate xds_ds
+
+deactivate xds_ds
+
+xds_ds -> xds_rr : //Provide & Register//\n//Document Set-b//\n//[ITI-41]//
+
+activate xds_rr
+
+deactivate xds_rr
+deactivate xds_ds
+
+
+xds_rr <- xds_dc : Registry Stored\nQuery [ITI-18]
+activate xds_dc
+activate xds_rr
+xds_rr <- xds_dc : Retrieve Document\nSet [ITI-43]
+
+@enduml
+
+PlantUML version 1.2022.7(Mon Aug 22 19:01:30 CEST 2022)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

@@ -1,0 +1,149 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+==== XDS Document Service
+Der *XDS Document Service* verarbeitet die (medizinischen) Dokumente des Aktensystems unter Anwendung des Registry-Repository-Designmusters. Gespeichert werden können sowohl strukturierte als auch unstrukturierte Dokumente wie beispielsweise PDF oder JPG. Bekannte, strukturierte Dokumente werden vom Aktensystem gesondert behandelt. Dies sind meist sogenannte *Medizinische Informationsobjekte* (MIOs), welche von der https://mio42.de[mio42 GmbH] spezifiziert werden. Diesen Dokumenten ist ein festgelegter Satz an Metadaten zugeordnet, sodass diese Dokumente aktensystemseitig u.a. stets mit der dafür vorgesehenen Datenkategorie (d.h. einem XDS Folder) verknüpft werden.
+
+Generell werden alle Dokumente aufgrund von Metadaten und bekannten Akteuren (erkennbar an der Sektorenrolle der SM-B) entsprechend der festen Kategorie zugeordnet. Neben dem Löschen von Dokumenten ist auch das Überschreiben von Dokumenten sowie das Korrigieren oder Aktualisieren von Metadaten möglich.
+
+Eine *Document Registry* verwaltet Metadaten, welche für die Suche und Navigation von Dokumenten notwendig sind. Die Dokumente werden in einem *Document Repository* gespeichert. Die Schnittstellen und Verarbeitungslogiken der Produkttypen der Fachanwendung ePA basieren auf den Spezifikationen von *Integrating the Healthcare Enterprise* (https://www.ihe.net[IHE]), insbesondere dem Konzept *Cross-Enterprise Document Sharing* (XDS) zum Speichern und Abrufen von (medizinischen) Dokumenten, welches Teil des IHE ITI Technical Frameworks (IHE ITI TF) ist.
+
+Integrating the Healthcare Enterprise (IHE):: IHE ist eine internationale Organisation, welche bestehende Industriestandards für die Umsetzung spezifischer Anwendungsszenarien im digitalisierten Gesundheitswesen profiliert.
+
+Für den XDS Document Service werden bestimmte IHE ITI-Transaktionen vorgegeben. Dies basiert auf der folgenden Herangehensweise:
+
+. Auswahl relevanter IHE ITI-Integrationsprofile
+. Logische Gruppierung von Akteuren zwischen den IHE ITI-Integrationsprofilen
+. Übergreifende Einschränkung von IHE ITI-Transaktionen
+. Festlegung spezieller Umsetzungsvorgaben bzgl. einzelner Transaktionen
+
+Die übergreifende Dokumentenverwaltung unter Nutzung des XDS Document Service basiert auf der Implementierungsstrategie, wie sie vereinfacht in der nachstehenden <<#fig:ihe-xds-implementierungsstrategie, Abbildung>> skizziert ist.
+
+[#fig:ihe-xds-implementierungsstrategie]
+image::drawio/IHE-XDS-Implementierungsstrategie.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="IHE XDS-Implementierungsstrategie mit zentraler Registry und Repository",width=80%, pdfwidth=80%,float="center",align="center",title-align="center"]
+
+Das Primärsystem aus einer Leistungserbringerinstitution implementiert die IHE XDS-Akteure "Document Consumer" sowie "Document Source", welche Dokumente aus einer/einem Document Registry/Document Repository des Aktenanbieters abrufen sowie neue Dokumente darin registrieren/einstellen. Das ePA-Frontend des Versicherten implementiert ebenso diese Akteure. Kostenträger und Omnbudsstellen stellen ebenfalls neue Dokumente ein, sodass auch hier ein IHE XDS-Akteur "Document Source" implementiert wird.
+
+
+===== Relevante IHE ITI-Integrationsprofile
+
+
+Die ePA-Fachanwendung nutzt die folgenden Integrationsprofile des IHE ITI TF:
+
+* Cross-Enterprise Document Media Interchange (XDM) Profile
+* Cross-Enterprise Document Sharing (XDS.b) Profile
+* Remove Metadata and Documents (RMD) Profile
+* Restricted Metadata Update (RMU) Profile
+
+In der nachstehenden <<#fig:ihe-xds-transaktionsübersicht, Abbildung>> wird gezeigt, welche IHE ITI-Akteure insgesamt in der Fachanwendung ePA wie gruppiert und welche zugehörigen Transaktionen angewendet werden. Akteure unterschiedlicher Integrationsprofile sind im XDS Document Service über zusammengefasste Außenschnittstellen nutzbar, d.h. sie agieren nach außen hin nicht als eigenständige Dienste, sondern sind über feste Pfade adressiert.
+
+_Hinweis: Kursiv dargestellte IHE ITI-Akteure und Transaktionen sind als produkttyp- bzw. komponentenintern anzusehen und setzen lediglich die jeweilige Semantik des Akteurs um._
+
+[#fig:ihe-xds-transaktionsübersicht]
+image::drawio/IHE-XDS-Transaktionsübersicht.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Überblick über IHE ITI-Akteure und assoziierte Transaktionen",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+Die IHE ITI-basierte Nachrichtenübermittlung in der nachstehenden <<#fig:ihe-xds-prozessablauf, Abbildung>> verdeutlicht die anzuwendenden Transaktionen, um ein Dokument durch einen Leistungserbringer in die ePA eines Versicherten zu speichern. Der Ablauf zum Speichern eines Dokuments durch den Versicherten bzw. der Abruf eines Dokuments erfolgt analog in umgekehrter Ablauflogik und ist – wie auch der Zugang eines Kostenträgers – nicht in der nachstehenden Abbildung dargestellt.
+
+_Hinweis: Kursiv dargestellte IHE ITI-Akteure und Transaktionen sind als intern anzusehen und aus Sicht des XDS Document Service nicht normativ._
+
+ifndef::env-github[]
+[#fig:ihe-xds-prozessablauf]
+[plantuml, "{diagramsdir}/IHE-XDS-Prozessablauf", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="XDS-Prozessablaufdiagramm zum Registrieren und Abrufen von Dokumenten",width=100%, pdfwidth=90%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/IHE-XDS-Prozessablauf.puml[]
+....
+endif::[]
+
+ifdef::env-github[]
+image::plantuml/IHE-XDS-Prozessablauf.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="XDS-Prozessablaufdiagramm zum Registrieren und Abrufen von Dokumenten",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+endif::[]
+
+Ein Primärsystem in der Consumer Zone erzeugt durch den XDS-Akteur "Document Source" ein Dokument, welches in den XDS Document Service gespeichert werden soll. Zum Speichern und Abrufen, kommen anschließend die folgenden IHE ITI-Transaktionen zum Tragen:
+
+[start=2]
+. _Provide & Register Document Set-b [ITI-41]_: Das Primärsystem als XDS-Akteur "Document Source" sendet eine Nachricht zum Speichern ein oder mehrerer Dokumente an den XDS-Akteur "Document Repository". Es erfolgt das interne Registrieren und Speichern der Dokumente (diese Transaktion ist nicht spezifiziert).
+. _Registry Stored Query [ITI-18]_: Das ePA-FdV als XDS-Akteur "Document Consumer" führt eine Suchanfrage auf Metadaten zu Dokumenten durch.
+. _Retrieve Document Set [ITI-43]_: Anhand der Document Unique IDs aus den Metadaten ruft das ePA-FdV als XDS-Akteur "Document Consumer" ein oder mehrere Dokumente ab.
+
+===== XDS Metadaten
+
+Im XDS Document Service werden XDS Folder (d.h. als Repräsentanz einer Datenkategorie) bei einer entsprechenden Anfrage eines Nutzers zurückgegeben. Hierbei handelt es sich um statische Akteninhalte mit festen, bekannten Identitäten, welche keiner weiteren Zugriffslogik unterliegen. Sehr wohl können mit einem Ordner assoziierte Dokumente aufgrund eines <<#_verbergen, Verbergens>> nicht zurückgegeben werden oder aber das Einstellen eines Dokuments in eine Kategorie kann aufgrund der Vorgaben der Legal Policy abgelehnt werden.
+
+Das Aktualisieren folgender Dokumentmetadatenattribute (DocumentEntry) wird vom Primärsystem sowie dem ePA-FdV (Versicherte/Vertreter) in der ePA für alle unterstützt:
+
+* author
+* classCode
+* comments
+* confidentialityCode
+* creationTime
+* eventCodeList
+* formatCode
+* healthcareFacilityTypeCode
+* languageCode
+* legalAuthenticator
+* practiceSettingCode
+* referenceIdList
+* serviceStartTime
+* serviceStopTime
+* title
+* typeCode
+* URI
+
+Eine Änderung dieser Metadaten führt zu einer erneuten Prüfung der bestehenden Zuordnung des Dokuments zu einer Datenkategorie und könnte somit eine andere Zuordnung oder Ablehnung zur Folge haben. Das Primärsystem und das ePA-FdV setzen weiterhin eine Sortierlogik auf Basis der Dokumentmetadaten um.
+
+
+===== Dedizierte Unterstützung von Digitalen Gesundheitsanwendungen
+
+Für jede DiGA wird je eine Befugnis verwaltet, welcher durch den Versicherten über das ePA-FdV eingerichtet werden kann. Die von einer spezifischen DiGA eingestellten Daten werden in einem für diese DiGA spezifischen XDS Folder verwaltet. Das Anlegen dieses XDS Folder erfolgt durch den XDS Document Service – unter der Voraussetzung, dass es eine gültige Befugnis für diese DiGA gibt – beim Zugriff einer DiGA auf den XDS Document Service. Bei der Erstellung des XDS Folder setzt der XDS Document Service den Wert für Folder.title entsprechend des Attributs "organizationName" aus dem IDToken der zugreifenden DiGA. Weiterhin belegt er den Wert für Folder.comment mit "urn:gematik:diga:<Telematik-ID>", wobei die Telematik-ID dem Attribut "idNummer" des ID-Token entspricht. Die Zuordnung von DiGA-Dokumenten beim Schreiben zum spezifischen XDS Folder erfolgt implizit über die Telematik-ID des ID-Token aus der User Session. Da ein DiGA-spezifischer XDS Folder im Titel stets den Namen der DiGA enthält, kann ein Leistungserbringer über sein Primärsystem die relevante DiGA auswählen und auf deren eingestellte DiGA-Dokumente zugreifen, sofern eine Befugnis  vorliegt. Eine Aktualisierung eines bestehenden DiGA-Dokuments mit der bekannten DocumentEntry.entryUUID kann durch einen DiGA-Client erfolgen. Hierzu ist es erforderlich, dass ein DiGA-Client die DocumentEntry.entryUUID persistiert und keine symbolischen IDs gemäß verwendet.
+
+
+===== Komfortfunktion zur Konvertierung von PDF-Dokumenten
+
+Das ePA-Aktensystem bietet Versicherten eine Funktion an, über die sie mittels ePA-FdV PDF-Dokumente in PDF/A-Dokumente konvertieren lassen können. Die Versicherten können das Ergebnis im ePA-FdV betrachten und wenn gewünscht das PDF/A-Dokument ins ePA-Aktensystem einstellen. 
+
+[#_verbergen]
+==== Constraint Management - Verbergen und sichtbar machen von Dokumenten
+
+Im XDS Document Service verwaltete Dokumente können vom Versicherten per ePA-FdV für Zugriffe von Leistungserbringerinstitutionen verborgen werden. Grundsätzlich können *Dokumente direkt* oder per *Datenkategorie* – und damit alle ihr zugeordneten, vorhandenen, als auch zukünftig eingestellten Dokumente – verborgen werden. Für verborgene Dokumente gilt, dass das ePA-Aktensystem eine Dokumentensuche auf verborgene Dokumente filtert und entfernt. Auch ein direkter Zugriff eines Primärsystems auf das Dokument (d.h. Löschen oder Herunterladen per Dokumenten-ID) führt dazu, dass dieser Zugriff abgelehnt wird (das Dokument ist dann unbekannt). Ein Leistungserbringer kann ein Dokument auf Wunsch des Versicherten als verborgen markieren und es in die Akte hochladen. Bisher verborgenene Dokumente oder Datenkategorien können durch den Versicherten mittels ePA-FdV jederzeit sichtbar gemacht werden.
+
+_Ein genereller Hinweis bzgl. des Verbergens von Uniform-/Mixed-Dokumenten_: +
+Wenn eine Kategorie verborgen wurde (z.B. ein Impfpass) und eine Leistungserbringerinstitution versucht, einen neuen Impfpasseintrag zu schreiben, antwortet der XDS Document Service mit einem Fehler, dass verborgene Dokumente innerhalb dieser Kategorie vorliegen und daher das Schreiben des Dokuments abgelehnt wurde. +
+Generell können Uniform-/Mixed-Dokumente nur gesamthaft über die jeweilige Kategorie verborgen werden. Mutterpässe werden bei Anlass über separate Ordner der Kategorie "pregnancy_childbirth" angelegt. Es können individuell separate Mutterpässe oder aber gänzlich per Kategorie verborgen werden.
+
+Beim Zugriff auf referenzierte Dokumente reagiert der XDS Document Service bei verborgenen Dokumenten dahingehend, dass er nur Zugriff auf nicht-verborgene Dokumente zulässt. Ist beispielsweise der Befundbericht durch den Versicherten verborgen worden, wird ausschließlich der Entlassungsbrief zurückgegeben.
+
+Es werden die folgenden Möglichkeiten für das Verbergen und Sichtbarmachen von Dokumenten unterstützt und in einer logischen *General Deny Policy* festgehalten.
+
+===== Kategorienbasiertes Verbergen von Dokumenten ggü. allen Leistungserbringerinstitutionen
+
+Der Versicherte/Vertreter wählt im ePA-FdV die zu verbergenden Datenkategorien aus. Das ePA-FdV übermittelt diese Kategorien über eine spezifische Schnittstelle an den XDS Document Service, welcher sie in die General Deny Policy aufnimmt.
+
+
+===== Dokumentenspezifisches Verbergen von Dokumenten ggü. allen Leistungserbringerinstitutionen
+
+Der Versicherte/Vertreter wählt im ePA-FdV die zu verbergenden Dokumente aus. Das ePA-FdV übermittelt diese Dokumenten-IDs über eine spezifische Schnittstelle an den XDS Document Service, welcher sie in die General Deny Policy aufnimmt.
+

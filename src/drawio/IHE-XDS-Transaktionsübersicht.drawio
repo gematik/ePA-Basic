@@ -1,0 +1,373 @@
+<mxfile host="Electron" modified="2024-02-27T08:34:11.633Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.16 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="yn4zW1bx4maa1g_r-naY" version="22.1.16" type="device" pages="2">
+  <diagram name="Page-1" id="GavNfFUJkx5YJLS3IbDN">
+    <mxGraphModel dx="2022" dy="712" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-6" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;labelPosition=center;verticalLabelPosition=middle;verticalAlign=middle;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="150" y="569.5" width="380" height="180.5" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-1" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;labelPosition=center;verticalLabelPosition=middle;verticalAlign=middle;fillColor=#F5F5F5;fontColor=#333333;strokeColor=#666666;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-40" width="170" height="750" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-2" value="Primärsystem" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-32" y="1" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-3" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;labelPosition=center;verticalLabelPosition=middle;verticalAlign=middle;fillColor=#F5F5F5;fontColor=#333333;strokeColor=#666666;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="150" width="380" height="550" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-4" value="ePA-Aktensystem / XDS Document Service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="160" width="320" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-5" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;labelPosition=center;verticalLabelPosition=middle;verticalAlign=middle;fillColor=#F5F5F5;fontColor=#333333;strokeColor=#666666;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="550" width="220" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-6" value="Client-System&amp;nbsp;ePA-FdV" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="560" y="1" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-7" value="" style="rounded=0;whiteSpace=wrap;html=1;align=center;labelPosition=center;verticalLabelPosition=middle;verticalAlign=middle;fillColor=#F5F5F5;fontColor=#333333;strokeColor=#666666;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="550" y="450" width="220" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-8" value="Client-System Kostenträger" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="560" y="452" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-11" value="Document&lt;br&gt;Administrator" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-10" y="37" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-12" value="Document&lt;br&gt;Consumer" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-10" y="110" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ong6lEerDtjRsgMwCOyq-13" value="Document&lt;br&gt;Source" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-10" y="200" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-3" value="Document&lt;br&gt;Consumer" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="640" y="110" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-5" value="Document&lt;br&gt;Source" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="564" y="567" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-7" value="ePA-Aktensystem / XDS Document Service &lt;br&gt;(neuer Anbieter)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="160" y="574" width="349" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-8" value="Document&lt;br&gt;Registry" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="370" y="110" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-9" value="Document&lt;br&gt;Repository" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="370" y="260" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-10" value="RMU &lt;br&gt;Update&lt;br&gt;Responder" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="180" y="353" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-11" value="RMU &lt;br&gt;Update &lt;br&gt;Initiator" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-10" y="400" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-12" value="RMU&lt;br&gt;Update&lt;br&gt;Initiator" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="640" y="363" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-13" value="Document&lt;br&gt;Administrator" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="640" y="40" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-15" value="Media&lt;br&gt;Importer" style="html=1;whiteSpace=wrap;fontStyle=2;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="359" y="681" width="111" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-16" value="Media&lt;br&gt;Initiator" style="html=1;whiteSpace=wrap;fontStyle=2;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="640" y="493" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-29" value="" style="endArrow=none;dashed=1;html=1;rounded=0;edgeStyle=elbowEdgeStyle;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="376" y="160" as="sourcePoint" />
+            <mxPoint x="376" y="260" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="376" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-30" value="Remove&lt;br&gt;Documents&lt;br&gt;(non-IHE&lt;br&gt;specified&lt;br&gt;interaction)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="378" y="181" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-32" value="" style="endArrow=none;dashed=1;html=1;rounded=0;edgeStyle=elbowEdgeStyle;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="438" y="160" as="sourcePoint" />
+            <mxPoint x="438" y="260" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="438" y="190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-33" value="Register&lt;br&gt;Document&lt;br&gt;Set-b&lt;br&gt;(non-IHE&lt;br&gt;specified&lt;br&gt;interaction)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="440" y="188" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-35" value="" style="endArrow=none;dashed=1;html=1;rounded=0;edgeStyle=elbowEdgeStyle;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=1;exitY=0.364;exitDx=0;exitDy=0;exitPerimeter=0;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-10" target="AYluNKD4JIUCI4J6xTpH-8" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="291" y="300" as="sourcePoint" />
+            <mxPoint x="420" y="338" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-36" value="Update&lt;br&gt;Metadata&lt;br&gt;(non-IHE&lt;br&gt;specified&lt;br&gt;interaction)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="291" y="320" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-38" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="353" y="364" as="sourcePoint" />
+            <mxPoint x="353" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-39" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="450" y="254" as="sourcePoint" />
+            <mxPoint x="450" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-40" value="" style="endArrow=none;html=1;rounded=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="124" as="sourcePoint" />
+            <mxPoint x="640" y="124" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-41" value="Registry Stored Query&lt;br&gt;[ITI-18]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="470" y="91" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-42" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="626" y="112.00999999999999" as="sourcePoint" />
+            <mxPoint x="608.6199999999999" y="112" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-43" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-9" target="AYluNKD4JIUCI4J6xTpH-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="200" as="sourcePoint" />
+            <mxPoint x="640" y="200" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="500" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-44" value="Retrieve Document&lt;br&gt;Set [ITI-43]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="503" y="150" width="111" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-45" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="633" y="171.01" as="sourcePoint" />
+            <mxPoint x="615.6199999999999" y="171" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-50" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;entryX=0.361;entryY=1.035;entryDx=0;entryDy=0;entryPerimeter=0;elbow=vertical;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="296" as="sourcePoint" />
+            <mxPoint x="679.71" y="219.75" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="580" y="285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-51" value="Provide &amp;amp; Register&lt;br&gt;Document Set-b&lt;br&gt;[ITI-41]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="540" y="250" width="111" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-52" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="670" y="275.01" as="sourcePoint" />
+            <mxPoint x="652.6199999999999" y="275" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-53" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;exitX=0.25;exitY=0;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-8" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="470" y="110" as="sourcePoint" />
+            <mxPoint x="640" y="63" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="460" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-54" value="Remove Metadata [ITI-62]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="460" y="37" width="149" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-55" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="626" y="53.00999999999999" as="sourcePoint" />
+            <mxPoint x="608.6199999999999" y="53" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-58" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;elbow=vertical;exitX=1;exitY=0.75;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-10" target="AYluNKD4JIUCI4J6xTpH-12" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="400" as="sourcePoint" />
+            <mxPoint x="525" y="324" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="425" y="389" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-59" value="Restricted Update&lt;br&gt;Document Set [ITI-92]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="380" y="354" width="124" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-60" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="523" y="375.01" as="sourcePoint" />
+            <mxPoint x="505.6199999999999" y="375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-62" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="382.38" y="228" as="sourcePoint" />
+            <mxPoint x="382.38" y="242" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-64" value="Resume&lt;br&gt;Account&lt;br&gt;(non-IHE&lt;br&gt;specified&lt;br&gt;interaction)" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="342" y="626" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-65" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="407.38" y="669" as="sourcePoint" />
+            <mxPoint x="407.38" y="655" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-14" value="Media&lt;br&gt;Creator" style="html=1;whiteSpace=wrap;fontStyle=2;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="180" y="470" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-67" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;elbow=vertical;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-14" target="AYluNKD4JIUCI4J6xTpH-16" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="427" y="530" as="sourcePoint" />
+            <mxPoint x="427" y="691" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="510" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-68" value="Suspend Account&lt;br&gt;(non-IHE specified interaction &lt;br&gt;with [ITI-32]-basedcontent&lt;br&gt;organization of the media)" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=2;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="286" y="460" width="230" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-69" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;entryX=0.999;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="532" y="487.76" as="sourcePoint" />
+            <mxPoint x="514.6199999999999" y="487.75" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-70" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;elbow=vertical;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-14" target="AYluNKD4JIUCI4J6xTpH-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="300" y="510" as="sourcePoint" />
+            <mxPoint x="646" y="510" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="320" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-4" value="Document&lt;br&gt;Source" style="html=1;whiteSpace=wrap;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="640" y="173" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-81" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;elbow=vertical;fontFamily=Verdana;" parent="1" target="AYluNKD4JIUCI4J6xTpH-5" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="301" as="sourcePoint" />
+            <mxPoint x="617" y="543" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="530" y="301" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-83" value="Provide &amp;amp; Register&lt;br&gt;Document Set-b&lt;br&gt;[ITI-41]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="621" y="312" width="111" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-84" value="" style="endArrow=open;html=1;rounded=0;endFill=0;jumpSize=4;align=left;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="670" y="346.25" as="sourcePoint" />
+            <mxPoint x="670" y="332.25" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-87" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="240" as="sourcePoint" />
+            <mxPoint x="370" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-88" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" source="ong6lEerDtjRsgMwCOyq-11" target="AYluNKD4JIUCI4J6xTpH-8" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-70" y="394" as="sourcePoint" />
+            <mxPoint x="10" y="344" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="390" y="90" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-89" value="Remove Metadata [ITI-62]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="140" y="37" width="145" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-90" value="" style="endArrow=open;html=1;rounded=0;endFill=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="286" y="52.88" as="sourcePoint" />
+            <mxPoint x="299" y="52.88" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-95" value="" style="endArrow=none;html=1;rounded=0;edgeStyle=elbowEdgeStyle;fontFamily=Verdana;" parent="1" source="AYluNKD4JIUCI4J6xTpH-11" target="AYluNKD4JIUCI4J6xTpH-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="90" y="377.5" as="sourcePoint" />
+            <mxPoint x="200" y="377.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="45" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-96" value="Restricted Update&lt;br&gt;Document Set [ITI-92]" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="-10" y="348" width="121" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-97" value="" style="endArrow=open;html=1;rounded=0;endFill=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="111" y="368.88" as="sourcePoint" />
+            <mxPoint x="124" y="368.88" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-98" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;fontFamily=Verdana;" parent="1" source="ong6lEerDtjRsgMwCOyq-12" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="134.5" as="sourcePoint" />
+            <mxPoint x="370" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-99" value="" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;fontFamily=Verdana;edgeStyle=orthogonalEdgeStyle;" parent="1" edge="1" target="AYluNKD4JIUCI4J6xTpH-9">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="140.5" as="sourcePoint" />
+            <mxPoint x="370" y="140.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="340" y="141" />
+              <mxPoint x="340" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-100" value="Registry Stored&lt;br&gt;Query [ITI-18]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="103" y="83" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-101" value="Retrieve&lt;br&gt;&lt;span style=&quot;font-style: italic;&quot;&gt;Document Set&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;font-style: italic;&quot;&gt;[ITI-43]&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="103" y="151" width="130" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-103" value="" style="endArrow=open;html=1;rounded=0;endFill=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="105" y="117" as="sourcePoint" />
+            <mxPoint x="118" y="117" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-104" value="" style="endArrow=open;html=1;rounded=0;endFill=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="106" y="188" as="sourcePoint" />
+            <mxPoint x="119" y="188" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-108" value="Provide &amp;amp;&lt;br&gt;Register&lt;br&gt;Document Set-b&lt;br&gt;[ITI-41]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=0;fontSize=10;fontFamily=Verdana;" parent="1" vertex="1">
+          <mxGeometry x="103" y="252" width="97" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="AYluNKD4JIUCI4J6xTpH-109" value="" style="endArrow=open;html=1;rounded=0;endFill=0;fontFamily=Verdana;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="107" y="296.75" as="sourcePoint" />
+            <mxPoint x="120" y="296.75" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="O5jFpuxB7dCEjr9WNafW" name="Page-2">
+    <mxGraphModel dx="1194" dy="824" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -35,6 +35,12 @@ info:
     not essentially required for the operation (e.g. raw-data collection), and
     may be considered for provider internal use. 
 
+    **Request ID**:</br>QQ
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
     **Log-Entries**
     Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
     data as defined in A_24055*.
@@ -43,15 +49,20 @@ info:
     always be skipped and no log entry shall be stored if this precondition is 
     not met.
 
-  version: 1.5.3
+  version: 1.7.0
 
   # version history:
   # ----------------
+  # version 1.7.0
+  #   - added status- and error code for state MAINTENANCE
+  # version 1.6.1
+  #   - clarification about condition for 404 noHealthRecord and 409 statusMismatch
+  # version 1.6.0
+  #   - optional X-Request-ID in all requests and responses
+  #   - editorial correction: removed oid_diga from allowed userrgroups for udpMedication assignments 
   # version 1.5.3
   #   - additional error condition for missing device registration 
   #   - clarification on scope of an UdpMedication assignment (fhir medication + category emp)
-  # version 1.5.2
-  #   - remove consent for data submission and DataUsagePurpose
   # version 1.5.1
   #   - clarification regarding required entitlement for logging
   #   - added error condition for not authenticated user sessions
@@ -94,6 +105,10 @@ tags:
     description: |
      Consent decision management operations allow to view current decisions made and to change those 
      decisions regarding consent related functions of the health record.
+  - name: DataUsagePurposes
+    description: |
+     Consent decision management provides operations to manage the insurant's consent decisions regarding the 
+     detailed purposes of use of transmitted health record data in the research data center (FDZ).    
   - name: UdpMedication
     description: |
       UdpMedication allows configuration of the user-specific deny policy for medication service only. 
@@ -126,7 +141,6 @@ tags:
       - oid_praxis-physiotherapeut
       - oid_institution-oegd
       - oid_institution-arbeitsmedizin
-      - oid_diga
       - oid_praxis-ergotherapeut
       - oid_praxis-logopaede
       - oid_praxis-podologe
@@ -138,6 +152,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: "#/components/parameters/functionid"
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     put:
       tags:
         - ConsentDecisions
@@ -189,6 +204,12 @@ paths:
           - (f) set the decision for _medication_ to _deny_ (including the consequences for clients) if _functionid_ = _erp-submission_ is 
             set to _deny_.
 
+        _functionid_ == _data-submission_:</br> 
+          The change of this decision prevents submission of pseudonymized medical data to the research data center (FDZ) if set to _deny_. 
+          The _deny_-decision information shall be sent to the FDZ instead of any further data for secondary usage.
+          If set to _permit_ new medical data will be pseudonymized and send to the FDZ, including the consent decisions 
+          of data usage purpose of the insurant.</br> 
+        
         If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
 
         An unknown parameter _functionid_ shall lead to rejection of the request. This operation operates on existings
@@ -208,9 +229,9 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Resource for _functionid_ does not exist | 404 | noResource ||
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -247,6 +268,9 @@ paths:
       responses:
         "200":
           description: OK. Consent decision successfully updated
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               examples:
@@ -311,9 +335,9 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Resource for _functionid_ does not exist | 404 | noResource ||
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -324,6 +348,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               example:
@@ -346,6 +373,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - ConsentDecisions
@@ -367,8 +395,8 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -379,6 +407,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               example:
@@ -387,6 +418,8 @@ paths:
                     decision: "deny"
                   - functionId: "erp-submission"
                     decision: "permit"
+                  - functionId: "data-submission"
+                    decision: "permit"                    
               schema:
                 type: object
                 properties:
@@ -405,11 +438,153 @@ paths:
         '500':
           $ref: "#/components/responses/Error500InternalError"
 
+  /epa/basic/api/v1/DataUsagePurposes:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    put:
+      tags:
+        - DataUsagePurposes
+      operationId: updateDataUsagePurposes
+      summary: (updateDataUsagePurposes) Update the consent list regarding purposes for usage of research data
+      description: |
+        Update the insurant's decision regarding the permissible use of data for research purposes.</br>
+        This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
+
+        **Client**:</br>
+        no recommendations.
+
+        **Provider**:</br>
+        A changed list of _DataUsagePurposes_ shall be persisted securely in SecureDataStorage. The changed list
+        shall be provided to the Data Submission Service in association to the insurantid for delivery to 
+        the research data center.</br>
+        The operation shall only succeed in case of general consent for data submission:</br> 
+        _functionid_ == _data-submission_ == _permit_</br> 
+
+        An email shall be sent to the insurant using the registered mail address after a successful change of 
+        a decision for notification. The mail shall contain understandable information about the changed consent
+        decision reagrding data submission and timestamp of change (according to A_24844*)."
+
+        The operation shall succeed in case of no reulting change of consents (i.e. 'old' and 'new' consent settings
+        are equal).
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
+        | Requestor has no valid entitlement | 403 | notEntitled ||
+        | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | No permission (consent) for data submission | 409 | noConsent ||
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The updated list of DataUsagePurposes is persisted securely in SecureDataStorage | |
+        | Updated list of DataUsagePurposes is provided to the Data Submission Service | |
+        | An email is sent to the insurant | success case with changed of consent(s) only |
+        | A log-entry for the operation exists | all operation results |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataUsagePurposesType"
+            examples:
+              Permit_Pupose1_only:
+                $ref: "#/components/examples/Permit_Pupose1_only"
+      responses:
+        "200":
+          description: OK. DataUsagePurposes successfully updated
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataUsagePurposesType"
+              examples:
+                Permit_Pupose1_only:
+                  $ref: "#/components/examples/Permit_Pupose1_only"
+        '400':
+          $ref: "#/components/responses/Error400BadRequest"
+        '403':
+          $ref: "#/components/responses/Error403Forbidden"
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
+    get:
+      tags:
+        - DataUsagePurposes
+      operationId: getDataUsagePurposes
+      summary: (getDataUsagePurposes) Read the consent list regarding the data usage purposes
+      description: |
+        Get the current user decision regarding the permissible uses of data in the Research Data Center.</br>
+        This operation is limited to entitled users of role oid_versicherter and oid_ombudsstelle.
+
+        **Client**:</br>
+        no recommendations.
+
+        **Provider**:</br>
+        The operation shall only succeed in case of general consent for data submission:</br> 
+        _functionid_ == _data-submission_ == _permit_:</br>
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
+        | Requestor has no valid entitlement | 403 | notEntitled ||
+        | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | No permission (consent) for data submission | 409 | noConsent ||
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataUsagePurposesType"
+              examples:
+                Permit_Pupose1_only:
+                  $ref: "#/components/examples/Permit_Pupose1_only"
+        '400':
+          $ref: "#/components/responses/Error400BadRequest"
+        '403':
+          $ref: "#/components/responses/Error403Forbidden"
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: "#/components/responses/Error409Conflict"
+        '500':
+          $ref: "#/components/responses/Error500InternalError"
 
   /epa/basic/api/v1/userspecific/medication:
     parameters:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UdpMedication
@@ -430,8 +605,8 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ | 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -442,6 +617,9 @@ paths:
       responses:
         '200':
           description: Ok. Returns a list of policy assignments
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -498,8 +676,8 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | The assignment parameter _oid_ is not in the list of allowd oids | 409 | requestMismatch ||
         | The assignment does yet exist (same _actorId_) | 409 | requestMismatch | avoid duplicates |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -523,6 +701,9 @@ paths:
       responses:
         '201':
           description: Created
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -547,6 +728,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/telematikid'
       - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
     get:
       tags:
         - UdpMedication
@@ -570,9 +752,9 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ | 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Resource for _telematikid_ does not exist | 404 | noResource ||
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -582,6 +764,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
@@ -627,9 +812,9 @@ paths:
         | Device registration does not exist | 403 | unregisteredDevice | if requestor role is oid_versicherter only |
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_| 403 | invalidOid ||
-        | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Assignment (_telematikid_) does not exist | 404 | noResource ||
-        | Health record is not in state ACTIVATED | 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or MAINTENANCE | 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -642,6 +827,9 @@ paths:
       responses:
         '204':
           description: OK. Assignment deleted
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -654,6 +842,13 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
+
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
+
   parameters:
     insurantid:
       name: x-insurantid
@@ -669,6 +864,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
     functionid:
       name: functionid
       in: path
@@ -687,6 +888,9 @@ components:
   responses:
     Error400BadRequest:
       description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -695,6 +899,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error403Forbidden:
       description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -703,6 +910,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error404NotFound:
       description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -711,6 +921,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error409Conflict:
       description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           examples:
@@ -721,6 +934,9 @@ components:
             $ref: '#/components/schemas/ErrorType'
     Error500InternalError:
       description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
       content:
         application/json:
           example:
@@ -758,6 +974,41 @@ components:
           functionId: "medication"
           decision: "deny"
 
+    DataUsagePurposesType:
+      description: "List of Data Usage Purposes"
+      type: object
+      properties:
+        purpose1:
+          $ref: '#/components/schemas/Purpose1Type'
+        purpose2:
+          $ref: '#/components/schemas/Purpose2Type'
+        purpose3:
+          $ref: '#/components/schemas/Purpose3Type'
+        purpose4:
+          $ref: '#/components/schemas/Purpose4Type'
+        purpose5:
+          $ref: '#/components/schemas/Purpose5Type'
+        purpose6:
+          $ref: '#/components/schemas/Purpose6Type'
+        purpose7:
+          $ref: '#/components/schemas/Purpose7Type'
+        purpose8:
+          $ref: '#/components/schemas/Purpose8Type'
+        purpose9:
+          $ref: '#/components/schemas/Purpose9Type'
+        purpose10:
+          $ref: '#/components/schemas/Purpose10Type'
+      required:
+        - purpose1
+        - purpose2
+        - purpose3
+        - purpose4
+        - purpose5
+        - purpose6
+        - purpose7
+        - purpose8
+        - purpose9
+        - purpose10
     UserAgentType:
       description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
       type: string
@@ -773,6 +1024,81 @@ components:
         For today the record identifier equals the insurant id (kvnr).
       pattern: '^[A-Z]{1}\d{9}$'
       example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
+    Purpose1Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 1: Wahrnehmung von Steuerungsaufgaben durch die Kollektivvertragspartner"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose2Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 2: Verbesserung der Qualität der Versorgung sowie Verbesserung der Sicherheitsstandards der Prävention, Versorgung und Pflege"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose3Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 3: Planung von Leistungsressourcen, zum Beispiel Krankenhausplanung oder Pflegestrukturplanungsempfehlungen nach § 8a Absatz 4 des Elften Buches"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose4Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 4: wissenschaftliche Forschung zu Fragestellungen aus den Bereichen Gesundheit und Pflege, Analysen des Versorgungsgeschehens, sowie Grundlagenforschung im Bereich der Lebenswissenschaften"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose5Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 5: Unterstützung politischer Entscheidungsprozesse zur Weiterentwicklung der gesetzlichen Kranken- und Pflegeversicherung"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose6Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 6: Analysen zur Wirksamkeit sektorenübergreifender Versorgungsformen sowie zur Wirksamkeit von Einzelverträgen der Kranken- und Pflegekassen"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose7Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 7: Wahrnehmung von Aufgaben der Gesundheitsberichterstattung, anderer Berichtspflichten des Bundes nach diesem oder dem Elften Buch und der amtlichen Statistik sowie Berichtspflichten der Länder"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose8Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 8: Wahrnehmung gesetzlicher Aufgaben in den Bereichen öffentliche Gesundheit und Epidemiologie"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose9Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 9: Entwicklung, Weiterentwicklung und Überwachung der Sicherheit von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln, digitalen Gesundheits- und Pflegeanwendungen sowie Systemen der Künstlichen Intelligenz im Gesundheitswesen einschließlich des Trainings, der Validierung und des Testens dieser Systeme der Künstlichen Intelligenz"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
+    Purpose10Type:
+      description: "State of consent for purpose referring §303e SGB V clause 2 number 10: Nutzenbewertung von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln sowie digitalen Gesundheits- und Pflegeanwendungen, Verhandlung von Vergütungsbeträgen oder Festlegung von Höchstbeträgen und Schwellenwerten nach § 134 sowie Vereinbarung oder Festsetzung von Erstattungsbeträgen von Arzneimitteln nach § 130b"
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: ["permit", "deny"]
     UdpMedicationResponseType:
       allOf:
         - $ref: '#/components/schemas/UdPMedicationAssignmentType'
@@ -828,6 +1154,30 @@ components:
         - errorCode
 
   examples:
+    Permit_Pupose1_only:
+      summary: Permit purpose 1 only (purpose according §303e SGB V clause 2 number 1)
+      value:
+          purpose1:
+            decision: permit
+          purpose2:
+            decision: deny
+          purpose3:
+            decision: deny
+          purpose4:
+            decision: deny
+          purpose5:
+            decision: deny
+          purpose6:
+            decision: deny
+          purpose7:
+            decision: deny
+          purpose8:
+            decision: deny
+          purpose9:
+            decision: deny
+          purpose10:
+            decision: deny
+   
     Get_AllUdpMedication:
       summary: Get all assignments of the user specific policy for the medication service.
       value:
