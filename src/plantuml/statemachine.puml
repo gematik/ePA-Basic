@@ -34,9 +34,13 @@ Initialized --> Activated : Set by Health Insurance or \nafter successful import
 
 Activated --> Unknown : No more consent \nfor Health Record
 Activated --> Suspended : Migration of \nHealth Record is \nstarted by \nHealth Insurance
+Activated --> Maintenance : Health Record must \nundergo maintenance
 Suspended --> Activated : Stop \nmigration \ndue to fault
 
 Suspended --> Unknown : Health Record deleted \nby Health Insurance
 
+Maintenance --> Activated : Maintenance finished \nby Health Insurance
+Maintenance --> Unknown : No more consent \nfor Health Record
+Maintenance --> Suspended : Migration of \nHealth Record is \nstarted by \nHealth Insurance
 
 @enduml

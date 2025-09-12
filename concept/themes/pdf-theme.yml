@@ -34,11 +34,11 @@ footer:
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 01.08.2025
+        Stand: 12.09.2025
     center:
       content: |
         Übergreifendes Konzept +
-        (C) gematik – öffentlich
+        (C) gematik - öffentlich
   verso:
     left:
       content: |
@@ -47,8 +47,8 @@ footer:
     right:
       content: |
         Seite {page-number} von {page-count} +
-        Stand: 01.08.2025
+        Stand: 12.09.2025
     center:
       content: |
         Übergreifendes Konzept +
-        (C) gematik – öffentlich
+        (C) gematik - öffentlich

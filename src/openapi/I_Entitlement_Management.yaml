@@ -51,11 +51,13 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.7.0
+  version: 1.7.1
   # version history:
   # ----------------
+  # version 1.7.1
+  #   - added email notification of insurant (health record owner) in case of representative entitlement in setEntitlement
   # version 1.7.0
-  #   - keep existing entitlment in error case in setEntitlement, setEntitlementPS and setEntitlementPSV2  
+  #   - keep existing entitlement in error case in setEntitlement, setEntitlementPS and setEntitlementPSV2  
   #   - added status- and error code for state MAINTENANCE
   #   - added error condition if device is not registered with error unregisteredDevice for operations getEntitlements, setEntitlement, getEntitlement and deleteEntitlement.
   #   - added remark on single use of audit evidence and PoPP-Token in setEntitlementPs and setEntitlementPsV2
@@ -432,7 +434,10 @@ paths:
        kvnr and name of the insurant. The mail address provision and the notification is optional in case 
        the new entitlement replaces an existing entitlement of the representative, but if address is available a 
        notification shall be sent.<br>
-       The email address shall be discarded after use and shall not be persistet.
+       The email address of the representative shall be discarded after use and shall not be persistet.
+
+       In case a new entitlement for a representative is stored, also an email including information about the new set 
+       entitlement for a representative shall be sent to the insurant (health record owner, if email adress is available). 
 
        | Conditions | Status code | Error code | Remarks |
        |------------|-------------|------------|---------|
@@ -461,6 +466,7 @@ paths:
        |---------------------------------------|---------|
        | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement is replaced |
        | Entitlement notification is sent | if applicable, for representative entitlement only |
+       | Entitlement notification is sent to heakth record owner| if applicable, for representative entitlement only |
        | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 

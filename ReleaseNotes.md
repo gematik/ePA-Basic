@@ -3,8 +3,15 @@
 # Release Notes ePA Basic
 ## information
 The version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.
+## Release 3.1.3
+### changes
+- added amount limit for pending device registrations (C_12383)
+- the use of `not_set` for a channel of push notification is now permitted
+- updated legal policy in concept
+- added email notification if health record owner in case of representative entitlement in I_Entitlement_Management
 ## Release 3.1.3 RC
 ### changes
+- Addition of state 'maintenance' in health record state diagram
 - integrated concept parts from epa-medication and epa-xds-document
 - remark on existing entitlements in case of failed setEntitlement operations in I_Entitlement_Management.yaml (C_12372)
 - added status codes for state MAINTENANCE in serveral OpenApi definititions

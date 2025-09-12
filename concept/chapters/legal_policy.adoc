@@ -78,8 +78,8 @@ h|Versicherter/ Vertreter
 |1b
 |emp
 |Daten des elektronischen Medikationsplans nach § 334 Abs. 1 S. 2 Nr. 4 SGB V
-^|CRUD
-^|CRUD
+^|R
+^|R
 ^|R
 ^|R
 ^|R
@@ -341,14 +341,14 @@ h|Versicherter/ Vertreter
 ^|CRUD
 ^|R
 ^|R
-^|-
+^|R
 ^|R
 ^|-
 ^|-
 ^|-
 ^|CU
 ^|-
-^|R
+^|RD
 
 |16
 |demographics +
@@ -383,8 +383,6 @@ h|Versicherter/ Vertreter
 ^|-
 ^|-
 ^|R
-
-15.1+^h|Basic Services
 
 |18
 |audit +
