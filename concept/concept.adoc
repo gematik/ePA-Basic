@@ -144,12 +144,17 @@ endif::[]
 |Ergänzung der XML- und JSON-Dokumente in den MHD Volltextindex; Vorveröffentlichung
 |gematik
 
-|3.1.3
+|3.1.3 RC
 |01.08.2025
 |6
 |Veröffentlichung zur Kommentierung; Ergänzung Elektronischer Medikationsplan und XDS Document Service
 |gematik
 
+|3.1.3
+|12.09.2025
+|
+|Veröffentlichung
+|gematik
 |===
 
 toc::[]
@@ -443,6 +448,8 @@ ifdef::env-github[]
 image::plantuml/statemachine.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Statusmodell einer Akte",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
 
 endif::[]
+
+Der Zustand "Maintenance" ist ein Zustand, der vom Aktensystem gesetzt wird, wenn eine Akte aufgrund von Wartungsarbeiten nicht verfügbar ist.
 
 <<<
 

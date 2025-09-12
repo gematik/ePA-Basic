@@ -47,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.7.0
+  version: 1.8.0
 
   # version history:
   # ----------------
+  # version 1.8.0
+  #   - added error condition for a maximum of 5 pending device registrations 
   # version 1.7.0
   #   - optional X-Request-ID in all requests and responses
   # version 1.6.2
@@ -219,6 +221,7 @@ paths:
         - too many failed attempts for registration occur in the past
           - 3 consecutive failed device registrations were requested for the kvnr of the user within a period of 8 hours and
           - the last failed device registration is less than 8 hours in the past of current system time (waiting time) or
+        - already 5 device registrations in status 'pending' exist for the kvnr of the requestor or
         - in a "Authorize Representative" use case.
 
         "Authorize Representative" applies when the last preceding _I_Authorization_Service::sendAuthorizationRequestfdV_ operation 
@@ -240,6 +243,7 @@ paths:
         | Not the "home system" of the user | 404| notHomeSystem ||
         | Mail address of user is not available | 404| noResource ||
         | Device registration temporarily not allowed | 409 | statusMismatch | errorDetail shall contain end of waiting time |
+        | Currently too many pending registrations | 409 | requestLimit | |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>

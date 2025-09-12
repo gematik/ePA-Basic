@@ -67,10 +67,12 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-  version: 1.2.0
+  version: 1.2.1
 
   # version history:
   # ----------------
+  # version 1.2.1
+  #   - removed rejection of 'not-set' status
   # version 1.2.0
   #   - added status- and error code for state MAINTENANCE
   # version 1.1.1
@@ -365,9 +367,6 @@ paths:
         the state of the channel on the server is not changed.</br>
         This operation is limited to users of role oid_versicherter which has to be the insurant 
         (health record owner).
-
-        In the ePA context, the use of `not_set` is not permitted. Therefore, a channel shall only be 
-        `enabled` or `disabled` here.
 
         **Client**:</br>
         No recommendations.
