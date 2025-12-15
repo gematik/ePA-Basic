@@ -51,9 +51,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.7.1
+  version: 1.7.2
   # version history:
   # ----------------
+  # version 1.7.2
+  #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE  
+  #   - bugfix: added X-Request-ID to responses where missing
   # version 1.7.1
   #   - added email notification of insurant (health record owner) in case of representative entitlement in setEntitlement
   # version 1.7.0
@@ -449,7 +452,7 @@ paths:
        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-       | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | invalidActorId ||
        | request claims _actorId_ == kvnr (_oid_ == oid_versicherter) and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
        | request claims _oid_ == oid_diga and _validTo_ is not equal 9999-12-31T00:00:00Z | 409 | requestMismatch ||
@@ -615,7 +618,7 @@ paths:
         | Requestor is representative deleting an entitlement of another representative  | 403 | accessDenied ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Entitlement to delete does not exist | 404 | noResource ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Parameter _actorId_ refers to a static entitlement| 409 | requestMismatch ||
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -634,6 +637,9 @@ paths:
       responses:
         '204':
           description: OK
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -732,7 +738,7 @@ paths:
        | Token verification failed | 403 | invalidToken ||
        | Audit evidence was already used before | 403 | tokenReuse ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-       | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | hcv value of jwt does not exist | 409 | hcvMissing ||
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
        | request claims _actorId_ and _actorId_ is referenced by a Deny List assignment | 409 | requestMismatch ||
@@ -855,7 +861,7 @@ paths:
        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-       | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
        | Rate limiting | 423 | locked||
        | to many failed attempts | 423 | locked | _kvnr_ check limit |
@@ -929,7 +935,7 @@ paths:
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -997,7 +1003,7 @@ paths:
         | Requestor has no valid entitlement | 403 | notEntitled ||
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | The assignment parameter _oid_ is not in the list of allowd oids | 409 | requestMismatch ||
         | The assignment does yet exist (same _actorId_) | 409 | requestMismatch | avoid duplicates |
         | Any other error | 500 | internalError | (see 'Retry interval') |
@@ -1077,7 +1083,7 @@ paths:
         | Requestor role is not oid_versicherter_ or _oid_ombudsstelle_ | 403 | invalidOid ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Resource for _telematikid_ does not exist | 404 | noResource ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -1134,7 +1140,7 @@ paths:
         | Requestor role is not _oid_versicherter_ or _oid_ombudsstelle_| 403 | invalidOid ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Assignment (_telematikid_) does not exist | 404 | noResource ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
          </br>
@@ -1147,6 +1153,9 @@ paths:
       responses:
         '204':
           description: OK. Assignment deleted
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':

@@ -42,10 +42,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.8.0
+  version: 1.8.1
 
   # version history:
   # ----------------
+  # version 1.8.1
+  #   - added new error condition for device attestation usage in home system in sendAuthCodeFdV
   # version 1.8.0
   #   - added new error condition (statusMismatch) to getNonce
   #   - removed 'exp' check of client attest jwt in sendAuthCodeSc
@@ -687,13 +689,16 @@ paths:
         The provided authorization code shall be exchanged for an ID-Token with the IDP. The ID-Token shall be converted
         into a HSM-ID-Token with an extended validity period.
         
-        Device verification - home system:</br>
+        **Device verification - home system:**</br>
         If _x-device-identifier_ and _x-device-token_ are both submitted the device verification starts immediately after
         the authorization completion.
         Device identifier and -token shall be verified with the registered values.
         The x-device-identifier / x-device-token check shall only consider device registrations for the authorized user.
 
-        Device verification - other than home system:</br>
+        If _x-device-identifier_ and _x-device-token_ are both missing (i.e. not yet registered device) access of the 
+        user session shall be limited to the device management service.
+        
+        **Device verification - other than home system:**</br>
         If _x-device-attestation_ is submitted the device verification starts immediately after the authorization completion.
         The authorization service shall accept a device attestation in case
           - signature is valid
@@ -711,8 +716,7 @@ paths:
         user session.
         if x-authorize-representative is set, access to the user's health record entitlement management only shall be
         possible for the user session.
-        In all other (success cases) access of the user session shall be limited to the device management service.
-
+        
         The user session of a client shall be closed and all session related data shall be deleted in case operation is not successful.
 
         The VAU user preudonym as generated for the vau-channel (see: vau protocol) shall be returned in a successful operation response.
@@ -723,6 +727,7 @@ paths:
         | Request does not match schema | 400 | malformedRequest ||
         | Only _x-device-identifier_ or _x-device-token_ provided | 400 | paramExcpected | both parameters required or none |
         | (_x-device-identifier_ and/or _x-device-token_) and _x-device-attestation_ provided | 400 | paramExcpected | use only registration of home system, another system or none (yet unregistered device) |
+        | _x-device-attestation_ provided in home system | 400 | paramExcpected | home system shall only accept _x-device-identifier_ and _x-device-token_ |
         | _authorize_representative_ is set and _x-device-identifier_ and/or _x-device-token_ and/or x-device-attestation_ provided | 400 | authorizeRep | _x-authorize_representative_ from preceding sendAuthorizationRequestFdV |
         | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
         | _authorizationCode_ not valid | 403 | invalAuth | includes any error of Authorization Service and IDP which is not mapped to 500 internal Server error |
@@ -1205,5 +1210,3 @@ components:
           type: string
       required:
         - errorCode
-
-

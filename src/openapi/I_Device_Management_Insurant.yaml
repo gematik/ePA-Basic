@@ -3,7 +3,8 @@ info:
   title: I_Device_Management_Insurant
   description: |
     This interface provides access to the service **Device Management** of a health 
-    record system for insurants and representatives.<br/>
+    record system for insurants and representatives an to the service **Snippet Management** of a health 
+    record system which may be used to improve the usability of the ePA FdV.<br/>
     
     **General conditions**:</br> 
     For all operations if applicable:
@@ -47,10 +48,14 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.8.0
+  version: 1.9.0
 
   # version history:
   # ----------------
+  # version 1.9.0
+  #   - added API for technical use of ePA-FdV with new operations getSnippets, getSnippet, putSnippet, deleteSnippet
+  # version 1.8.1
+  #   - bugfix: added X-Request-ID to responses where missing
   # version 1.8.0
   #   - added error condition for a maximum of 5 pending device registrations 
   # version 1.7.0
@@ -94,6 +99,7 @@ tags:
 - name: DeviceManagement
   description: |
     **Device Management**
+
     Management of devices takes place beside a health record and is also possible for insurants
     which do not want to use the ePA at all (i.e. general consent decision for epa usage 
     is 'deny').
@@ -168,6 +174,32 @@ tags:
     Deviating from the behaviour of the home system which persists a confirmed device registration, is a device attestation
     only temporarily valid and never persisted, i.e. usually a new device attestation must be obtained from the home system
     for each new login to another system.
+- name: SnippetManagement
+  description: |
+    **Snippet Management**
+
+    Management of snippets takes place beside the health record. It can be used by the ePA FdV manufacturer
+    to improve the usability and applicability for the user's ePA FdV. Therefore it is obtained as a 
+    technical interface without need to involve the user itself. 
+
+    The usage of Snippet Management is the responsibility of the manufacturers. The content of a snippet will not be defined. 
+    It may be for example a code snippet, configuration values, ... - in summary, any information 
+    that can be used by the ePA FdV to improve the usability of the ePA FdV for the user.
+
+    The snippets of an insurant are always and only managed in the health record system associated
+    to the insurant ("home health record system" or "home system"), which is the health record system 
+    hosting the insurance of the insurant.
+
+     **Manage snippets:**
+    - (VAU channel shall be established)
+    - (Login (IDP user authorization) shall be successfully completed)
+    - device registration for the used device is done
+    - Use the following operations to manage the snippets: 
+      - Get a list of all snippets (operation getSnippets)
+      - Get a snippet by snippet identifier (operation getSnippet)
+      - Change existing snippet (operation putSnippet, calling with existing snippet identifier)
+      - Create snippet (operation putSnippet, calling with non-existing snippet identifier)
+      - Delete snippet (operation deleteSnippet)
 
 paths:
   /epa/basic/api/v1/devices/manage:
@@ -716,6 +748,251 @@ paths:
       responses:
         '204':
           description: 'OK. Device registration deleted.'
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v1/snippets:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+
+    get:
+      tags:
+        - SnippetManagement
+      operationId: getSnippets
+      summary: (getSnippets) Get a list of all snippets or technical artefacts
+      description: |
+        Get a list of snippets for the user (associated to kvnr of user).</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        An ePA-FdV client shall have a valid device registration.</br>
+        The _snippet_ is only for technical use and should not be displayed to the user.
+
+        **Provider**:</br>
+        no recommendations.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: "OK"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      $ref: "#/components/schemas/SnippetIdentifierType"
+                    snippet:
+                      $ref: "#/components/schemas/SnippetType"
+              examples:
+                GetAllSnippets:
+                  summary: "example for operation getSnippets"
+                  value:
+                    - id: "2d4f2c5e-33fa-4e75-8dde-12bfa70564b6"
+                      snippet: "ZXhhbXBsZSBvZiBzbmlwcGV0IHRoYXQgdGhlIGVQQS1GZFYgaXMgYWJsZSB0byBzYXZlIGZvciB0aGUgdXNlcgo="
+                    - id: "3b8f05e3-7cd6-419e-9d4b-bf498e6ebb69"
+                      snippet: "Y29kZSBzbmlwcGV0IDI="
+                    - id: "d5c6d4b0-baaf-11eb-8529-0242ac130003"
+                      snippet: 'YT0xOyBiPTI7IGM9Mwo='
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v1/snippets/{snippetidentifier}:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+      - $ref: '#/components/parameters/snippetidentifier'
+
+    put:
+      tags:
+        - SnippetManagement
+      operationId: putSnippet
+      summary: (putSnippet) Create a snippet or update an existing snippet.
+      description: |
+        Create a snippet identified by _snippetidentifier_ if it does not exist otherwise update it.</br>
+        This operation is limited to users of role oid_versicherter.</br>
+        An entitlement is not required.
+
+        **Client**:</br>
+        An ePA-FdV client shall have a valid device registration.</br>
+        The snippet is only for technical use and should not be displayed to user.</br>
+        If a _snippet_ is to be created by this operation, the _snippetidentifier_ has to be created by the client.
+
+        **Provider**</br>        
+        If _snippetidentifier_ already exists, the _snippet_ is updated.</br>
+        If _snippetidentifier_ does not exist, the _snippet_ is created.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |updated||
+        | Successful operation | 201 |created||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | _snippet_ identified by _snippetidentifier_ is created respectively updated ||
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnippetType"
+            examples:
+              example1:
+                summary: "Example to update a snippet for snippetidentifier=2d4f2c5e-33fa-4e75-8dde-12bfa70564b6"
+                value: "ZXhhbXBsZSBvZiBzbmlwcGV0IHRoYXQgdGhlIGVQQS1GZFYgaXMgYWJsZSB0byBzYXZlIGZvciB0aGUgdXNlcgo="
+              example2:
+                summary: "Example to create a snippet for snippetidentifier=3b8f05e3-7cd6-419e-9d4b-bf498e6ebb69"
+                value: "Y29kZSBzbmlwcGV0IDI="
+      responses:
+        '200':
+          description: "OK. Snippet successfully updated"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '201':
+          description: "OK. Snippet successfully created"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    get:
+      tags:
+        - SnippetManagement
+      operationId: getSnippet
+      summary: (getSnippet) Get a snippet by snippetidentifier
+      description: |
+        Retrieves snippet identified by _snippetidentifier_.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        An ePA-FdV client shall have a valid device registration.</br>
+        The snippet is only for technical use and should not be displayed to user.
+
+        **Provider**</br>
+        no recommendations.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Snippet (_snippetidentifier_) does not exist | 404 | noResource ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | none ||
+
+      responses:
+        '200':
+          description: "OK"
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnippetType'
+              examples:
+                example1:
+                  description: "Example to get snippet with snippetidentifier=2d4f2c5e-33fa-4e75-8dde-12bfa70564b6"
+                  value: "ZXhhbXBsZSBvZiBzbmlwcGV0IHRoYXQgdGhlIGVQQS1GZFYgaXMgYWJsZSB0byBzYXZlIGZvciB0aGUgdXNlcgo="
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    delete:
+      tags:
+        - SnippetManagement
+      operationId: deleteSnippet
+      summary: (deleteSnippet) Deletes a snippet by snippetidentifier
+      description: |
+        Deletes _snippet_ identified by _snippetidentifier_.</br>
+        This operation is limited to users of role oid_versicherter. An entitlement 
+        is not required.
+
+        **Client**:</br>
+        An ePA-FdV client shall have a valid device registration.</br>
+        The _snippet_ is only for technical use and should not be displayed to user.
+
+        **Provider**</br>        
+        The _snippet_ identified by _snippetidentifier_ is deleted.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
+        | Requestor role is not _oid_versicherter_ | 403 | invalidOid ||
+        | Device registration does not exist | 403 | unregisteredDevice ||
+        | Snippet (_snippetidentifier_) does not exist | 404 | noResource ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The _snippet_ identified by _snippetidentifier_ is finally deleted ||
+
+      responses:
+        '204':
+          description: 'OK. Snippet deleted.'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -815,7 +1092,12 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/DeviceIdentifierType'
-
+    snippetidentifier:
+      name: snippetidentifier
+      in: path
+      required: true
+      schema: 
+        $ref: '#/components/schemas/SnippetIdentifierType'
   responses:
     Error400BadRequest:
       description: Bad Request.
@@ -993,6 +1275,16 @@ components:
       format: application/jwt
       pattern: ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
       example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIGMuZmQuc2lnIn0.eyJhY3RvcklkIjoiQTEyMzQ1Njc4OSIsICJpYXQiOjE3MzY4OTkyMDAsImV4cCI6MTczNjkwNjQwMH0.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ"
+    SnippetIdentifierType:
+      description: "identifier of snippet generated by the client"
+      type: string
+      format: uuid
+      example: "2d4f2c5e-33fa-4e75-8dde-12bfa70564b6"
+    SnippetType:
+      description: "snippet as a base-64 encoded string"
+      type: string
+      format: byte
+      example: "bGFzdCB1cGRhdGUgb2YgYW55dGhpbmcK"
     ErrorType:
       description: Error object with additional information about the occurred error
       type: object

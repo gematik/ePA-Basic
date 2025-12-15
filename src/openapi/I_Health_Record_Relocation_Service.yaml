@@ -57,10 +57,14 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.3.1
+  version: 1.4.0
 
   # version history:
   # ----------------
+  # version 1.4.0
+  #   - new operations startPackageMergeImport and startPackageCreationForMerge
+  #   - added new state INACCESSIBLE 
+  #   - bugfix: added X-Request-ID to responses where missing
   # version 1.3.1
   #   - editorial: removal of an unused schema
   #   - corrections regarding record state and conditions for error codes
@@ -98,6 +102,12 @@ tags:
       a different insurance ('old insurance')
       
       The _importing provider_ is associated to the operations in path _relocationservice/import_
+
+  - name: Content merge
+    description: |
+     Merge data of an existing health record with data from a health record from a different insurance (source and merge 
+     target with same kvnr). 
+     
 
 paths:
   /relocationservice/v1/export:
@@ -164,6 +174,7 @@ paths:
        | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
        | Invalid certificate provided | 403 | invalCert | the certificate from HSM (hsm-r7) |       
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+       | Health record is in state INACCESSIBLE | 409 | statusMismatch ||
        | Relocation process aborted by requesting provider in the meantime | 409 | processAborted ||
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
@@ -233,7 +244,7 @@ paths:
       tags:
         - Relocation (importing provider)
       operationId: startPackageImport
-      summary: (startPackageImport) Start import of an prepared export package of a health record
+      summary: (startPackageImport) Start import of a prepared export package of a health record
       description: |
        Start the import of an encrypted export package for data migration from another health record provider.</br>
        This operation is limited to entitled users of role oid_kostentraeger. 
@@ -325,6 +336,195 @@ paths:
       responses:
         '204':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /relocationservice/v1/export/merge:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/x-requestid'
+    get:
+      tags:
+        - Content merge
+      operationId: startPackageCreationForMerge
+      summary: (startPackageCreationForMerge) Create an export package of health record for download
+      externalDocs:
+        description: 'Reference implemenation for Health Record Migration'
+        url: https://github.com/gematik/ref-ePA-HealthRecordMigration
+      description: |
+       This operation creates an export package including all data of 
+       the health record for relocation to another health record provider.</br>
+       A created export package equals a _startPackageCreation_ outcome and considers the same data for 
+       export but it is not part of the regular health record relocation process and can be used by the insurance 
+       when necessary.</br>
+       This operation is limited to entitled users of role oid_kostentraeger.
+       
+       **Client**:</br>
+       A client shall use this operation to create an export package for a merge import to an 
+       existing health record hosted by another provider.
+
+       **Provider**:</br>
+       The export package shall be encrypted and stored for later download and contain all transferable 
+       data of all health record services. The export package download url shall 
+       be returned in the response. 
+
+       The certificate (of the receiving health record system) for encryption is a preinstalled
+       certificate and shall be retrieved from HSM by rule 'hsm-r7'. This certifcate shall be 
+       validated before use.
+
+       The format and encryption requirements are stated in an additional repository (see: 'find more details' below)
+       
+       The operation shall not cause a state change and can only be called while in state INACCESSIBLE with sole reason 'ready for merge'.
+     
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 201 |||
+       | Request does not match schema | 400 | malformedRequest ||       
+       | Requestor has no valid entitlement | 403 | notEntitled ||
+       | Requestor role is not _oid_kostentraeger__ | 403 | invalidOid ||
+       | Invalid certificate provided | 403 | invalCert | the certificate from HSM (hsm-r7) |       
+       | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
+       | Health record is not in state INACCESSIBLE with sole reason 'ready for merge' | 409 | statusMismatch | 
+       also if state is INACCESSIBLE with another or additional reason than 'prepared for a merge' |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | Export package is created| |#
+
+      responses:
+        '201':
+          description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              example:
+                downloadurl: 'http://example.com'
+              schema:
+                type: object
+                properties:
+                 downloadurl:
+                    $ref: '#/components/schemas/UrlType'
+                required:
+                  - downloadurl
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: "#/components/responses/Error404NotFound"
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+
+  /relocationservice/v1/import/merge:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/x-requestid'
+    post:
+      tags:
+        - Content merge
+      operationId: startPackageMergeImport
+      summary: (startPackageMergeImport) Import an export package and merge content with existing data of a health record
+      description: |
+       Start the import of an encrypted export package for data migration from another health record provider.</br>
+       This operation is similar to _startPackageImport_ but is not limited to new and empty health records and allows
+       integration of the imported data into an existing health record with data.</br>
+
+       This operation is not part of the regular health record relocation process and can be used by the insurance 
+       when necessary. 
+
+       This operation is limited to entitled users of role oid_kostentraeger. 
+              
+       **Client**:</br>
+       A client shall use this operation with a url for export package download. A client receives this url 
+       by proprietary means.
+       
+       **Provider**:</br>
+       Download the complete export package from the download point. Decrypt the package (rule 'hsm-r5') and 
+       integrate the content into the existing health record data.
+       
+       The rules how to merge incoming and existing data are stated in requirement A_28412-* 
+       and shall be applied.
+
+       The merge of data shall be possible in state ACTIVATED only.
+       Any occuring error shall abort the data merge process and remove all already merged data completely
+       (roll back). 
+
+       Entitlements contained in the export package combine a jwt and additional data.</br> 
+       If an entitlement as part of the export package shall be merged into the current data than 
+       the jwt of the entitlement shall be converted to a CMAC secured entitlement using HSM rule 'rr5'.
+
+       The CMAC secured result shall then be completed with the additional data from the export package entitlement element:
+       - _oid_ of the entitled user
+       - _displayName_ of the entitled user
+       - _issued-at_ original point in time
+       - _issued-actorId_ of requestor
+       - _issued-displayName_ of requestor
+
+       The completed entitlement shall then be stored, encrypted by SecureAdminStorageKey of the health record.</br>
+
+       Audit events for the merge process events shall be created according to requirement A_28413-*.
+
+       The search index for MHD Service shall be rebuild to reflect the merged changes.
+
+       If previously unknown email addresses of representatives are added by the merge operation, a notification 
+       mail shall be sent to each of these representatives, including the information about the changed FQDN.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 204 |||
+       | Request does not match schema | 400 | malformedRequest ||       
+       | Requestor has no valid entitlement | 403 | notEntitled ||
+       | Requestor role is not _oid_kostentraeger_ | 403 | invalidOid ||
+       | Health record does not exist | 404 | noHealthRecord | _insurantid_ unknown |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+       </br>
+       | Postconditions                        | Remarks |
+       |---------------------------------------|---------|
+       | Export package data is merged ||
+       | Log-entries exist | |
+       | Notification for representatives are sent | succesful operation and new representatives only|
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              downloadurl: 'http://example.com'
+            schema:
+              type: object
+              properties:
+                downloadurl:
+                  $ref: '#/components/schemas/UrlType'
+              required:
+                - downloadurl
+      responses:
+        '204':
+          description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':

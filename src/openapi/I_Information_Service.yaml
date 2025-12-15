@@ -31,10 +31,13 @@ info:
     - echo the exact same X-Request-ID value in the response header.
     - log the X-Request-ID in all operational logs related to that request.
 
-  version: 1.5.0
+  version: 1.5.1
 
   # version history:
   # ----------------
+  # version 1.5.1
+  #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
+  #   - bugfix: added X-Request-ID to responses where missing
   # version 1.5.0
   #   - added status- and error code for state MAINTENANCE
   # version 1.4.1
@@ -109,7 +112,7 @@ paths:
        | Health record exists and is in state ACTIVATED | 204 |||
        | Request does not match schema | 400 | malformedRequest ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | _insurantid_ unknown |
-       | Health record is not in state ACTIVATED (i.e. is in state SUSPENDED or MAINTENANCE) | 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is not in state ACTIVATED (i.e. is in state SUSPENDED or INACCESSIBLE) | 409 | statusMismatch | (see 'Retry interval') |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -120,6 +123,9 @@ paths:
       responses:
         '204':
           description: Ok. Record exists and is in state ACTIVATED
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '404':
@@ -156,7 +162,7 @@ paths:
        | Successful operation | 200 |||
        | Request does not match schema | 400 | malformedRequest ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-       | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | Any other error | 500 | internalError | (see 'Retry interval') |
 
        </br>
@@ -244,6 +250,9 @@ paths:
       responses:
         '204':
           description: Ok. Data collected
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '500':

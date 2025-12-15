@@ -47,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.2.0 
+  version: 1.2.1 
 
   # version history:
   # ----------------
+  # version 1.2.1
+  #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
   # version 1.2.0
   #   - added status- and error code for state MAINTENANCE
   # version 1.1.1
@@ -195,7 +197,7 @@ paths:
        | Requestor is not the insurant | 403 | invalidUser ||
        | HSM verification failed | 403 | invalidToken ||
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-       | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+       | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ which is _actorId_ of a static entitlement | 409 | invalidActorId ||
        | request claims _actorId_ == kvnr | 409 | requestMismatch ||
        | request claims _oid_ != oid_ncpeh | 409 | requestMismatch ||
