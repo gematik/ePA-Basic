@@ -10,6 +10,8 @@ properties:
       - $ref: '#/definitions/entitlePs'
       - $ref: '#/definitions/entitleDel'
       - $ref: '#/definitions/constraintDel'
+required:
+  - pushContent
 
 definitions:
   pushContentItem:
@@ -38,7 +40,6 @@ definitions:
 
   xdsPut:
     description: data structure of channel to upload a new document to the XDS document service (operation ProvideAndRegisterDocumentSet-b)
-    properties:
     allOf:
       - $ref: '#/definitions/pushContentItem'
       - type: object
@@ -51,9 +52,9 @@ definitions:
           docId:
             description: Identifier of the document according to metadata DocumentEntry.uniqueId
             type: string
-    required:
-    - title
-    - docId
+        required:
+          - title
+          - docId
 
   xdsUpdate:
     description: data structure of channel to update an existing document to the XDS document service (operation ProvideAndRegisterDocumentSet-b with document replacement)
@@ -69,9 +70,9 @@ definitions:
           docId:
             description: Identifier of the document according to metadata DocumentEntry.uniqueId
             type: string
-    required:
-    - title
-    - docId
+        required:
+          - title
+          - docId
 
   entitlePut:
     description: data structure of channel to add an entitlement done by representative using FdV
@@ -91,10 +92,10 @@ definitions:
             description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
             type: string
             format: date-time
-    required:
-    - who
-    - oid
-    - validTo
+        required:
+          - who
+          - oid
+          - validTo
 
   entitlePs:
     description: data structure of channel to add an entitlement done by LEI using operation setEntitlementPs
@@ -114,10 +115,10 @@ definitions:
             description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
             type: string
             format: date-time
-    required:
-    - who
-    - oid
-    - validTo
+        required:
+          - who
+          - oid
+          - validTo
 
   entitleDel:
     description: data structure of channel to delete an entitlement done by representative using FdV
@@ -137,13 +138,13 @@ definitions:
             description: validTo of entitlement; Expiry date-time of entitlement in format according to rfc3339
             type: string
             format: date-time
-    required:
-    - who
-    - oid
-    - validTo
+        required:
+          - who
+          - oid
+          - validTo
 
   constraintDel:
-    description: | 
+    description: |
       data structure of channel to undo (make it visible again) a restricted document or category or folder; 
       means deleting constraint in general deny policiy of a health record; 
       done by representative using FdV
@@ -153,8 +154,9 @@ definitions:
         properties:
           channelId:
             const: 'constraint.del'
-      - oneOf:
-          - properties:
+        oneOf:
+          - type: object
+            properties:
               title:
                 description: |
                   title of the document which is now visible (was hidden before) according to metadata DocumentEntry.title
@@ -165,11 +167,20 @@ definitions:
                   Identifier of the document according to metadata DocumentEntry.uniqueId;
                   rootDocumentId of deleted entry of general deny policy references the document
                 type: string
-          - properties:
+            required:
+              - title
+              - docId
+
+          - type: object
+            properties:
               categoryId:
                 description: categoryId of deleted entry of general deny policy
                 type: string
-          - properties:
+            required:
+              - categoryId
+
+          - type: object
+            properties:
               folderTitle:
                 type: string
               folderCode:
@@ -178,3 +189,7 @@ definitions:
               folderUuid:
                 description: folderUUID of deleted entry of general deny policy
                 type: string
+            required:
+              - folderTitle
+              - folderCode
+              - folderUuid

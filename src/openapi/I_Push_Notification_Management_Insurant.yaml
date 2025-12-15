@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 openapi: 3.0.3
 info:
   title: I_Push_Notification_Management
@@ -67,15 +68,19 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-  version: 1.2.1
+  version: 1.4.0
 
   # version history:
   # ----------------
-  # version 1.2.1
+  # version 1.4.0
+  #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
+  #   - changed HTTP-Statuscode from 409 to 403 for forbidden user condition
+  #   - adapted parameters to new general push specification (parameter names were adjusted there)
+  # version 1.3.1  
   #   - removed rejection of 'not-set' status
-  # version 1.2.0
+  # version 1.3.0
   #   - added status- and error code for state MAINTENANCE
-  # version 1.1.1
+  # version 1.2.1
   #   - clarification about condition for 404 noHealthRecord and 409 statusMismatch
   # version 1.2.0
   #   - changed OperationId getChannelsOfDevice to getChannelsOfPusher
@@ -131,9 +136,9 @@ paths:
         | Request does not match schema | 400 | malformedRequest||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
+        | Requestor is not insurant (health record owner | 403 | invalidUser ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
         </br>
@@ -150,10 +155,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/schema'
+                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_get.yaml#/schema'
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -245,11 +250,11 @@ paths:
         | Request does not match schema | 400 | malformedRequest ||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
+        | Requestor is not insurant (health record owner | 403 | invalidUser ||
         | Pusher does not exist in health record | 404 | noResource | delete pusher only |
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | The specified pusher is already registered for a different ePA-FdV instance | 409 | requestMismatch | except for delete pusher |
-        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
         </br>
@@ -262,12 +267,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
             examples:
               registration:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
               deletion:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
         description: The pusher information.
         required: true
       responses:
@@ -322,10 +327,10 @@ paths:
         | Request does not match schema | 400 | malformedRequest||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
+        | Requestor is not insurant (health record owner | 403 | invalidUser ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Provided _pushkey_ does not exist in health record | 404 | noResource ||
-        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
         </br>
@@ -342,10 +347,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -389,10 +394,10 @@ paths:
         | Request does not match schema | 400 | malformedRequest||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
+        | Requestor is not insurant (health record owner | 403 | invalidUser ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
         | Provided _pushkey_ does not exist in health record | 404 | noResource ||
-        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
         </br>
@@ -416,10 +421,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_post.yaml#/schema
             examples:
               update:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_post.yaml#/examples/update
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_post.yaml#/examples/update
         description: The channel information.
         required: true
       responses:
@@ -469,9 +474,9 @@ paths:
         | Request does not match schema | 400 | malformedRequest||
         | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
         | Device registration does not exist | 403 | unregisteredDevice ||
+        | Requestor is not insurant (health record owner | 403 | invalidUser ||
         | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
-        | Requestor is not insurant (health record owner) | 409 | requestMismatch ||
-        | Health record is in state SUSPENDED or MAINTENANCE| 409 | statusMismatch | (see 'Retry interval') |
+        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
         | Any other error | 500 | internalError | (see 'Retry interval') |
 
         </br>
@@ -492,10 +497,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.0/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':

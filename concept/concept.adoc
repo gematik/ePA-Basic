@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 01.08.2025
-:revnumber: 3.1.3
+// :revdate: 15.12.2025
+:revnumber: 3.1.3-1
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.1.3 Release, 01.08.2025
+//Version: 3.1.3-1 Release, 15.12.2025
 endif::[]
 
 
@@ -155,8 +155,13 @@ endif::[]
 |
 |Veröffentlichung
 |gematik
-|===
 
+|3.1.3-1
+|15.12.2025
+|
+|Anpassung der Legal Policy - keine Leserechte für Ärzt:innen; Veröffentlichung
+|gematik
+|===
 toc::[]
 
 
@@ -449,7 +454,7 @@ image::plantuml/statemachine.svg[caption="Abbildung {counter:figure}: ", reftext
 
 endif::[]
 
-Der Zustand "Maintenance" ist ein Zustand, der vom Aktensystem gesetzt wird, wenn eine Akte aufgrund von Wartungsarbeiten nicht verfügbar ist.
+Der Zustand "Inaccessible" ist ein Zustand, der vom Aktensystem gesetzt wird, wenn eine Akte aufgrund von Wartungsarbeiten oder Inkonsistenzen nicht verfügbar ist.
 
 <<<
 

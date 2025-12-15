@@ -24,23 +24,22 @@ Unknown : The Health Record is not known
 Initialized : Health Record is registered \nbut not accessible to anyone \nelse but the Health Insurance
 Activated : Normal work state \nfor Health Record
 Suspended : Health Record is \nsuspended for migration
+Inaccessible : Health Record is \ntemporarily not operational
 
 Unknown --> Initialized : Initializing \nHealth Record
 
 Initialized --> Unknown : No more consent \nfor Health Record
-
 Initialized --> Initialized : Finish import of \nmigration information
 Initialized --> Activated : Set by Health Insurance or \nafter successful import \nof migration information
 
 Activated --> Unknown : No more consent \nfor Health Record
 Activated --> Suspended : Migration of \nHealth Record is \nstarted by \nHealth Insurance
-Activated --> Maintenance : Health Record must \nundergo maintenance
-Suspended --> Activated : Stop \nmigration \ndue to fault
+Activated -right-> Inaccessible : Health Record is \nnot operational
 
+Suspended --> Activated : Stop \nmigration \ndue to fault
 Suspended --> Unknown : Health Record deleted \nby Health Insurance
 
-Maintenance --> Activated : Maintenance finished \nby Health Insurance
-Maintenance --> Unknown : No more consent \nfor Health Record
-Maintenance --> Suspended : Migration of \nHealth Record is \nstarted by \nHealth Insurance
+Inaccessible --> Activated : Health Record is \noperational again
+Inaccessible --> Unknown : No more consent \nfor Health Record
 
 @enduml

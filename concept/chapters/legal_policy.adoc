@@ -206,12 +206,12 @@ h|Versicherter/ Vertreter
 |7
 |receipt
 |Bei Kostenträgern gespeicherte Daten über die in Anspruch genommenen Leistungen des Versicherten
-^|RD
-^|RD
 ^|-
-^|R
-^|R
-^|R
+^|-
+^|-
+^|-
+^|-
+^|-
 ^|CU
 ^|-
 ^|-
@@ -344,11 +344,11 @@ h|Versicherter/ Vertreter
 ^|R
 ^|R
 ^|-
-^|-
+^|D(**)
 ^|-
 ^|CU
 ^|-
-^|RD
+^|RD(**)
 
 |16
 |demographics +
@@ -404,6 +404,8 @@ h|Versicherter/ Vertreter
 |===
 
 (*) Der Einsteller einer Elternnotiz eines Kinderuntersuchungshefts kann neben einer Leistungserbringerinstitution der Versicherte bzw. sein Vertreter sein.
+
+(**) Ein Versicherter bzw. sein Vertreter sowie die Ombudsstelle kann, durch Setzen eines Widerspruchs gegen das Einstellen von Verordnungsdaten und Dispensierinformation durch den E-Rezept-Fachdienst (erp-submission), das Löschen der im FHIR data service medication gespeicherten Daten erzwingen.
 
 [page-layout=portrait]
 <<<

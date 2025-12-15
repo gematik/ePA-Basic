@@ -1,8 +1,22 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
-## information
-The version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.
+## Release 3.1.3-1
+### changes
+- new operations for merge packages in I_Information_Service_Accounts.yaml (C_12531)
+- API to manage technical artefacts (snippets) in I_Device_Management_Insurant.yaml (C_12525)
+- no relocation in state INACCESSIBLE in I_Health_Record_Relocation_Service.yaml (C_12439)
+- new operations for export package merge in I_Health_Record_Relocation_Service.yaml (C_12438)
+- renamed state MAINTENANCE to INACCESSIBLE in all OpenApis (C_12469)
+- improved description for health record relocation in I_Information_Service_Accounts.yaml (C_12501)
+- changed HTTP-Statuscode for error condition in I_Push_Notification_Management_Insurant.yaml (C_12527)
+- added error condition for device attestation usage in home system in I_Authorization_Service.yaml (C_12470)
+- push content schema bugfix in pushNotificationSchema.yaml (C_12494)
+- adapted parameters to new general push specification in I_Push_Notification_Management_Insurant.yaml (parameter names were adjusted there) (C_12511)
+- fixed version history in I_Push_Notification_Management_Insurant.yaml (version numbers were not correct)
+- bugfix: added X-Request-ID to responses where missing (C_12536)
+- concept: change of legal policy - deletion of read access for health professionals  (C_12540)
+
 ## Release 3.1.3
 ### changes
 - added amount limit for pending device registrations (C_12383)
@@ -21,7 +35,8 @@ The version 3.1.2 is the logically subsequent version of version 3.0.5 and incor
 - add suppression of repeated authorizations in getNonce in I_Authorization_Service.yaml 
 - integrate all changes from ePA-3.0.5-4
     - correction for 'iat' and timing tolerance used in client attest jwt in I_Authorization_Service.yaml (C_12364)
-## Release 3.1.2-1
+## information
+The version 3.1.2 is the logically subsequent version of version 3.0.5 and incorporates the latest fixes and maintenance changes and also selected changes published for the intermediate release 3.1.0.## Release 3.1.2-1
 ### changes
 - Clarified distinction between relocation requestid and X-Request-ID in I_Information_Service_Accounts.yaml and I_Health_Record_Relocation_Service.yaml.
 - Changed OperationId getChannelsOfDevice to getChannelsOfPusher in I_Push_Notification_Management_Insurant.yaml
