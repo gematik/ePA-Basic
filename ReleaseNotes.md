@@ -1,6 +1,9 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
+## Release 3.1.3-2 alpha
+### changes
+- new operation for conflict avoidance in I_Information_Service_Accounts.yaml (C_12603)
 ## Release 3.1.3-1
 ### changes
 - new operations for merge packages in I_Information_Service_Accounts.yaml (C_12531)
