@@ -54,7 +54,7 @@ info:
   #   - added error condition for not authenticated user sessions
   # version 1.3.0
   #   - added status code 404 notHomeSystem to replaceEmailAddress
-  #   - clarification regarding x-insurant-id (editorial)
+  #   - clarification regarding x-insurantid (editorial)
   #   - responses as json object
   #   - added actor and timestamp to responses
   #   - discard setEmailAddress and rework replaceEmailAddress as common setter operation
@@ -85,7 +85,7 @@ tags:
     - insurants (excluding representatives) to register or update their own email address 
     - insurances to register or update the email address of an insurant hosted by the insurance
 
-    There is only one single email address supported by the helath record system. This address 
+    There is only one single email address supported by the health record system. This address 
     is always associated to a kvnr and always hosted in the "Home System" of an insurant, the 
     health record system operating health records for the insurance of a user.
 
@@ -112,7 +112,7 @@ paths:
         **Client**:</br>
         An ePA-FdV client shall have a valid device registration.
 
-       The insurance shall use _x-insurant-id_ for addressing.</br>
+       The insurance shall use _x-insurantid_ for addressing.</br>
        For ePA-FdV no health record is mandated for this operation but the used device
        shall have a valid device registration for successful operation.
 
@@ -176,7 +176,7 @@ paths:
        The (single) email address is set or replaced by the provided new email address. The addressed owner
        of the email (associated insurant) shall be: 
        - kvnr (insurantId) from UserSession when requestor role is oid_versicherter (i.e. ePA-FdV client)
-       - insurnatId from _x-insurant-id_ when requestor role is oid_kostentraeger
+       - insurantId from _x-insurantid_ when requestor role is oid_kostentraeger
        
        Each change of an email address shall collect the following data for information:
        - timestamp _createdAt_ set to current system time.

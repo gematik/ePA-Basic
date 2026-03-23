@@ -225,8 +225,6 @@ paths:
         The only supported kind is http. The request body's `kind` parameter shall therefore only be `http` 
         or `null`. Any other value shall be considered an invalid parameter (-> malformedRequest).
 
-        Requests with the request body's data object containing keys other that url shall be considered invalid (-> malformedRequest).
-
         Requests with one or more invalid parameters (e.g. invalid data.url) are to be considered 
         invalid and rejected as a whole (-> malformedRequest).
 

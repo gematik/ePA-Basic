@@ -1,9 +1,16 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
-## Release 3.1.3-2 alpha
+## Release 3.1.3-2
 ### changes
+- added missing X-Request-ID in some reponses (from C_12536)
+- added 'relocationRejected' and 'mergeRejected' incidents in I_Information_Service_Accounts.yaml (C_12718)
+- operation updatePusher: other attributes than url and format are allowed in Pusher.PusherData in I_Push_Notification_Management_Insurant.yaml (C_12668)
+- link of push notification concept is updated in chapter Push Notification Management
+- renamed merge incidents in I_Information_System_Account.yaml (C_12642)
+- clarification for multiple health record system providers in I_Information_Service_Accounts.yaml (C_12671)
 - new operation for conflict avoidance in I_Information_Service_Accounts.yaml (C_12603)
+- changed use of DocumentEntry.uniqueId to DocumentEntry.entryUUID for element docId in pushNotificationSchema.yaml (C_12638)
 ## Release 3.1.3-1
 ### changes
 - new operations for merge packages in I_Information_Service_Accounts.yaml (C_12531)

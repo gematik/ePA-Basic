@@ -48,10 +48,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.9.0
+  version: 1.10.0
 
   # version history:
   # ----------------
+  # version 1.10.0
+  #   - added missing X-Request-ID to all responses
   # version 1.9.0
   #   - added API for technical use of ePA-FdV with new operations getSnippets, getSnippet, putSnippet, deleteSnippet
   # version 1.8.1
@@ -993,6 +995,9 @@ paths:
       responses:
         '204':
           description: 'OK. Snippet deleted.'
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
