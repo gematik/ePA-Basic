@@ -33,7 +33,7 @@ Hat der Versicherte seine ePA-FdV-Instanz für Push Nachrichten registriert und 
 Das Feature Push Notification ist im ePA-FdV ein optionales Feature.
 
 Das Feature Push Notification als Basisleistung der Telematik Infrastruktur ist beschrieben in:
-link:https://github.com/gematik/gem-push-notifications-concept/blob/1.0.0-RC1/docs/concept.adoc[Push Notification Concept]
+link:https://github.com/gematik/gem-push-notifications-concept/blob/main/docs/concept.adoc[Push Notification Concept]
 
 
 

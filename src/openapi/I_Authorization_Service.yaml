@@ -42,10 +42,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.8.1
+  version: 1.9.0
 
   # version history:
   # ----------------
+  # version 1.9.0
+  #   - added missing  X-Request-ID in responses
   # version 1.8.1
   #   - added new error condition for device attestation usage in home system in sendAuthCodeFdV
   # version 1.8.0
@@ -312,6 +314,9 @@ paths:
       responses:
         '200':
           description: Ok.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
           content:
             application/json:
               schema:
