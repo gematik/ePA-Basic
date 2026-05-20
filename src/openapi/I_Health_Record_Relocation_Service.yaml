@@ -57,10 +57,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.4.0
+  version: 1.5.0
 
   # version history:
   # ----------------
+  # version 1.5.0
+  #   - added missing requestId for merge operations
   # version 1.4.0
   #   - new operations startPackageMergeImport and startPackageCreationForMerge
   #   - added new state INACCESSIBLE 
@@ -355,7 +357,7 @@ paths:
       - $ref: '#/components/parameters/insurantid'
       - $ref: '#/components/parameters/useragent'
       - $ref: '#/components/parameters/x-requestid'
-    get:
+    post:
       tags:
         - Content merge
       operationId: startPackageCreationForMerge
@@ -365,7 +367,7 @@ paths:
         url: https://github.com/gematik/ref-ePA-HealthRecordMigration
       description: |
        This operation creates an export package including all data of 
-       the health record for relocation to another health record provider.</br>
+       the health record for a record merge by another health record provider.</br>
        A created export package equals a _startPackageCreation_ outcome and considers the same data for 
        export but it is not part of the regular health record relocation process and can be used by the insurance 
        when necessary.</br>
@@ -405,6 +407,23 @@ paths:
        |---------------------------------------|---------|
        | Export package is created| |#
 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              Package generation request:
+                value:
+                  requestId: '39a85677-795d-4a49-862d-29fbd6ec8a3d'
+            schema:
+              type: object
+              properties:
+                requestId:
+                  allOf:
+                    - $ref: '#/components/schemas/RequestIdType'
+                  description: A unique merge request id
+              required:
+                - requestId
       responses:
         '201':
           description: Ok.
@@ -413,14 +432,20 @@ paths:
               $ref: '#/components/headers/requestid'
           content:
             application/json:
-              example:
-                downloadurl: 'http://example.com'
+              examples:
+                Package generation response:
+                  value:
+                    requestId: '39a85677-795d-4a49-862d-29fbd6ec8a3d'
+                    downloadurl: 'http://example.com'
               schema:
                 type: object
                 properties:
-                 downloadurl:
+                  requestId:
+                    $ref: '#/components/schemas/RequestIdType'
+                  downloadurl:
                     $ref: '#/components/schemas/UrlType'
                 required:
+                  - requestId
                   - downloadurl
         '400':
           $ref: '#/components/responses/Error400BadRequest'
@@ -510,14 +535,22 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              downloadurl: 'http://example.com'
+            examples:
+              Package import request:
+                value:
+                  requestId: '39a85677-795d-4a49-862d-29fbd6ec8a3d'
+                  downloadurl: 'http://example.com'
             schema:
               type: object
               properties:
+                requestId:
+                  allOf:
+                    - $ref: '#/components/schemas/RequestIdType'
+                  description: A unique relocation request id
                 downloadurl:
                   $ref: '#/components/schemas/UrlType'
               required:
+                - requestId
                 - downloadurl
       responses:
         '204':
@@ -628,7 +661,7 @@ components:
 
   schemas:
     UrlType:
-      description: An url for the download of a prepared and encrypted export package
+      description: An url to download a prepared and encrypted export- or merge package
       type: string
       format: url
       example: https://example.com

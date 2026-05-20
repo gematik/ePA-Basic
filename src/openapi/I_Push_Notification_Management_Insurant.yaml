@@ -68,10 +68,12 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-  version: 1.4.0
+  version: 1.5.0
 
   # version history:
   # ----------------
+  # version 1.5.0
+  #   - correction of linked raw files to actual version tag V1.1.0
   # version 1.4.0
   #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
   #   - changed HTTP-Statuscode from 409 to 403 for forbidden user condition
@@ -155,10 +157,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_get.yaml#/schema'
+                $ref: 'https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/pusher_get.yaml#/schema'
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/pusher_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -265,12 +267,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/pusher_post_put_delete.yaml#/schema
             examples:
               registration:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/registration
               deletion:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/pusher_post_put_delete.yaml#/examples/deletion
         description: The pusher information.
         required: true
       responses:
@@ -345,10 +347,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -419,10 +421,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_post.yaml#/schema
+              $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_post.yaml#/schema
             examples:
               update:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_post.yaml#/examples/update
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_post.yaml#/examples/update
         description: The channel information.
         required: true
       responses:
@@ -495,10 +497,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/schema
+                $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_get.yaml#/schema
               examples:
                 response:
-                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.0.1/docs_sources/definitions/channels_get.yaml#/examples/response
+                  $ref: https://raw.githubusercontent.com/gematik/gem-push-notifications-concept/refs/tags/1.1.0/docs_sources/definitions/channels_get.yaml#/examples/response
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':

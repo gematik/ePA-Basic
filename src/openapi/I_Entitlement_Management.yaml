@@ -51,9 +51,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.7.2
+  version: 1.8.0
   # version history:
   # ----------------
+  # version 1.8.0
+  #   - align errorconditions of setEntitlementPsV2 with setEntitlementPs
+  #   - fixed example Set_SingleEntitlementV2 (jwt -> popp)
   # version 1.7.2
   #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE  
   #   - bugfix: added X-Request-ID to responses where missing
@@ -858,8 +861,11 @@ paths:
        |------------|-------------|------------|---------|
        | Successful operation | 201 || even if an existing entitlement is kept due to longer validity |
        | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | no user session with valid ID-Token available |
        | Requestor role is not in the list of allowed usergroups | 403 | invalidOid ||
-       | HSM verification failed | 403 | invalidToken ||
+       | Token verification failed | 403 | invalidToken ||
+       | Audit evidence was already used before | 403 | tokenReuse ||
+       | request claims _actorId_ and _actorId_ is referenced by a Deny List assignment | 409 | requestMismatch ||       
        | Health record does not exist (UNKNOWN) or is in state INITIALIZED | 404 | noHealthRecord | |
        | Health record is in state SUSPENDED or INACCESSIBLE| 409 | statusMismatch | (see 'Retry interval') |
        | request claims _actorId_ and _actorId_ is referenced by a Blocked User Policy assignment | 409 | requestMismatch ||
@@ -1575,7 +1581,7 @@ components:
     Set_SingleEntitlementV2:
       summary: An entitlement request using PoPP (dummy data).
       value:
-        jwt: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0g.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0=.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ=="
+        popp: "eyJ0eXAiOiAidm5kLnRlbGVtYXRpay5wb3BwK2p3dCIsImFsZyI6ICJFUzI1NiIsImtpZCI6ICJ4X3ZXNExWRGlwdnU4aVVRNWFsS3NaTFd0SDZqaDRlSjRjNW9mZlh0TVYwIn0g.eyJ2ZXJzaW9uIjogIjEuMC4wIiwiaWF0IjogMTcyMjU5MzI1NiwiaXNzIjogImh0dHBzOi8vcG9wcC5leGFtcGxlLmNvbSIsInByb29mTWV0aG9kIjogImVoYy1wcmFjdGl0aW9uZXItdHJ1c3RlZGNoYW5uZWwtcmVhZC14NTA5IiwicGF0aWVudFByb29mVGltZSI6IDE3MjI1OTMyNTUsInBhdGllbnRJZCI6ICJYMTIzNDU2Nzg5IiwiaW5zdXJlcklkIjogIjEyMzQ1Njc4OSIsImFjdG9ySWQiOiAiMS0yMDEyMzQ1Njc4IiwiYWN0b3JQcm9mZXNzaW9uT2lkIjogIjEuMi4yNzYuMC43Ni40LjUwIn0=.W3NvbWUgdmFsaWQgc2lnbmF0dXJlXQ=="
     Get_AllPolicyAssignments:
       summary: Get all Blocked User Policy assignments.
       value:

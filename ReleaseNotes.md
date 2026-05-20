@@ -1,6 +1,12 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
+## Release 3.1.3-3
+### changes
+- correction of linked raw files to actual version tag V1.1.0 in I_Push_Notification_Management_Insurant.yaml (C_12749)
+- aligned error conditions for setEntitlement versions in I_Entitlement_Magangement.yaml (from C_12735)
+- corrected example in I_Entitlement_Magangement.yaml (editorial)
+- added missing requestId in merge operations of I_Health_Record_Relocation_Service.yaml (C_12739)
 ## Release 3.1.3-2
 ### changes
 - added missing X-Request-ID in some reponses (from C_12536)
