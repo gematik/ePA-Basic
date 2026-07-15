@@ -42,10 +42,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.9.0
+  version: 1.9.1
 
   # version history:
   # ----------------
+  # version 1.9.1
+  #   - added new operation sendAuthCodeSCv2 with capabilities section in response for product version information
   # version 1.9.0
   #   - added missing  X-Request-ID in responses
   # version 1.8.1
@@ -196,7 +198,7 @@ tags:
    **Allowed usergroups for Authorization SMC-B**
    Authorization with SMC-B is limited to certain user roles: 
    The following list of allowed roles (professionOid) is for information only and may be incomplete, 
-   the normative requirement is defined in A_23941-* (excluding oid_versicherter and oid_erp-vau) and C_12159-*.
+   the normative requirement is defined in A_23941-* (excluding oid_versicherter and oid_erp-vau) and A_26167-*.
 
    Allowed roles [professionOID] 
    - oid_praxis_arzt
@@ -454,7 +456,86 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/AuthorizationResponse200'
+          $ref: '#/components/responses/AuthorizationResponseSC200'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/authz/v2/send_authcode_sc:
+    parameters:
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    post:
+      tags:
+        - Authorization SMC-B
+      operationId: sendAuthCodeSCv2
+      summary: (sendAuthCodeSCv2) Send authorization code
+      externalDocs:
+        description: 'IDP-Dienst: gemSpec_IDP_FD, chapter "5.5 IDP-Dienst als OIDC IDP"'
+        url: https://gemspec.gematik.de/docs/gemSpec/
+      description: | 
+        After successful user authentication the authorization code grant was returned to the authorization 
+        service, that is exchanged for an ID token at the IDP's token endpoint using this operation.
+        This operation is limited to users of the "Allowed usergroups for Authorization SMC-B"
+
+        **Client**:</br>
+        A client shall submit the authorization code received from the authenticator and the client attestation
+        (signed nonce)
+
+        **Provider**:</br>
+        The authorization service shall use the authorization code to prepare a token request for the IDP and receive
+        the encrypted ID-Token in return. 
+        The received ID-Token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
+
+        The authorization service shall further validate the ID-token against the stored nonce (from a preceding _getNonce_ operation)
+        and the client attestation:
+        - _clientAttest_ is valid if
+          - signature is valid
+          - user has role as in "Allowed usergroups for Authorization SMC-B" (from signature cert)
+        - stored nonce shall not be outdated
+        - stored nonce shall match client attestation nonce
+        - Telematik-Id of client attestation (from signature cert) shall match the telematik-id claim of the ID-Token 
+
+        note: client based timestamps (e.g. 'iat' or 'exp' of client attest jwt) are not checked 
+        due to timebase difference between client and server and are always accepted.
+
+        The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
+
+        The nonce shall be discarded, i.e. reuse of a client attestation for user session establishment shall be rejected. 
+
+        The VAU user preudonym as generated for the vau-channel (see: vau protocol) and the version information 
+        for the product are returned in a successful operational response.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 200 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Invalid request | 403 | invalAuth | includes any error of Authorization Service which are not mapped to 500 internal Server error |
+        | No or outdated nonce | 409 | statusMismatch | No preceding _getNonce_ call or stored nonce outdated/invalid |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+         </br>
+        | Postconditions                        | Remarks |
+        |---------------------------------------|---------|
+        | The nonce is discarded ||
+        | User session has valid HSM-ID-Token for requesting client (telematik-id) | successful operation only |
+        | User session and temporary data is deleted | failed operation only |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendAuthCodeSCtype'
+
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthorizationResponseSC200v2'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -566,7 +647,7 @@ paths:
 
       responses:
         '200':
-          $ref: '#/components/responses/AuthorizationResponse200'
+          $ref: '#/components/responses/AuthorizationResponseBearerToken200'
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -938,7 +1019,57 @@ components:
         example: true
 
   responses:
-    AuthorizationResponse200:
+    AuthorizationResponseSC200:
+      description: "OK, Successful login"
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            vau-np: c9a7289e763616d449886acdeb8b83d115881c5d078b8643d112190bc7516584
+          schema:
+            type: object
+            properties:
+              vau-np:
+                $ref: '#/components/schemas/VauUserPseudonymType'
+            required:
+              - vau-np
+    AuthorizationResponseSC200v2:
+      description: "OK, Successful login"
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            vau-np: c9a7289e763616d449886acdeb8b83d115881c5d078b8643d112190bc7516584
+            capabilities:
+              ProductVersion: "6.0.0"
+              ProductTypeVersion: "3.1.3"
+          schema:
+            type: object
+            properties:
+              vau-np:
+                $ref: '#/components/schemas/VauUserPseudonymType'
+              capabilities:
+                type: object
+                description: Information about current versions of product, services and components of the health record system.
+                properties: 
+                  ProductVersion:
+                    description: Product version of the health record system
+                    $ref: '#/components/schemas/VersionInfoType'
+                  ProductTypeVersion:
+                    description: Product type version of the health record system
+                    $ref: '#/components/schemas/VersionInfoType'
+                required:
+                  - ProductVersion
+                  - ProductTypeVersion
+            required:
+              - vau-np
+              - capabilities
+
+    AuthorizationResponseBearerToken200:
       description: "OK, Successful login"
       headers:
         X-Request-ID:
@@ -1063,6 +1194,11 @@ components:
             $ref: '#/components/schemas/ErrorType'
 
   schemas:
+    VersionInfoType:
+      description: Version information of a service or component
+      type: string
+      pattern: '^(?:[1-9]\d?|\d)\.(?:[1-9]\d?|\d)\.(?:[1-9]\d?|\d)(?:-(?:[1-9]\d?|\d))?$'
+      example: "1.2.3"
     KvnrType:
       description: KVNR of a user
       type: string

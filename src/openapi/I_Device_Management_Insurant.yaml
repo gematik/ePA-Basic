@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: I_Device_Management_Insurant
   description: |
-    This interface provides access to the service **Device Management** of a health 
-    record system for insurants and representatives an to the service **Snippet Management** of a health 
-    record system which may be used to improve the usability of the ePA FdV.<br/>
+    This interface provides access to the **Device Management** of a health 
+    record system for insurants and representatives an the **Snippet Management** of a health 
+    record system which may be used to improve the usability of ePA-FdVs.<br/>
     
     **General conditions**:</br> 
     For all operations if applicable:
@@ -22,7 +22,8 @@ info:
 
     All operations of this service mandate a VAU-channel and an authorized user session.</br>
     As this service does not address particular health records, no entitlement for the user
-    is required. Also no (confirmed) device registration for the device used is required.
+    is required.</br> 
+    A valid (confirmed) device registration for the device used is required, except for Device Management access.
 
     **Retry interval**:</br>
     The following retry intervals are suggested in case of an error response:<br>
@@ -48,10 +49,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.10.0
+  version: 1.10.1
 
   # version history:
   # ----------------
+  # version 1.10.1
+  #   - (editorial) clarification of device registration requirement for device management and snippet management operations
   # version 1.10.0
   #   - added missing X-Request-ID to all responses
   # version 1.9.0
@@ -118,7 +121,7 @@ tags:
 
     A confirmed device registration is always required for any device with installed ePA-FdV 
     used to access health record content. An unregistered (i.e. new) or not confirmed device 
-    only has access to the device management service. A device used in an "Authorize Representative"
+    only has access restricted to the device management. A device used in an "Authorize Representative"
     situation with a user temporarily acting on a device of a different user for respresentative 
     entitlement only has access to the entitlement management of the acting user's health record.
 
@@ -195,7 +198,7 @@ tags:
      **Manage snippets:**
     - (VAU channel shall be established)
     - (Login (IDP user authorization) shall be successfully completed)
-    - device registration for the used device is done
+    - (A valid device registration for the device used exists)
     - Use the following operations to manage the snippets: 
       - Get a list of all snippets (operation getSnippets)
       - Get a snippet by snippet identifier (operation getSnippet)
