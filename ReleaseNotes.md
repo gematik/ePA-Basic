@@ -1,6 +1,11 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
+## Release 3.1.3-4
+### changes
+- added error condition requestRejected for incident rejection in case of merge in I_Information_Service_Accounts.yaml (C_12751)
+- added product version information for clients at login in I_Authorization_Service.yaml (C_12709)
+- removed obsolete error condition in I_Email_Management.yaml (from C_12738)
 ## Release 3.1.3-3
 ### changes
 - correction of linked raw files to actual version tag V1.1.0 in I_Push_Notification_Management_Insurant.yaml (C_12749)
