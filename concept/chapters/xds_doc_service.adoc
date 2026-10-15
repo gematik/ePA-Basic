@@ -56,7 +56,6 @@ Die ePA-Fachanwendung nutzt die folgenden Integrationsprofile des IHE ITI TF:
 * Cross-Enterprise Document Media Interchange (XDM) Profile
 * Cross-Enterprise Document Sharing (XDS.b) Profile
 * Remove Metadata and Documents (RMD) Profile
-* Restricted Metadata Update (RMU) Profile
 
 In der nachstehenden <<#fig:ihe-xds-transaktionsübersicht, Abbildung>> wird gezeigt, welche IHE ITI-Akteure insgesamt in der Fachanwendung ePA wie gruppiert und welche zugehörigen Transaktionen angewendet werden. Akteure unterschiedlicher Integrationsprofile sind im XDS Document Service über zusammengefasste Außenschnittstellen nutzbar, d.h. sie agieren nach außen hin nicht als eigenständige Dienste, sondern sind über feste Pfade adressiert.
 

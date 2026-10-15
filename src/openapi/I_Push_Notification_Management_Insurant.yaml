@@ -57,8 +57,8 @@ info:
     - log the X-Request-ID in all operational logs related to that request.
 
     **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24055*.
+    Log entries for the audit Event Service shall be created according to
+    "Implementation Guide ePA BAsisfunktionalitäten - Audit Event Service - Belegung der Protokolldaten"
 
   contact:
     name: gematik GmbH
@@ -68,10 +68,12 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 
-  version: 1.5.0
+  version: 1.5.1
 
   # version history:
   # ----------------
+  # version 1.5.1
+  #   - reworked logging requirement
   # version 1.5.0
   #   - correction of linked raw files to actual version tag V1.1.0
   # version 1.4.0
@@ -261,7 +263,6 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | A pusher is added to, updated in or removed from the health record | successful operation only |
-        | A log-entry for the operation exists | all operation results |
 
       requestBody:
         content:
@@ -404,7 +405,6 @@ paths:
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
         | New channel statuses are set for the specified pusher in the health record (if any) | succesful operation only |
-        | A log-entry for the operation exists | all operation results |
 
       parameters:
         - name: pushkey

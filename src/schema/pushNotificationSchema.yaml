@@ -1,5 +1,8 @@
 # version history:
 # ----------------
+# version 1.1.0
+#   - rename channelIds removing xds and add path for ePA (e.g., epa.document.update)
+#   - add content for title and documentId to a new document or update a document (document.put, document.update)
 # version 1.0.1
 #   - the filling of docId is changed from DocumentEntry.uniqueId to DocumentEntry.entryUUID
 # version 1.0.0
@@ -11,8 +14,8 @@ properties:
   pushContent:
     type: object
     oneOf:
-      - $ref: '#/definitions/xdsPut'
-      - $ref: '#/definitions/xdsUpdate'
+      - $ref: '#/definitions/documentPut'
+      - $ref: '#/definitions/documentUpdate'
       - $ref: '#/definitions/entitlePut'
       - $ref: '#/definitions/entitlePs'
       - $ref: '#/definitions/entitleDel'
@@ -45,37 +48,53 @@ definitions:
       - actor
       - insurantId
 
-  xdsPut:
-    description: data structure of channel to upload a new document to the XDS document service (operation ProvideAndRegisterDocumentSet-b)
+  documentPut:
+    description: |
+      Data structure of channel to upload a new document to the Health Record System;
+      triggered by operation ProvideAndRegisterDocumentSet-b of XDS document service;
+      triggered by Generate-Metadata-Transaktion of the MHD service;
+      triggered by Simplified-Publish-Transaktion of the MHD Service
     allOf:
       - $ref: '#/definitions/pushContentItem'
       - type: object
         properties:
           channelId:
-            const: 'xds.put'
+            const: 'epa.document.put'
           title:
-            description: title of the document according to metadata DocumentEntry.title
+            description: |
+              XDS: title of the document according to metadata DocumentEntry.title
+              MHD: DocumentReference.content.attachment.title
             type: string
           docId:
-            description: Identifier of the document according to metadata DocumentEntry.entryUUID
+            description: |
+              XDS: Identifier of the document according to metadata DocumentEntry.entryUUID
+              MHD: DocumentReference.id
             type: string
         required:
           - title
           - docId
 
-  xdsUpdate:
-    description: data structure of channel to update an existing document to the XDS document service (operation ProvideAndRegisterDocumentSet-b with document replacement)
+  documentUpdate:
+    description: |
+      Data structure of channel to update an existing document to the Health Record System;
+      triggered by operation ProvideAndRegisterDocumentSet-b of XDS document service;
+      triggered by Generate-Metadata-Transaktion of the MHD service;
+      triggered by Simplified-Publish-Transaktion of the MHD Service
     allOf:
       - $ref: '#/definitions/pushContentItem'
       - type: object
         properties:
           channelId:
-            const: 'xds.update'
+            const: 'epa.document.update'
           title:
-            description: title of the document according to metadata DocumentEntry.title
+            description: |
+              XDS: title of the document according to metadata DocumentEntry.title
+              MHD: DocumentReference.content.attachment.title
             type: string
           docId:
-            description: Identifier of the document according to metadata DocumentEntry.entryUUID
+            description: |
+              XDS: Identifier of the document according to metadata DocumentEntry.entryUUID
+              MHD: DocumentReference.id
             type: string
         required:
           - title
@@ -88,7 +107,7 @@ definitions:
       - type: object
         properties:
           channelId:
-            const: 'entitle.put'
+            const: 'epa.entitle.put'
           who:
             description: displayName of entitlement to describe who is entitled, e.g. LEI, DiGA
             type: string
@@ -111,7 +130,7 @@ definitions:
       - type: object
         properties:
           channelId:
-            const: 'entitle.ps'
+            const: 'epa.entitle.ps'
           who:
             description: displayName of entitlement to describe who is entitled
             type: string
@@ -134,7 +153,7 @@ definitions:
       - type: object
         properties:
           channelId:
-            const: 'entitle.del'
+            const: 'epa.entitle.del'
           who:
             description: displayName of entitlement to describe who was entitled
             type: string
@@ -160,7 +179,7 @@ definitions:
       - type: object
         properties:
           channelId:
-            const: 'constraint.del'
+            const: 'epa.constraint.del'
         oneOf:
           - type: object
             properties:

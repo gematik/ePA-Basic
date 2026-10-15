@@ -1,0 +1,114 @@
+@startuml
+
+skinparam sequenceMessageAlign center
+
+participant Kostenträger_Neu
+participant Aktensystem_Neu
+participant Aktensystem_Alt
+participant Kostenträger_Alt
+
+
+== Aktenkontoanlage starten ==
+
+Kostenträger_Neu -> Aktensystem_Neu : Aktenkontoanlage
+
+Aktensystem_Neu -> Aktensystem_Neu : Besteht schon ein \nAktenkonto zur KVNR? \n(anderer Mandant)
+
+loop Für jedes andere ePA-Aktensystem
+== Aufbau VAU-Kanal ==
+
+    Aktensystem_Neu -> Aktensystem_Alt : Aufbau VAU-Kanal (Self-Signed-Token)
+    Aktensystem_Alt --> Aktensystem_Neu : Bestätigung
+
+== Vorprüfung ==
+
+    Aktensystem_Neu -> Aktensystem_Alt : Existiert ein Aktenkonto zur KVNR?
+    alt Es existiert ein Aktenkonto
+
+        Aktensystem_Alt --> Aktensystem_Neu : Ja (mit Kostenträgerinformation)
+
+    else KVNR unbekannt
+
+        Aktensystem_Alt --> Aktensystem_Neu : Nein
+        Aktensystem_Neu -> Aktensystem_Alt : Abbau VAU-Kanal
+        Aktensystem_Alt --> Aktensystem_Neu : Bestätigung
+
+    end
+end
+
+alt Mehr als ein ePA-Aktensystem meldet ain Aktenkonto
+
+    Aktensystem_Neu -[#Red]> Kostenträger_Neu : Abbruch aufgrund eines Konflikts!
+
+end
+
+== Aktenokonto existiert und Informationen müssen verschoben werden ==
+
+alt Lokaler Anbieterwechsel 
+
+    Aktensystem_Neu -> Aktensystem_Neu : Übernehme die neue Befugnis \nfür KTR und Ombudsstelle, \nfalls eine Akte existiert
+    Aktensystem_Neu -> Kostenträger_Neu : Akte oder Widerspruch wurden intern übernommen
+
+else Externer Anbieterwechsel
+
+    Aktensystem_Neu -> Aktensystem_Alt : Informationen zum Aktenkonto \nverschieben (ITSG-Token)
+
+    alt Es existiert ein Widerspruch
+
+        Aktensystem_Alt --> Aktensystem_Neu : Widerspruch
+
+    else Es existiert eine Akte
+
+        Aktensystem_Alt -> Aktensystem_Alt : Akte geht nach SUSPENDED
+
+        Aktensystem_Alt --> Aktensystem_Neu : Lieferliste mit Exportpaketen
+        Aktensystem_Neu -> Aktensystem_Neu : Akte geht nach INITIALIZED
+
+        note over Aktensystem_Neu, Aktensystem_Alt : Wenn Aktensystem_Alt nicht antwortet, wiederholt Aktensystem_Neu den Request. \nWenn Aktensystem weiterhin nicht antwortet wird ein Abbruch gesendet.\nWenn ein Kommunikationspartner länger nicht wie erwartet reagiert, dann wird der Transfer \nund der VAU-Kanal abgebrochen und das Aktensystem geht wieder in seinen Ausgangszustand \nzurück. Der entsprechende Kostenträger wird über den Abbruch informiert.
+        loop Für jedes Exportpaket in der Lieferliste
+
+            Aktensystem_Neu -> Aktensystem_Alt : GET Exportpaket X
+
+            note left of Aktensystem_Neu: Wenn ein Exportpaket noch nicht \nbereit steht, wird das vom \nAktensystem_Alt signalisiert \nund Aktensystem_Neu versucht \nes nach einer Wartezeit erneut
+
+            Aktensystem_Alt --> Aktensystem_Neu : Exportpaket X
+            Aktensystem_Neu -> Aktensystem_Neu : Daten aus Exportpaket importieren
+
+        end
+    end
+
+
+== Abschluss der Verschiebung ==
+
+    alt Akte oder Widerspruch wurde erfolgreich verarbeitet
+
+        Aktensystem_Neu -> Aktensystem_Alt : Datenübernahme erfolgreich abgeschlossen
+        Aktensystem_Alt -> Aktensystem_Alt : Aktenkonto löschen
+        Aktensystem_Alt -> Kostenträger_Alt : Akte oder Widerspruch zu KVNR wurde verschoben
+        Aktensystem_Alt --> Aktensystem_Neu : Bestätigung
+        Aktensystem_Neu -> Aktensystem_Neu : Akte geht nach ACTIVATED
+
+        Aktensystem_Neu -> Kostenträger_Neu : Akte oder Widerspruch wurden übernommen
+
+    else Es gab Probleme bei der Übernahme der Informationen
+
+        Aktensystem_Neu -[#Red]> Aktensystem_Alt : Abbruch
+        Aktensystem_Alt --[#Red]> Aktensystem_Neu : Bestätigung
+
+    alt Wenn eine Akte verschoben werden sollte
+
+            Aktensystem_Alt -> Aktensystem_Alt : Akte geht nach ACTIVATED
+            Aktensystem_Neu -[#Red]> Aktensystem_Neu : Löschen der Akte
+    end
+        Aktensystem_Neu -> Aktensystem_Neu : Aktenkonto löschen
+        Aktensystem_Neu -[#Red]> Kostenträger_Neu : Akte oder Widerspruch konnten aus\n folgendem Grund nicht übernommen\n werden. Die Anlage des Aktenkontos muss\nspäter erneut gestartet werden.
+
+    end
+
+    == Abbau VAU-Kanal ==
+
+    Aktensystem_Neu -> Aktensystem_Alt : Abbau VAU-Kanal
+    Aktensystem_Alt --> Aktensystem_Neu : Bestätigung
+
+end
+@enduml

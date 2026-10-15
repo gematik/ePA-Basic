@@ -36,8 +36,8 @@ info:
     - log the X-Request-ID in all operational logs related to that request.
 
     **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24987*.
+    Log entries for the audit Event Service shall be created according to
+    "Implementation Guide ePA BAsisfunktionalitäten - Audit Event Service - Belegung der Protokolldaten"
 
   contact:
     name: gematik GmbH
@@ -47,10 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.2.1 
+  version: 1.2.2
 
   # version history:
   # ----------------
+  # version 1.2.2
+  #   - reworked logging requirement
   # version 1.2.1
   #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
   # version 1.2.0
@@ -208,7 +210,6 @@ paths:
        | Postconditions                        | Remarks |
        |---------------------------------------|---------|
        | The valid and completed entitlement is stored in SecureAdminStorage | a possible existing entitlement with same _oid_ is replaced |
-       | A log-entry for the operation exists | successful operation only |
        | The raw-data of the operation is collected and associated to _useragent_ | for any operation result according to gemSpec_Perf UC_A2.2 and UC_A2.5 |
 
       requestBody:

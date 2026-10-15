@@ -1,0 +1,81 @@
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[#_aktenkontoverwaltung]
+=== Aktenkontoverwaltung
+
+Das *Account Management* ermöglicht es dem Kostenträger ein Aktenkonto zu verwalten. Dabei kann er eine Akte anlegen, einen Widerspruch hinterlegen oder ein Aktenkonto mit einer Akte bzw. einen Widerspruch löschen.
+
+Die Aktenanlage muss dabei über ein ITSG-Token autorisiert sein, welches bestätigt, dass der handelnde Kostenträger die entsprechende KVNR verwaltet. Das ITSG-Token bezieht der handelnde Kostenträger über die Systeme der ITSG.
+
+==== Anlage eines Aktekontos und Anbieterwechsel
+
+Die Anlage eines Aktenkontos mit einer Akte erfolgt durch den Kostenträger am *Account Management*. Der Kostenträger muss dabei über ein ITSG-Token nachweisen, dass er berechtigt ist, für die betreffende KVNR ein Aktenkonto zu verwalten. Gleiches gilt auch für die Hinterlegung von Widersprüchen gegen die ePA für alle. Wird ein Widerspruch hinterlegt, dann wird eine bestehende Akte für diese KVNR gelöscht. Genauso wird bei Rücknahme des Widerspruchs automatisch eine Akte angelegt.
+
+Bei der Anlage eines Aktenkontos mit einer Akte geht diese in den Status "Initialized" über. Im *Entitlement Management* sind der Versicherte selbst, der zuständige Kostenträger, die zuständige Ombudsstelle und der E-Rezept-Fachdienst als befugt hinterlegt. Die Befugnisse für den zuständigen Kostenträger und der zuständigen Ombudsstelle müssen durch diese mit deren SMC-B Zertifikatsprofil C.HCI.OSIG signiert werden. Die beiden Befugnisse werden im Aktensystem hinterlegt und beim Start der VAU ins *Entitlement Management* übernommen.
+
+Das *Account Managment* fragt das *Account Management* aller anderen Aktensysteme an, ob dort Informationen zu der betreffenden KVNR vorliegen. Diese Informationen können eine bestehende Akte oder ein vorhandener Widerspruch sein. Die Kommunikation erfolgt über einen VAU-Kanal, der direkt zwischen den VAUs der beteiligten Aktensysteme aufgebaut wird. Dabei erfolgt die Authentisierung über ein Self-Signed-Token des Kostenträgers.
+
+Sollten Informationen vorliegen, dann werden diese verschoben und nach erfolgreicher Übernahme im alten Aktensystem gelöscht. Autorisiert wird die Verschiebung durch das ITSG-Token, welches zusammen mit dem Self-Signed-Token (C.HCI.AUT) übermittelt wird.
+
+Beide beteiligten Kostenträger werden über die Verschiebung der Informationen (Akte oder Widerspruch) informiert. 
+
+Sollten keine Informationen bei einem anderen Aktensystem vorliegen, werden im *Account Management* die Widerspruchsinformationen mit Standardwerten initialisiert. 
+
+Der Statusübergang zu "Activated" erfolgt automatisch nach erfolgreicher Initialisierung der Akte und möglicher Verschiebung der Akte aus einem anderen Aktensystem. Danach ist die Akte in der Versorgung nutzbar. Sollte ein Widerspruch verschoben worden sein, wird keine Akte angelegt.
+
+Antwortet zu einem Zeitpunkt in der Verschiebung ein Aktensystem nicht mehr, dann muss der VAU-Kanal durch das initierende Aktensystem abgebaut werden, worauf beide Aktensystem wieder in den Ausgangszustand zurück kehren. Die Anlage der Akte muss dann zu einem späteren Zeitpunkt noch einmal durch den Kostenträger angestoßen werden.
+
+ifndef::env-github[]
+
+[#fig:accountmanagement]
+[plantuml, "{diagramsdir}/accountmanagement", svg]
+[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf der Aktenanlage mit Anbieterwechsel",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+....
+include::{chapterplantumlsdir}/accountmanagement.puml[]
+....
+
+endif::[]
+
+ifdef::env-github[]
+
+image::plantuml/accountmanagement.svg[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="Ablauf der Aktenanlage mit Anbieterwechsel",width=100%, pdfwidth=100%,float="center",align="center",title-align="center"]
+
+endif::[]
+
+==== Setzen eines Widerspruchs
+
+Hinterlegt der Kostenträger am *Account Management* einen Widerspruch zu einer KVNR, zu der noch kein Aktenkonto besteht, dann wird erst ein Aktenkonto angelegt (mit der möglichen Verschiebung von Informationen aus anderen Aktensystemen) und danach der Widerspruch durchgesetzt.
+
+Existiert schon ein Aktenkonto mit einer Akte, dann wird diese Akte gelöscht und der Widerspruch übernommen.
+
+Auch die Hinterlegung eines Widerspruchs muss über ein ITSG-Token autorisiert sein.
+
+==== Löschung eines Aktenkontos
+
+Es kann nötig sein, dass ein Kostenträger ein Aktenkonto mit einer Akte oder einem Widerspruch löschen muss. Gründe dafür können z.B. der Wechsel des Versicherten in eine PKV ohne ePA für alle oder auch ein Todesfall sein.
+
+Das Löschen eine Aktenkontos darf ohne die Autorisierung durch ein ITSG-Token erfolgen, da ein solches Token nicht in allen Fällen verfügbar sein wird.

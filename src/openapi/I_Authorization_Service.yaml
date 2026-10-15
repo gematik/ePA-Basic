@@ -46,6 +46,8 @@ info:
 
   # version history:
   # ----------------
+  # version 1.9.2
+  #   - fix description in sendAuthorizationRequestBearerToken to suit requests by eRP-, FDZ- and KTR-bearer-token
   # version 1.9.1
   #   - added new operation sendAuthCodeSCv2 with capabilities section in response for product version information
   # version 1.9.0
@@ -220,8 +222,9 @@ tags:
 
 - name: Authorization BearerToken
   description: |
-   This interface method enables the authorization by a signed BearerToken only (no IDP interaction).
-   This method is restricted for use by the ePrescription backend only.
+   This interface method enables the authorization by a signed BearerToken only (no IDP interaction). 
+
+   This variant is used by eRp-Fachdienst, Forschungsdatenzentrum FDZ and insurance companies (account management) 
 
 - name: Search access-token for FHIR VZD
   description: | 
@@ -556,13 +559,13 @@ paths:
       operationId: getFreshnessParameter
       summary: (getFreshnessParameter) Get freshness parameter for a bearer token
       externalDocs:
-        description: 'eRP backend authentication: gemSpec_Krypt, chapter "7.4 Authentisierung des E-Rezept-FD als ePA-Client"'
+        description: 'PKI based authentication: gemSpec_Krypt, chapter "Authentisierung des E-Rezept-FD als ePA-Client"'
         url: https://gemspec.gematik.de/docs/gemSpec/
       description: |-
        Get a new freshness parameter for a new bearer token for the authorization by bearer token.
 
        **Client**</br>
-       The ePrescription backend shall use the freshness parameter for a signed JWT (bearer token) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
+       The client shall use the freshness parameter for a signed JWT (bearer token) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
 
        **Provider**</br>
        The returned freshness parameter shall follow the requirements in gemSpec_Krypt, A_24658* and be verifiable by HSM rule 'rr0'. 
@@ -606,19 +609,18 @@ paths:
       operationId: sendAuthorizationRequestBearerToken
       summary: (sendAuthorizationRequestBearerToken) Client authorization based on JWT authorization grant.
       externalDocs:
-        description: 'BearerToken: gemSpec_Aktensystem_ePAfuerAlle, chapter "3.15.3 Anforderungen an den Authorization Service für die Authentisierung des E-Rezept-Fachdienstes"'
+        description: 'BearerToken: gemSpec_Aktensystem_ePAfuerAlle, chapter "Anforderungen an den Authorization Service für die Authentisierung über JWT Bearer Token"'
         url: https://gemspec.gematik.de/docs/gemSpec/
       description: |-
-        Authorization of the ePrescription backend (E-Rezept-Fachdienst).
+        PKI based authorization using JWT bearer token.
 
         **Client**</br>
-        The ePrescription backend shall send a signed JWT (bearerToken) according to requirement gemSpec_Aktensystem_ePAfuerAlle, A_25165*.
-        The token shall contain a fresh parameter (see: _getFreshnessParameter_).
+        The client shall send a signed JWT (bearerToken) according to (see specification in 'externalDocs').
+        For tokens requiring a freshness parameter (challenge), see: operation _getFreshnessParameter_.
 
         **Provider**</br>
-        The received token shall be validated with HSM rule 'rr0'. The resulting HSM-ID-Token shall be added to the user session.
-        The received token shall have a claim "sub", this claim shall state the telematik-id of the ePrescription backend. 
-
+        The received token shall be validated and authorize a user session. 
+        
         The user session of the client shall be closed and all session related data shall be deleted in case operation is not successful.
 
         The VAU user preudonym as generated for the vau-channel (see: vau protocol) shall be returned in a successful operation response.
@@ -627,13 +629,13 @@ paths:
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
         | Request does not match schema | 400 | malformedRequest | also for _bearerToken_ does not match token schema |
-        | Invalid request | 403 | invalAuth | _bearerToken_ is invalid by means of HSM rule 'rr0' or timestamp |
+        | Invalid request | 403 | invalAuth | _bearerToken_ is invalid |
         | Any other error | 500 | internalError ||
 
          </br>
         | Postconditions                        | Remarks |
         |---------------------------------------|---------|
-        | authorized user session with HSM-ID-Token for ePrescription backend exists | successful operation only |
+        | authorized user session for client exists | successful operation only |
         | user session and temporary data is deleted | failed operation only |
 
       requestBody:
@@ -1318,7 +1320,7 @@ components:
       description: |
         "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
         base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
-        Content for ePrescription backend bearerToken</br>
+        Content for bearerToken</br>
         (expiration time is implicite, HSM rule 'rr0' will reject tokens with 'iat' 
         more than 10 minutes in the past of current time.)</br>
         - protected_header contains:
@@ -1329,7 +1331,7 @@ components:
           - "type": "ePA-Authentisierung über PKI" (fixed value)
           - "iat" issued_at is the timestamp of the time of issue.
           - "challenge": freshness parameter (base64 encoded)
-          - "sub": Telematik-ID ePrescription backend
+          - "sub": Telematik-ID of client
         - signature: contains token signature
         
       type: object

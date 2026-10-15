@@ -1,0 +1,1508 @@
+openapi: 3.0.1
+info:
+  title: I_Account_Management
+  description: |-
+    This interface provides the service **Account Management** for insurance companies and health record systems 
+    to manage accounts (health record or objection) for insurants.
+    
+    **General conditions**:<br> 
+    For all operations if applicable:
+    - a section _Client_ in operation descriptions covers recommendations (informative) for clients.
+    - a section _Provider_ in operation descriptions covers requirements for the server side. 
+    - error responses may be extended by helpful information about the error condition in _errorDetail_
+
+    **Prerequisites**:<br>
+    The Health Record System shall provide 
+    - name
+    - role ((profession-)oid)
+    - identifier (telematik-id)
+
+    of the current user session for evaluation in operations.
+
+    The Health Record System requested for transfer shall provide
+    - the insurance bearer token
+    for evaluation in operations
+
+    **Retry interval**:<br>
+    The following retry intervals are suggested in case of an error response:<br>
+    - '500' Internal Error
+      - approx. 10 minutes
+
+    **User Agent**:<br>
+    The user agent information (x-useragent) is part of any request, even if 
+    not essentially required for the operation (e.g. raw-data collection), and
+    may be considered for provider internal use. 
+
+    **Request ID**:<br>
+    Clients may provide a unique request identifier (X-Request-ID) with each request. 
+    Given such a request identifier, providers must 
+    - echo the exact same X-Request-ID value in the response header.
+    - log the X-Request-ID in all operational logs related to that request.
+
+  version: 1.0.0
+
+  # version history:
+  # ----------------
+  # version 1.0.0
+  #   - initial version
+
+  contact:
+    name: gematik GmbH
+    url: 'http://www.gematik.de'
+  license:
+    name: Apache 2.0
+    url: "https://www.apache.org/licenses/LICENSE-2.0"
+
+servers:
+  - url: https://epa-hst1.prod.epa4all.de
+
+tags:
+  - name: Account information 
+    description: |
+     Used by insurance companies to check occurances of accounts among all available health 
+     record systems for conflict resolution. 
+
+  - name: Accounts
+    description: |
+     **All operations of this section are limited to insurances as user (oid_kostenträger).**
+
+     Account Management for insurance companies allows to create or delete accounts for specific insurants
+     and to apply objections or health records to existing accounts, including a merge of health records.
+
+     Using these operations starts activities that continue even after receiption of a response by a client. Information 
+     about the results of these activities is sent asynchronously to the insurance company. The necessary 
+     interface for such notifications is not part of the Account Management.  
+
+     The management operations 'create', 'merge', 'setObject' and 'setRecord' require a valid ITSG-Token (_itsgToken_), 
+     claiming the responsibility of the insurance company for a specific kvnr. 'create' and 'merge' 
+     also require a self-signed token, the insurance bearer token (_ktrBearerToken_), claiming the kvnr and a specific ITSG-Token 
+     (by hash value). The insurance bearer token is used for authentication requirements towards other health record 
+     systems.
+
+  - name: Data Transfer
+    description: |
+     **All operations of this section are limited to health record systems as client.**
+     (see also additional requirements in "gemSpec_AktenSystem_ePAfueralle#Aktenkontoverwaltung")
+
+     The operations are for health record system interaction and support all aspects of data transfer (objection or health record) 
+     of a known insurant to a new insurance company and a different health record system.
+
+     A transfer of data request is bound to an insurance company providing a valid ITSG-Token as proof of responsibility
+     for this insurant and an insurance bearer token for insurance company authentication. 
+     All operations are invoked in a VAU-channel with the receiving health record system as client.
+     The User Session is authenticated by validation of the insurance bearer token. This validated token of the 
+     insurance shall be kept with the user session as it is also required in some operations of the transfer. 
+     
+     The transfer itself is covered by a unique transfer session used to unambiguously move data to a new location. Data is either
+     the objection information or an export package containing health record data in one or several parts.
+     
+     On success, all data is associated to the requesting insurance company and located in the health record system associated 
+     to this insurance company.
+     On failure, all data remains with the previous insurance company and health record system as before the request and not any
+     data is associated to the requetsing insurance company or health record system.
+     
+     Data transfer serves the use cases "health record relocation" and "health record merge".
+     The data transferred is identical in both cases but the preconditions for a transfer differs, i.e. specific 
+     health record states are required for the data providing health record.
+
+     A transfer requires an explicite confirmation for a successful completion. The providing health record system shall 
+     thereafter delete the whole account data and all transfer related data and settings..
+     
+     A transfer is aborted and shall never complete successfully with all transfer session related data and settings resetted if 
+     - the VAU-channel gets closed for any reason and the user session disappeared
+     - an explicite abort is received from the client system
+     - session progress is timed out (client does not perform further required session steps for 60 minutes) 
+     - retry operations do not receive any response for 4 consecutive attemps (except for _transferComplete_)
+     - transfer can not be continued for own reasons (requires appropriate rejection of operations for notification)
+
+     The principle session for a relocation transfer is like:
+    
+     - client system establishes VAU-channel and performs _sendAuthorizationRequestBearerToken_ with insurance bearer token
+     - client checks presence of an account (also among all other health record systems to discover conflicts)
+     - client invokes _transferStartRelocation_ with kvnr, seld-signed token and itsg-token
+     - provider returns either an objection or a list of export package parts for download. It also returns a session identifier and 
+     sets the health record to state SUSPENDED
+     - client performs _getContent_ operation(s) to receive the announced parts of the export package (if any)
+     - client integrates complete export package data in client side account (if any) 
+     - client confirms the succesful transfer and integration invoking _transferComplete_. This applies even if only an objection was transferred.
+     - provider deletes all account- and transfer session data
+     - client finalizes own account and enables access for users (objection or health record). A health record is ACTIVATED now (right after 
+     the mandatory check for conflicting accounts). 
+
+externalDocs:
+  description: 'ePA Specifcation: gemSpec_AktenSystem_ePAfueralle'
+  url: https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle
+
+   
+paths:
+  /epa/basic/api/v1/accounts:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    get:
+      tags:
+        - Data Transfer
+      operationId: doesKvnrExist
+      summary: (doesKvnrExist) Check if data exists for a specific kvnr 
+      description: |
+       This operation indicates the presence of an account related to the requested kvnr (_insurantid_).<br>
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       A client shall perform a _doesKvnrExist_ check with any possible health record system. A subsequent 
+       transfer of account data for relocation shall only follow with the single health record system signaling success. 
+       Any contradictory check result shall be resolved first. 
+       
+       ### Provider
+       A successful result indicates available data for transfer in case either an objection to epa 
+       or a health record exists for the requested _insurantid_. 
+
+       A health record must exist when the _insurantid_ is known and no objection exists. This is independent
+       of a particular health record's state. A health record does not exist if an objection exists. There is 
+       never an intermediate status with either both existing or none existing and _insurantid_ is known.    
+
+       The operation shall only succeed in case of an unambiguous result among all accounts of the health record system, 
+       i.e. there is exactly one account related to _insurantid_ available.<br>
+       The operation shall only respond _noResource_ in case not any information related to _insurantid_ is 
+       available at all. Other cases shall be rated as _informationMismatch_.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 || |
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance's bearer token |
+       | Kvnr (_insurantid_) not known at all | 404 | noResource | |
+       | Contradictonary information available | 409 | informationMismatch | inconsistent local data, retry not applicable - 
+       internal clarification required |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      responses:
+        "200":
+          description: OK. Account is available
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              example:
+                insurance: 'Muster Krankenkasse'
+                insuranceId: '123456789' 
+              schema:
+                $ref: '#/components/schemas/KvnrExistsType'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    post:
+      tags:
+        - Accounts
+      operationId: createAccount
+      summary: (createAccount) set up a new account for an insurant
+      description: |
+        Creates an account for an insurant associated to the requesting insurance company.<br>
+        This operation is limited to users of role oid_kostentraeger
+
+        There are two options for the request: 
+        - provide data for the entitlements of the insurance company and the ombuds office or
+        - provide an insurant's objection to epa declared to the requesting insurance company  
+
+        ### Provider
+        An account for _insurantid_ shall be established. The resulting content depends on the 
+        request parameters and the conditions of a possible exiting account associated to the previous insurance company.
+
+        #### Result matrix
+        |                                     | Account exists:<br>false    | Account exists:<br>with objection1 | Account existst:<br>with record |
+        | ---                                     | ---                             | ---                        | ---                             |
+        | Request<br>with new objection2          | Account<br>with objection2      | Account<br>with objection2 | Account<br>with objection2      |
+        | Request<br>with entitlement data        | Account<br>with 'empty' record) | Account<br>with objection1 | Account<br>with existing record | 
+        
+        An existing account is relocated in any case, even if the resulting content equals the newly
+        declared objection (objection2).
+
+        The _itsgToken_ and the _ktrBearerToken_ shall be validated. The _ktrBearerToken_ shall claim the hash value of _itsgToken_ in "hash-itsg".
+        _insurantid_ and shall match the claim "kvnr" in _itsgToken_.
+
+        A VAU-channel shall be established and authenticated with the _ktrBearerToken_ to each health record system. All of those systems are checked for 
+        an existing account (_doesKvnrExist_). The operation shall abort if the summarized results show more than one existing account for _insurantid_.
+
+        A new account shall be created.
+        If an account exists elsewhere, this account's data shall be transferred based on the bearer token authenticated VAU-channel.
+        Transferred account data and request parameters are evaluated according to the Result matrix and define the new account's final data.
+        
+        #### Resulting account with objection:
+        - this can be either _objection1_ or _objection2_ (difference is timestamp  and issuer)
+        - any received health record data from transfer shall be deleted
+        - set the email address for the insurant
+        - apply final conflict check (avoid 'doubled' accounts)
+        - enable access for users
+
+        #### Resulting account with health records:
+        - this can either be an 'empty' record or a transferred existing record (see "Account transfer")
+        - generate Entitlements for the insurance company and the ombuds office using hsm rule rr4.
+        - set the email address for the insurant
+        - apply final conflict check (avoid 'doubled' accounts)
+        - activate health record
+
+        #### Account transfer (according to 'Data Transfer' section):
+        - Request the account data (_transferStartRelocation_)
+        - Receive the complete export package if applicable (_getContent_ for each part)
+        - integrate received account data (objection or export package) to local account
+        - confirm successful transfer (_transferComplete_)
+        
+        The operation shall send a response either before any export package transfer or the final conflict check with the operation result
+        for this stage so far. The result of remaining activities shall be send by proprietary means towards the client.
+
+        The account creation shall fail if account can not be completed for activation and all data and settings shall be deleted, except 
+        for the case of a completed transfer. If transferred account data is (possibly) deleted on previous health record system side, i.e. after
+        _sending_ a _transferComplete_ notification, this data shall always be kept for further evaluation.    
+
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 202 || Request ok, account in preparation |
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | user session not authorized |
+        | _itsgToken_ and/or insurance bearer token not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+        | Tokens for entitlements are invalid | 403 | notEntitled | applies for insurance and ombuds office token|
+        | Requestor role is not _oid_kostenträger_  | 403 | invalidOid ||
+        | Account already exists | 403 | invalidRequest | for the requesting insurance |
+        | Account exists more than once | 409 | accountMismatch | shall be resolved first - no retry required |
+        | Required transfer not possible | 409 | transferMismatch | shall be resolved first - no retry required |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              createAccountWithObjection:
+                summary: "Create a new account and set an objection"
+                value:
+                  itsgToken: "encoded content (jwt) of ITSG-Token"
+                  ktrBearerToken: "encoded content (jwt) of insurance bearer token"
+                  objection:
+                    insurance: "Muster Krankenkasse"
+                    insuranceId: "123456789"
+                    objection: true
+                    at: '2026-12-24T12:00:00.000Z'
+              createAccountWithRecord:
+                summary: "Create a new account and do not set an objection"
+                value:
+                  itsgToken: "encoded content (jwt) of ITSG-Token"
+                  ktrBearerToken: "encoded content (jwt) of insurance bearer token"
+                  ktrEntitlement: "encoded content (jwt) of insurance company entitlement"
+                  ombudsOfficeEntitlement: "encoded content (jwt) of ombuds office entitlement"
+                  email: "mmustermann@example.de"
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ObjectionRequestType'
+                - $ref: '#/components/schemas/HealthRecordRequestType'
+      responses:
+        "202":
+          description: OK. Account creation initialized
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    delete:
+      tags:
+        - Accounts
+      operationId: deleteAccount
+      summary: (deleteAccount) Complete account deletion 
+      description: |
+        Delete the account and its content (objection or health record). <br>
+        This operation is limited to the insurance company associated to the account.
+        
+        ### Provider
+        Account deletion may be peformed at any time. The account and all contained data 
+        shall be deleted.
+
+        A possible ongoing transfer session shall first be completed or aborted.
+
+        A notification indicating a consent change to 'deny' for the _functionid_ == _data-submission_ shall be
+        send to the FDZ if a health record with a consent decision 'permit' for _data-submission_ is deleted.
+        
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 204 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | user session not authorized |
+        | _insurantid_ not known at all | 404 | noResource ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      responses:
+        "204":
+          description: OK.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+    
+  /epa/basic/api/v1/accounts/state:
+    get:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      tags:
+        - Account information
+      operationId: getAccountState
+      summary: (getAccountState) Get the state of accounts associated to a particular kvnr for management reasons
+      description: |
+       Find all occurrences of accounts for a particular KVNR among all insurance companies of a health record system.<br>
+       This operation is limited to users of role oid_kostentraeger.
+
+       ### Provider 
+       Find within the health record system every account for the requested KVNR (_insurantid_) and determine the hosting insurance, the data 
+       and the state if a health record is available. 
+       The response shall include the information of all occurrences found. 
+       
+       Internal or proprietary states of a health record used by the health record system (e.g. substates of INACCESSIBLE) shall be mapped in the response 
+       to the specified states (specified states for health records are: INITIALIZED, ACTIVATED, SUSPENDED and INACCESSIBLE).
+
+       The response shall list either accounts with an objection and its timestamp or accounts with a health record and its record state. 
+
+       
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor role is not _oid_kostentraeger_| 403 | invalidOid ||
+       | KVNR (insurant) unknown | 404 | noResource | _insurantid_ unknown |
+       | Any other error | 500 | internalError ||
+
+      responses:
+        '200':
+          description: Ok.
+          content:
+            application/json:
+              examples: 
+                One suspended record state found:
+                  value:
+                    records:    
+                      - insurance: 'Muster Krankenkasse A' 
+                        insuranceId: '123456789'
+                        recordState: SUSPENDED                      
+                One activated record state found:
+                  value:
+                    records:    
+                      - insurance: 'Muster Krankenkasse B'
+                        insuranceId: '987654321'
+                        recordState: ACTIVATED    
+                Multiple and conflicting information found:
+                  value:
+                    records:    
+                      - insurance: 'Muster Krankenkasse C'
+                        insuranceId: '246898642'
+                        objection: '2026-11-11T13:48:12.333Z'                       
+                      - insurance: 'Muster Krankenkasse B'
+                        insuranceId: '987654321'
+                        recordState: SUSPENDED    
+              schema:
+                description: 'List of all account occurences associated to _insurantid_ '
+                type: object
+                properties:
+                  accounts:
+                    description: The state(s) and associated insurance information of the health record(s).
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AccountInformationType'                
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v1/accounts/objection:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    post:
+      tags:
+        - Accounts
+      operationId: setObjection
+      summary: (setObjection) apply objection to an existing account
+      description: |
+        Set the objection to epa for an existing account.<br>
+        This operation is limited to the insurance company associated to the account.
+
+        ### Provider
+         The _itsgToken_ shall be valid for a successful operation.
+
+        The provided objection parameter shall indicate the insurance company's name and identifier (telematik-id).
+        The provided timestamp for the objection shall not indicate a point in the future. 
+
+        The objection to epa shall be set as exclusive data of the account. 
+        A possible existing objection shall be overwritten, an existing health record shall be deleted.
+        
+        The account shall remain unchanged in case of any error. 
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 204 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth ||
+        | _itsgToken_ not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+        | Requestor is not the account associated insurance company | 403 | invalidUser ||
+        | Objection data not accepted | 403 | invalidRequest ||
+        | Account does not exist | 404 | noResource ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              itsgToken: "encoded content (jwt) of ITSG-Token"
+              objection:
+                insurance: "Muster Krankenkasse"
+                insuranceId: "123456789"
+                objection: true
+                at: '2026-12-24T12:00:00.000Z'
+            schema:
+              $ref: '#/components/schemas/LocalObjectionRequestType'
+
+      responses:
+        "204":
+          description: OK.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v1/accounts/record:
+    parameters:
+      - $ref: '#/components/parameters/insurantid'
+      - $ref: '#/components/parameters/useragent'
+      - $ref: '#/components/parameters/requestid'
+    post:
+      tags:
+        - Accounts
+      operationId: setRecord
+      summary: (setRecord aka withdrawObjection) revoke objection and add 'empty' health record to an existing account
+      description: |
+        Creates a new health record for an existing account.<br>
+        This operation is limited to the insurance company associated to the account.
+
+        ### Provider
+        The _itsgToken_ shall be valid for a successful operation.
+
+        A new health record shall be initialized and associated to the account and the existing objection data shall be deleted.
+        The entitlements for the insurance company and the ombuds office shall be generated using hsm rule rr4.
+        
+        The email address for the insurant shall be set.
+        
+        All settings of the health record shall be set to their default values. 
+        The new health record shall not contain any data for the medical service nor any content in audit service
+
+        The account shall remain unchanged in case of any error. 
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 204 |||
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | user session not authorized |
+        | Requestor is not insurance company associated to _insurantid_ | 403 | invalidUser ||
+        | _itsgToken_ not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+        | Tokens for entitlements are invalid | 403 | notEntitled | applies for insurance and ombuds office token |
+        | Health record already exists | 403 | invalidRequest||
+        | Account does not exist | 404 | noResource ||
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              itsgToken: "encoded content (jwt) of ITSG-Token"
+              ktrEntitlement: "encoded content (jwt) of insurance company entitlement"
+              ombudsOfficeEntitlement: "encoded content (jwt) of ombuds office entitlement"
+              email: "mmustermann@example.de"
+            schema:
+              $ref: '#/components/schemas/LocalHealthRecordRequestType'
+      responses:
+        "202":
+          description: OK. Account creation initialized
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+    put:
+      tags:
+        - Accounts
+      operationId: mergeRecord
+      summary: (mergeRecord) integrate existing remote health record into current record of an account 
+      description: |
+        Integrates the health record data of two accounts associated to _insurantid_ into the local health record.<br>
+        This operation is limited to the insurance company associated to the account.
+
+        The client shall provide the exact insurance company information of the insurance company hosting the remote health record 
+        for the merge. 
+
+        ### Provider
+        A VAU-channel shall be established and authenticated with the _ktrBearerToken_ to the health record system hosting the remote account (this
+        shall be derived from the insurance information in request parameter _from_).
+
+        Transfer the remote health record data (according to 'Data Transfer' section):
+        - Request the remote account data (_transferStartMerge_)
+        - Receive the complete export package (_getContent_ for each part)
+        - confirm successful transfer (_transferComplete_)
+
+        The received date shall be integrated according to merge requirements in "gemspec_Aktensystem_ePAfueralle, Chapter: Aktenzusammenführung (Health Record Merge)"
+
+        The operation shall send a response before any transport of the export package transfer with the operation result
+        for this stage so far. The result of the remaining activities shall be send by proprietary means towards the client.
+
+        | Conditions | Status code | Error code | Remarks |
+        |------------|-------------|------------|---------|
+        | Successful operation | 202 || Request ok, merge in preparation |
+        | Request does not match schema | 400 | malformedRequest ||
+        | Requestor not authorized | 403 | invalAuth | user session not authorized |
+        | Requestor is not insurance company associated to _insurantid_ | 403 | invalidUser ||
+        | _itsgToken_ and/or insurance bearer token not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+        | Account contains objection | 403 | statusMismatch | |
+        | Account (local) does not exist or Health record (remote) does not exist| 404 | noResource ||
+        | Required transfer not possible | 409 | transferMismatch | shall be resolved first - no retry required |
+        | Any other error | 500 | internalError | (see 'Retry interval') |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              itsgToken: "encoded content (jwt) of ITSG-Token"
+              ktrBearerToken: "encoded content (jwt) of insurance bearer token"
+              from:
+                insurance: "Muster Krankenkasse"
+                insuranceId: "123456789"
+            schema:
+              $ref: '#/components/schemas/HealthRecordMergeType'
+              
+      responses:
+        "202":
+          description: OK. Health record merge initialized
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+  /epa/basic/api/v1/accounts/transfer:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      tags:
+        - Data Transfer
+      operationId: transferStartRelocation
+      summary: (transferStartRelocation) Initiate transfer of data related to _insurantid_
+      description: |
+       This operation initiates the transfer of data of an account to a new location.<br>
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       The client receives a transfer session identifier and the objection or a partlist of transferable
+       parts containing the health record data.
+
+       The client shall continue with _getContent_ operation(s) if a partlist is available.
+
+       The client shall always explicitely confirm (_transferComplete_) a successful 
+       transfer session finalizing the data transfer or abort (_transferAbort_) the session 
+       and roll back all changes made.
+
+       A client shall not continue if an error code _irreparable_ is reveived, acting as an abort
+       request issued by the provider. 
+
+       ### Provider
+       The _itsgToken_ shall be validated and the _itsgToken's_ hash shall match the "hash-itsg" claim 
+       of the insurance bearer token.
+
+       If account data is a health record the state of the health record shall be ACTIVATED and 
+       shall be switched to SUSPENDED for transfer prior to any data collection for the export package.
+
+       The transferable content is either the objection information, or the health record data. 
+
+       Health record data covers almost any personal, medical and adminstrative data of the record according to 
+       requirement "gemspec_Aktensystem_ePAfuerAlle, A_25005-* - Daten des Exportpakets".<br>
+       Health record data shall be prepared for a transfer as defined in "HealthRecordExportPackage" 
+       in one or more parts.
+
+       A complete list of part identifiers for the subsequent _getContent_ operation(s) or the 
+       objection information and always a transfer identifier to address this particular transfer session 
+       shall be returned.
+
+       The prepared transfer parts shall be available by the _getContent_ operation as long as the 
+       transfer session is alive.
+
+       The transfer of prepared parts shall be tracked to monitor a transfer of all parts within one 
+       transfer session.
+
+       A new transfer session shall be rejected if a transfer session is already active (this is accompanied 
+       by a state SUSPENDED and shall be signaled as _statusMismatch_).
+
+       If a transfer session shall be finally rejected by the provider for any severe internal reason,
+       an _irreparable_ error code shall be used for notification. All transfer session related settings 
+       or artefacts shall be removed.
+
+       The possible time consuming preparation of the export package parts may be ongoing when the 
+       response is sent.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 202 || Accepted. Request ok, data in preparation |
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance bearer token |
+       | _itsgToken_ and/or insurance bearer token not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+       | Invalid account | 404 | noInformation | _insurantid_ not known |
+       | Health record is not in state ACTIVATED | 409 | statusMismatch ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+       | Fatal error | 503 | irreparable | Internal error and transfer not possible at all |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              itsgToken: "encoded content (jwt) of ITSG-Token"
+            schema:
+              type: object
+              properties:
+                itsgToken:
+                    $ref: '#/components/schemas/ItsgTokenType'
+             
+      responses:
+        "202":
+          description: Accepted. Kvnr is known, data is available and in preparartion for transfer
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              examples:
+                relocateObjection:
+                  summary: Start relocation of an objection
+                  value:
+                    transferId: 0da394b9-55d1-4109-92bd-d8aaff597e09
+                    insurance: "Muster Krankenkasse"
+                    insuranceId: "123456789"
+                    objection: true
+                    at: '2026-12-24T12:00:00.000Z'
+                relocateRecord:
+                  summary: Start relocation of a health record
+                  value:
+                    transferId: 0da394b9-55d1-4109-92bd-d8aaff597e09
+                    partList: [
+                      {partId: "d1bf29e8-9b1d-4b93-b5fd-1070ec2a3450"},
+                      {partId: "c5c865b9-2506-4cf9-b36f-2a9ecb3b74c8"}
+                    ]
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      transfer-id:
+                        type: string
+                        format: uuid
+                  - oneOf:
+                    - $ref: '#/components/schemas/PartsType'
+                    - $ref: '#/components/schemas/ObjectionType'
+
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+        '503':
+          $ref: '#/components/responses/Error503ServiceUnavailableError'
+
+    put:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+      tags:
+        - Data Transfer
+      operationId: transferStartMerge
+      summary: (transferStartMerge) Initiate transfer of the health record related to _insurantid_ for a health record merge
+      description: |
+       This operation initiates the transfer of a health record of an account for a health record merge process.<br>
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       The client receives a transfer session identifier and a partlist of transferable
+       parts containing the health record data.
+
+       The client shall continue with _getContent_ operation(s) to receive the parts.
+
+       The client shall always explicitely confirm (_transferComplete_) a successful 
+       transfer session finalizing the data transfer or abort (_transferAbort_) the session 
+       and roll back all changes made.
+
+       A client shall not continue if an error code _irreparable_ is reveived, acting as an abort
+       request issued by the provider. 
+
+       ### Provider
+       The _itsgToken_ shall be validated.
+       The _itsgToken_ hash shall match the "hash-itsg" claim of the insurance bearer token.
+
+       The health record shall be in state INACCESSIBLE with reason "ready for merge". 
+
+       The transferable content is only health record data. 
+
+       Health record data covers almost any personal, medical and adminstrative data of the record according to 
+       requirement "gemspec_Aktensystem_ePAfuerAlle, A_25005-* - Daten des Exportpakets".<br>
+       Health record data shall be prepared for a transfer as defined in "HealthRecordExportPackage" 
+       in one or more parts.
+
+       A complete list of part identifiers for the subsequent _getContent_ operation(s) or the 
+       objection information and always a transfer identifier to address this particular transfer session 
+       shall be returned.
+
+       The prepared transfer parts shall be available by the _getContent_ operation as long as the 
+       transfer session is alive.
+
+       The transfer of prepared parts shall be tracked to monitor a transfer of all parts within one 
+       transfer session.
+
+       A new transfer session shall be rejected if a transfer session is already active (this is accompanied 
+       by a state SUSPENDED and shall be signaled as _statusMismatch_).
+
+       If a transfer session shall be finally rejected by the provider for any severe internal reason,
+       an _irreparable_ error code shall be used for notification. All transfer session related settings 
+       or artefacts shall be removed.
+
+       The possible time consuming preparation of the export package parts may be ongoing when the 
+       response is sent.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 202 || Accepted. Request ok, data in preparation |
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance bearer token |
+       | _itsgToken_ and/or insurance bearer token not valid | 403 | invalToken | Token invalid or token claims do not match requirements |
+       | Invalid account | 404 | noInformation | _insurantid_ not known |
+       | Health record is not in state INACCESSIBLE with reason "ready for merge" | 409 | statusMismatch ||
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+       | Fatal error | 503 | irreparable | Internal error and transfer not possible at all |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              itsgToken: "encoded content (jwt) of ITSG-Token"
+            schema:
+              type: object
+              properties:
+                itsgToken:
+                    $ref: '#/components/schemas/ItsgTokenType'
+             
+      responses:
+        "202":
+          description: Accepted. Kvnr is known, health record is available and in preparartion for transfer
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              example:
+                transferId: 2550d574-e482-47b4-8593-f9d2d234a0f7
+                partList: [
+                  {partId: "d1bf29e8-9b1d-4b93-b5fd-1070ec2a3450"},
+                  {partId: "c5c865b9-2506-4cf9-b36f-2a9ecb3b74c8"}
+                ]
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      transfer-id:
+                        type: string
+                        format: uuid
+                  - $ref: '#/components/schemas/PartsType'
+
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          $ref: '#/components/responses/Error409Conflict'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+        '503':
+          $ref: '#/components/responses/Error503ServiceUnavailableError'
+
+    get:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+        - $ref: '#/components/parameters/transferid'
+        - $ref: '#/components/parameters/partid'
+      tags:
+        - Data Transfer
+      operationId: getContent
+      summary: (getContent) Transfer a part of health record data related to _insurantid_
+      description: |
+       Request transfer of a prepared part containing health record data. <br>
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       The demanded part is identified by a _partid_. This _partid_ shall be listed in the response 
+       of a prior _transferStartRelocation_ or _transferStartMerge_ operation within the same transfer session. 
+
+       The preparation of some parts may be time consuming. The client shall consider a _Retry-After_-
+       response before retry but only for 4 consecutive _Retry-After_ responses and shall then abort the transfer session,
+       including invocation of _transferAbort_.
+
+       The client shall also perform retries in case no response is received at all but only for 4 consecutive attempts
+       and shall then abort the transfer session, including invocation of _transferAbort_.
+
+       Parts of a multi-part transfer may be retrieved in any order.
+
+       The client shall consider the transfer session as finally aborted when a requested part can not be
+       provided for any reason (response 503 'irreparable').
+
+       The client shall consider the transfer session as no longer valid if no part is transferred after a suitable
+       amount of retries without an error indication. The client shall end the transfer session themselve and notify 
+       this by a call to _transferAbort_ 
+       
+
+       ### Provider
+       Returns the addressed part of health record content and suggests a filename for this part. <br>
+       The successful transfer of a part shall be tracked for transfer process monitoring.<br>
+       The part shall be available until transfer session closure and may be downloaded multiple times.
+
+       If a part is not yet ready for a transfer an indication about a suitable client waiting time 
+       shall be part of the response.
+
+       The whole transfer session shall be aborted and the account shall be restored in case of inactivity
+       of the client for 60 minutes.
+
+       If a transfer session shall be finally aborted by the provider for any reason, including part 
+       preparation problems, an _irreparable_ error code shall be used for notification. All 
+       transfer session related settings or artefacts shall be removed.
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance's bearer token |
+       | Transfer session unknown | 404 | noSession | unknown _transferid_|
+       | Part does not exist | 404 | noResource | unknown _partid_|
+       | Invalid account | 404 | noInformation | _insurantid_ not known |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+       | Pending part preparation | 503 | inProgress | retry after indicated waiting time |
+       | Part preparation error | 503 | irreparable | Internal error and transfer not possible at all, transfer aborted |
+
+      responses:
+        "200":
+          description: OK. 
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+            Content-Disposition:
+              description: filename of the requested part
+              schema:
+                type: string
+              example: attachment; filename="export-kvnr-part-X-of-Y-partid-transferid.zip"
+            Digest:
+              description: Digest according RFC 5843 for the content (part of export package)
+              required: true
+              schema:
+                type: string
+              example: 'sha-256=MWYyNWI2ZWY0YmY0YmJiYmU3NzQzYWU1ODk4MDUzYmU='          
+          content:
+            application/zip: 
+              schema:
+                description: Content of the requested part
+                type: string
+                format: binary
+                example: "Health record content according to export package requirements"
+
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+        '503':
+          description: Service Unavailable Error and Retry-After information 
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+            Retry-After:
+              description: Retry waiting time in seconds - only in combination with errorCode 'inProgress'
+              schema:
+                type: string
+                example: "120"
+          content:
+            application/json:
+              examples:
+                ExServiceUnavailable:
+                  value:
+                    errorCode: irreparable
+                ExRetryAfter:
+                  value:
+                    errorCode: inProgress
+              schema:
+                $ref: '#/components/schemas/ErrorType'
+
+  /epa/basic/api/v1/accounts/transfer/finalize:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+        - $ref: '#/components/parameters/transferid'
+      tags:
+        - Data Transfer
+      operationId: transferComplete
+      summary: (transferComplete) Notification about successful data transfer
+      description: |
+       A client shall invoke this operation to confirm a successful transfer of the requested data.<br> 
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       The client is has now overall responsibility for the transferred data. The transfer can not be repeated,
+       all data is deleted on provider side! 
+
+       The client shall complete the account on client side. 
+
+       The client shall always receive and process the response of this operation. An account shall not 
+       become accessible for users on client sidec in case of an unclear operation result! This includes retries 
+       of the client in case no response is received at all but only for 4 consecutive attempts. Revceived account 
+       data shall not be deleted on client side until clerification o the situation!
+
+       The client shall consider the transfer session as finally aborted when a requested part can not be
+       provided for any reason (response 503 'irreparable').
+
+       ### Provider
+       This finalizes the transfer session. 
+       All prepared transfer session parts shall be deleted, parameter _transferid_ shall no longer be valid.
+       The current data (objection or health record) shall be deleted.
+
+       A notification about the successful transfer shall be sent to the (previous) insurance company. 
+
+       This operaton shall not succeed if not all parts are transferred by means of a _getContent_ operation. The 
+       error response shall list all remaing parts for information.
+
+       If transfer session completion shall be finally rejected by the provider for any severe internal reason,
+       an _irreparable_ error code shall be used for notification. All transfer session related settings 
+       or artefacts shall be deleted, parameter _transferid_ shall no longer be valid
+       The current account data shall not be deleted.          
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance's bearer token |
+       | Invalid transfer session | 404 | noResource | _transferid_ is not valid |
+       | Invalid account | 404 | noInformation | _insurantid_ not known |
+       | transfer parts remaining | 409 | incomplete | includes list of remaining parts |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+       | Fatal error | 503 | irreparable | Internal error and transfer completion not possible at all |
+
+      responses:
+        "200":
+          description: OK.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '409':
+          description: Conflict.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+          content:
+            application/json:
+              example:
+                partList: [
+                  {partId: "c5c865b9-2506-4cf9-b36f-2a9ecb3b74c8"}
+                ]
+                errorCode: 'incomplete'
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PartsType'
+                  - $ref: '#/components/schemas/ErrorType'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+        '503':
+          $ref: '#/components/responses/Error503ServiceUnavailableError'
+
+  /epa/basic/api/v1/accounts/transfer/abort:
+    post:
+      parameters:
+        - $ref: '#/components/parameters/insurantid'
+        - $ref: '#/components/parameters/useragent'
+        - $ref: '#/components/parameters/requestid'
+        - $ref: '#/components/parameters/transferid'
+      tags:
+        - Data Transfer
+      operationId: transferAbort
+      summary: (transferAbort) Notification about transfer abortion
+      description: |
+       A client shall invoke this operation to abort an ongoing transfer of data. <br> 
+       This operation is limited to users health record system authenticated by insurance bearer token.
+
+       The client shall delete and reset all transfer related data and settings.
+
+       ### Provider
+       All prepared transfer session parts shall be deleted, parameter _transferid_ shall no longer be valid.
+       All transfer related data and settings shall be restored to its original state.
+       The current account data shall not be deleted.  
+
+       | Conditions | Status code | Error code | Remarks |
+       |------------|-------------|------------|---------|
+       | Successful operation | 200 |||
+       | Request does not match schema | 400 | malformedRequest ||
+       | Requestor not authorized | 403 | invalAuth | user session not authorized by insurance's bearer token |
+       | Invalid transfer session | 404 | noResource | _transferid_ is not valid |
+       | Invalid account | 404 | noInformation | _insurantid_ not known |
+       | Any other error | 500 | internalError | (see 'Retry interval') |
+       | Conditions | Status code | Error code | Remarks |
+
+      responses:
+        "200":
+          description: OK.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/requestid'
+        '400':
+          $ref: '#/components/responses/Error400BadRequest'
+        '403':
+          $ref: '#/components/responses/Error403Forbidden'
+        '404':
+          $ref: '#/components/responses/Error404NotFound'
+        '500':
+          $ref: '#/components/responses/Error500InternalError'
+
+components:
+  headers:
+    requestid:
+      description: Request identifier as provided by the client.
+      schema:
+       $ref: '#/components/schemas/RequestIdType'
+
+  parameters:
+    insurantid:
+      name: x-insurantid
+      in: header
+      description: Health Record Identifier.
+      required: true
+      schema:
+        $ref: '#/components/schemas/InsurantIdType'
+    useragent:
+      name: x-useragent
+      in: header
+      description: user agent information
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserAgentType'
+    requestid:
+      name: X-Request-ID
+      in: header
+      description: request identifier
+      schema:
+        $ref: '#/components/schemas/RequestIdType'
+    transferid:
+      name: transferid
+      in: header
+      description: identifier of a transfer session
+      required: true
+      schema:
+        $ref: '#/components/schemas/TransferIdType'
+    partid:
+      name: partid
+      in: header
+      description: identifier of a content part for transfer
+      required: true
+      schema:
+        $ref: '#/components/schemas/ContentIdType'
+
+  responses:
+    Error400BadRequest:
+      description: Bad Request.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: malformedRequest
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error403Forbidden:
+      description: Forbidden.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: invalAuth
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error404NotFound:
+      description: Not found.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: noResource
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error409Conflict:
+      description: Conflict.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          examples:
+            statusMismatch:
+              value:
+                errorCode: statusMismatch
+            informationMismatch:
+              value:
+                errorCode: informationMismatch
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error500InternalError:
+      description: Internal Server Error
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: internalError
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+    Error503ServiceUnavailableError:
+      description: Service Unavailable Error or Retry-After information 
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/requestid'
+      content:
+        application/json:
+          example:
+            errorCode: irreparable
+          schema:
+            $ref: '#/components/schemas/ErrorType'
+
+  schemas:
+    KvnrExistsType:
+      description: 'Insurance company information'
+      type: object
+      properties:
+        insurance:
+          description: The name of the insurance company hosting the account.
+          type: string
+          example: 'Muster Krankenkasse'
+        insuranceId:
+          description: The IK-Number of the insurance company hosting the account. 
+          type: string
+          example: '123456789'  
+    AccountInformationType:
+      description: 'State and associated insurance company of an account.'
+      type: object
+      properties:
+        insurance:
+          description: The name of the insurance company hosting the account.
+          type: string
+          example: 'Muster Krankenkasse'
+        insuranceId:
+          description: The IK-Number of the insurance company hosting the account. 
+          type: string
+          example: '123456789'  
+        recordState:
+          description: The state of the health record.  
+          type: string
+          enum:
+            - INITIALIZED
+            - ACTIVATED
+            - INACCESSIBLE
+            - SUSPENDED
+        objection:
+          description: The objection to epa (timestamp only).  
+          type: string
+          format: date-time
+      required:
+        - insurance
+      oneOf:
+        - required:
+          - recordState
+        - required:
+          - objection
+    PartsType:
+      description: A list of part identifiers
+      example:
+        partlist: [
+          {partId: "d1bf29e8-9b1d-4b93-b5fd-1070ec2a3450"},
+          {partId: "c5c865b9-2506-4cf9-b36f-2a9ecb3b74c8"},
+        ]
+      type: object
+      properties:
+        partList:
+          type: array
+          items:
+            type: object
+            properties:
+              partId: 
+                $ref: '#/components/schemas/ContentIdType'
+          minItems: 1
+    ObjectionType:
+      description: The declared objection to epa usage
+      type: object
+      properties:
+        objection:
+          type: object
+          properties:
+            insurance:
+              description: The name of the insurance
+              type: string
+              example: 'Muster Krankenkasse'
+            insuranceId:
+              description: The IK-Number of the insurance 
+              type: string
+              example: '123456789'  
+            objection: 
+              type: string
+              enum: ["true"]
+            at: 
+              type: string
+              format: date-time
+    HealthRecordRequestType:
+      type: object
+      properties:
+        itsgToken:
+          $ref: '#/components/schemas/ItsgTokenType'
+        ktrBearerToken:
+          $ref: '#/components/schemas/KtrBearerTokenType'
+        ktrEntitlement:
+          $ref: '#/components/schemas/KtrEntitlementJwt'
+        ombudsOfficeEntitlement:
+          $ref: '#/components/schemas/OoEntitlementJwt'
+        email:
+          $ref: '#/components/schemas/EmailAddressType'            
+    HealthRecordMergeType:
+      type: object
+      properties:
+        itsgToken:
+          $ref: '#/components/schemas/ItsgTokenType'
+        ktrBearerToken:
+          $ref: '#/components/schemas/KtrBearerTokenType'
+        from:
+          $ref: '#/components/schemas/KvnrExistsType'            
+    LocalHealthRecordRequestType:
+      type: object
+      properties:
+        itsgToken:
+          $ref: '#/components/schemas/ItsgTokenType'
+        ktrEntitlement:
+          $ref: '#/components/schemas/KtrEntitlementJwt'
+        ombudsOfficeEntitlement:
+          $ref: '#/components/schemas/OoEntitlementJwt'
+        email:
+          $ref: '#/components/schemas/EmailAddressType'            
+    ObjectionRequestType:
+      type: object
+      properties:
+        itsgToken:
+          $ref: '#/components/schemas/ItsgTokenType'
+        ktrBearerToken:
+          $ref: '#/components/schemas/KtrBearerTokenType'
+        objection:
+          $ref: '#/components/schemas/ObjectionType'
+    LocalObjectionRequestType:
+      type: object
+      properties:
+        itsgToken:
+          $ref: '#/components/schemas/ItsgTokenType'
+        objection:
+          $ref: '#/components/schemas/ObjectionType'
+    ItsgTokenType:
+      description: |
+        ITSG-Token JWT as issued by ITSG as proof of responsibility of the claimed insurance company for 
+        the claimed kvnr. 
+        This token is defined in 
+        - title: "GKV - Technische Absicherung der KVNR-Nutzung in der Telematikinfrastruktur, Anlage 4 der Richtlinie nach § 290 SGB V "
+        - version: "1.0.1"
+      example: "ITSG-Token content"
+      type: string
+      format: binary
+    KtrBearerTokenType:
+      description: |
+        Insurance bearer token. JWT of the insurance company for account data transfer. This jwt shall meet the requirements
+        of "gemSpec_Aktensystem_ePAfuerall#A_30391-* 
+
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256" 
+          - "x5c": signature certificate (C.HCI.AUT signature certificate of insurance company)
+        - payload claims:
+          - "type": "ePA-Authentisierung über PKI"
+          - "iat": "issued at timestamp"
+          - "hash-itsg": hash value of associated ITSG-token jwt
+          - "sub": Telematik-Id of insurance company
+          - "cn": name of insurance company, matching subject.commonName in signature certificate C.HCI.AUT
+        - signature contains token signature"
+      example: "Insurance Bearer Token content"
+      type: string
+      format: binary
+    KtrEntitlementJwt:
+      description: |
+        Entitlement-JWT of the insurance company associated to a health record. This jwt shall suit
+        an exchange to a long term entitlement via hsm rule rr4. 
+
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256" 
+          - "x5c": signature certificate (C.HCI.OSIG signature certificate of insurance company)
+        - payload claims:
+          - "type": "ePA-Befugnis über PKI"
+          - "iat": issued at timestamp
+          - "insurantId": Identifier of designated account
+          - "actorId": Telematik-Id of insurance company
+          - "oid": value of oid_kostenträger
+          - "displayName": name of insurance company
+        - signature contains token signature"
+      example: "Insurance Entitlement Token content"
+      type: string
+      format: binary
+    OoEntitlementJwt:
+      description: |
+        Entitlement-JWT of the ombuds office associated to a health record. This jwt shall suit
+        an exchange to a long term entitlement via hsm rule rr4. 
+
+        "A JSON Web Token (JWT) with following format build according to RFC-7515:</br>
+        base64url (protected_header) + '.' + base64url (payload) + '.' + base64url (signature)"</br>
+        - protected_header contains:
+          - "typ": "JWT"
+          - "alg": "ES256" 
+          - "x5c": signature certificate (C.HCI.OSIG signature certificate of ombuds office)
+        - payload claims:
+          - "type": "ePA-Befignis über PKI"
+          - "iat": issued at timestamp 
+          - "insurantId": Identifier of designated account
+          - "actorId": Telematik-Id of ombuds office
+          - "oid": value of oid_ombudsstelle
+          - "displayName": name of ombuds office
+        - signature contains token signature"
+      example: "Ombuds Office Entitlement Token content"
+      type: string
+      format: binary
+    EmailAddressType:
+      type: string
+      description: "email address"
+      format: email
+      example: "name@example.com"
+    UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
+    TransferIdType:
+      description: "Unique identifier of a transfer session"
+      type: string
+      format: uuid
+    ContentIdType:
+      description: "Unique identifier of a content part"
+      type: string
+    TelematikIdType:
+      type: string
+      pattern: '^[1-9][0-9]?-[\x21-\x7E]+$'
+      maxLength: 128
+      example: 2-883110000118994
+    ErrorType:
+      description: "Error object with additional information about the occurred error"
+      type: object
+      properties:
+        errorCode:
+          description: "Error condition specifier"
+          type: string
+        errorDetail:
+          description: "Additional details regarding the error condition"
+          type: string
+      required:
+        - errorCode
+

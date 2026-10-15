@@ -36,12 +36,8 @@ info:
     - log the X-Request-ID in all operational logs related to that request.
 
     **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24987*.
-    Log entry storage requires an entitled user for the related operation to 
-    ensure access to secure data storage. Therefore, log entry creation shall 
-    always be skipped and no log entry shall be stored if this precondition is 
-    not met.
+    Log entries for the audit Event Service shall be created according to
+    "Implementation Guide ePA BAsisfunktionalitäten - Audit Event Service - Belegung der Protokolldaten"
     
   contact:
     name: gematik GmbH
@@ -51,9 +47,12 @@ info:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
 
-  version: 1.8.0
+  version: 1.8.1
+
   # version history:
   # ----------------
+  # version 1.8.1
+  #   - reworked logging requirement
   # version 1.8.0
   #   - align errorconditions of setEntitlementPsV2 with setEntitlementPs
   #   - fixed example Set_SingleEntitlementV2 (jwt -> popp)
@@ -176,7 +175,7 @@ tags:
      The following entitlements are set at health record creation time. They are always present and can
      neither be altered, deleted or viewed.
      - insurant (actorId == insurant*s kvnr == health record identifier)
-     - ePrescription backend (actorId == registered telematik-id of ePrescription backend)
+     - ePrescription backend
      - ombuds office (actorId == registered telematik-id of ombuds office)
      - insurance (actorId == registered telematik-id of health insurance)
 
