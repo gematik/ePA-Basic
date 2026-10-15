@@ -5,13 +5,12 @@
 |This branch||
 |:----|----|
 | Context| __ePA 3.0 (ePA für alle)__|
-| Designation  | __Release 3.1.3-4__  |
-| Current status | __released__ |
-| Release date   | __2026-07-15__ |
-| Release documents</br> (specification and relevant sources) | [gemSpecPages ePA 3.1.3-4](https://gemspec.gematik.de/releases/ePA_3_1_3-4/)|
-| Previous release documents | [gemSpecPages ePA 3.1.3-3](https://gemspec.gematik.de/prereleases/Draft_ePA_3_1_3-3/)|
+| Designation  | __Release ePA-27__  |
+| Current status | __pre-released__ |
+| Release date   | __2026-10-15__ |
+| Release documents</br> (specification and relevant sources) | [gemSpecPages ePA-27 Teil 2](https://gemspec.gematik.de/prereleases/Draft_ePA_27_Teil2/) |
+| Previous release documents | [gemSpecPages ePA 3.1.3-4](https://gemspec.gematik.de/releases/ePA_3_1_3-4/)|
 | Follow-up | not yet defined |
-
 </br>
 
 ## About releases and associated branches

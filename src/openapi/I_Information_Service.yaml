@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: I_Information_Service
   description: |-
-    This interface provides information about a specific health record for healthcare institutions and backends (ePrescription)<br/>
+    This interface provides information about a specific health record for clients<br/>
     This interface collects information about client use case performance.<br/>
 
     **General conditions**:</br> 
@@ -81,7 +81,7 @@ tags:
      
   - name: ConsentDecisions
     description: |
-     Consent decision information for healthcare institutions and backends (ePrescription).
+     Consent decision information of healthrecord.
 
   - name: UserExperience
     description: |

@@ -1,0 +1,1332 @@
+= Aktenkontoverwaltung - Exportpaket für Daten der Akte
+:title-page:
+:title-logo-image: image:Gematik_Logo_Flag.svg[pdfwidth=4.25in,align=center]
+ifndef::env-github[]
+ifndef::imagesdir[:imagesdir: ../../images]
+ifndef::plantumlsimages[:plantumlsimages: plantuml]
+ifndef::chapterplantumlsdir[:chapterplantumlsdir: ../../src/plantuml]
+endif::[]
+ifdef::env-github[]
+:source-highlighter: rouge
+:icons:
+:imagesdir: ../../images
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:plantumlsimages: plantuml
+:plantumlsdir: ../../src/plantuml
+:xrefstyle: full
+:sectanchors:
+:numbered:
+:sectnums:
+endif::[]
+
+ifdef::env-github[]
+image::Gematik_Logo_Flag.png[gematik,width=20%,float="right"]
+endif::[]
+
+[width="100%",cols="50%,50%", options="header",]
+|===
+|Dokumentversion:
+|2.0.0
+|===
+
+
+toc::[]
+
+
+[cols="1,4",options="header"]
+|===
+|Version
+|
+
+|1.0.0
+|erste Version für ePA-Aktensysteme ab Release 3.x
+|1.0.1
+|Hinweise zur Reihenfolge der Artefakte im Zip-File
+|1.0.2
+|Ergänzung Schema für UdpMedication
+|1.1.0
+|Ergänzung von Ressourcen in medication sowie deren Reihenfolge
+|1.1.1
+|Editorische Korrekturen 
+|1.1.2
+|Zulässigkeit verlinkter Anhänge in XDS-Dokumenten und editorische Anpassungen 
+|1.1.3
+|Ergänzung der Patient Ressourcen und History-Bundles für versionierte Ressourcen
+|1.1.4
+|Keine Reihenfolge der Medication Ressourcen im Zip-File mehr vorgegeben und redaktionelle Korrekturen
+|2.0.0
+a| 
+* Consent Decisions und Data Usage Purposes mit Änderungsdatum und -akteur
+* Anpassungen für den MHD Service
+* Anpassungen und Umbenennung zu "HealthRecordExportPackage" für Releases ab ePA-27
+|===
+
+
+:sectnums:
+
+[#_exportpackage]
+== Exportpaket (Daten)
+
+Definition der Formate für die bei einem Anbieterwechsel in einem Exportpaket zu übertragenen Daten einer ePA.
+
+=== Zip-Datei
+
+Die einzelnen Artefakte einer Akte werden in einer oder mehreren Zip-Datei(en) mit folgender Struktur abgelegt:
+
+[cols="1,1,2a,2a,1"]
+|===
+|Root
+|Pfad (Verzeichnis)
+|Elemente (Datei(en))
+|Inhalt
+|see
+
+|ZIP/ ||||
+
+||(root)|Information.json {1 .. 1}|allgemeine Information| <<Information>>
+||IHE_XDS/|gemäß <<ITI-TF2>>, ITI-32|XDS Dokumente| <<IHE_XDS>>
+||MedicalService/|M_nnnnnn.json { 0 .. * }|FHIR Ressourcen| <<MedicalService>>
+||AuditEvents/|A_nnnnnn.json { 0 .. * }|Audit Events| <<AuditEvents>>
+||Patient/|P_nnnnnn.json { 0 .. * }|FHIR Ressourcen Patient Service| <<Patient>>
+||Entitlements/|E_nnnnnn.json { 0 .. * }|Befugnisse| <<Entitlements>>
+||(root)|Consents.json {1 .. 1}|Widersprüche gegen Funktionen der ePA| <<Consents>>
+||(root)|UdpMedication.json {1 .. 1}|LEI-spezifische Ausschlüsse von der Nutzung des Medication Service| <<User-specific Deny Policy>>
+||(root)|ResearchDataPurposes.json {1 .. 1}|Verwendungszwecke für Forschungsdaten| <<DataUsagePurposes>>
+||(root)|Constraints.json {1 .. 1}|verborgene Elemente| <<Constraints>>
+||(root)|EmailOwner.json {1 .. 1}|E-Mail Adresse Versicherter| <<Emails>>
+||(root)|Emails.json {1 .. 1}|E-Mail Adressen Vertreter| <<Emails>>
+||(root)|BlockedUsers.json {1 .. 1}|ausgeschloßene Nutzer| <<BlockedUsers>>
+|===
+
+Einzelne Datenelemente der Akte, beispielsweise ein spezifisches Entitlement, eine konkrete Consent Decision, ein bestimmtes Dokument, sind jeweils nur einmalig gemäß obiger Tabelle in die Zip-Datei(en) aufzunehmen (keine Duplikate).
+
+Die Komprimierung der Zip-Datei(en) erfolgt mit Kompressionsmethode 'no compression' (0) oder 'Deflate' (8) gemäß der Vorgaben in  <<zip>>.
+
+Innerhalb der Zip-Datei darf es kein Interleaving geben. Alle Einträge mit gleichem Pfad müssen aufeinanderfolgen und sollen nicht abwechselnd mit Einträgen eines abweichenden Pfades vorkommen.
+
+Die Menge der Zip-Dateien bildet das Exportpaket einer Akte. Die Verwendung einer oder mehrerer Teile eines Exportpakets wird durch das exportierende System festgelegt.
+Ein Exportpaket ist erst dann übertragen, wenn alle Teile übertragen sind. Referenzen der Datenelemente untereinander sind in der Regel erst im Anschluss an eine vollständige Übertragung des Exportpakets auflösbar.
+
+---
+==== Information
+
+Die Information Sektion enthält allgemeine Angaben zum Exportpaket.
+
+**previousHealthCareInsurance** +
+Zu Informations- und Protokollierungszwecken wird dem importierenden Aktensystem die Kennung des bisherigen Kostenträgers übermittelt.
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/schema-information.json",
+  "title": "Information",
+  "description": "General information",
+  "type": "object",
+  "properties": {
+    "previousHealthCareInsurance": {
+      "type": "object",
+      "properties": {
+        // Name des Kostenträgers
+        "name": {
+          "type": "string"
+        },
+        // IK-Nummer (optional)
+        "identifierInstitution": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
+    }
+  },
+  "required": ["previousHealthCareInsurance"]
+}
+----
+
+
+Beispiel: Inhalt Information.json
+[source,json]
+----
+{
+    "previousHealthCareInsurance": {
+        "name": "Test GKV",
+        "identifierInstitution": "109500969"
+    }
+}
+----
+
+==== IHE_XDS
+Der Export der Daten des XDS Document Service erfolgt analog zum Vorgehen in ePA-2.6.
+Policy Documents sind nicht mehr vorhanden und werden daher nicht berücksichtigt. Audit Events werden gemäß der Vorgaben in <<AuditEvents>> in das Exportpaket aufgenommen.
+
+Im Ordner IHE_XDS werden alle Dokumente und alle Metadaten gemäß IHE ITI Cross-Enterprise Document Media Interchange (XDM) - Distribute Document Set on Media [ITI-32] für den Export abgelegt (<<ITI-TF2>>).
+
+Abweichend von den Vorgaben aus [ITI-32] muss:
+
+* der ursprüngliche Inhalt von DocumentEntry.URI in das Metadatum DocumentEntry.originalURI kopiert werden. DocumentEntry.originalURI wird ausschließlich im Rahmen des Aktenumzugs verwendet (d.h. es ist kein Metadatum von XDS-Registry) und wie die anderen Metadaten auch in METADATA.XML übertragen.
+* für Dokumente ohne DocumentEntry.title dieses Metadatum mit dem auf den reinen Dateinamen reduzierten Wert (d.h. ohne Pfadangaben) von documentEntry.URI befüllt und in METADATA.XML übernommen werden.
+
+===== Reihenfolge und Sortierung der Submission Sets
+Innerhalb der Daten zu IHE_XDS in der Zip-Datei des Exportpakets werden Submission Sets so angeordnet, dass bei sequentiellem Lesen keine 'Dangling Pointer' auftreten, d.h. keine Assoziationen, deren Ziel (Folder oder Document Entry) noch nicht gelesen wurde, sondern erst im weiteren Verlauf der Zip-Datei enthalten ist
+
+---
+==== MedicalService
+Innerhalb dieses Verzeichnisses werden alle Daten der Medical Services 'medication' und 'documents (MHD)' abgelegt.
+
+Jede FHIR-Ressource wird im Format JSON als jeweils eine Datei abgelegt. Der Dateiname ist M_nnnnnn.json mit 'nnnnnn' aus der Menge {000000, ..., 999999}, beginnend mit 'nnnnnn' = 000000 und fortlaufender Zählung.
+
+Die jeweils enthaltene FHIR-Ressource einer Datei ist innerhalb der JSON Struktur über das Attribut "resourceType" identifizerbar, das spezifische Profil der Ressource über das Attribut "meta.profile".
+
+Versionierbare Ressourcen verwenden vollständige History-Bundle mit allen Versionen pro Datei. Die Resource.id muss dabei über alle Versionen hinweg konstant bleiben, die Attribute Resource.meta.versionId und Resource.meta.lastUpdated werden pro Version übernommen. Nach einem Import aller Versionen darf nur die jeweils aktuellste Version mit der höchsten Resource.meta.versionId über die Standard-Query-Api abrufbar sein. Alle älteren Versionen müssen dagegen über die URL [base]/[resourceType]/[id]/_history/[versionId] zugänglich sein.
+
+Einige FHIR-Ressourcen verwenden Referenzen auf weitere FHIR-Ressourcen, welche (alle) nach einem erfolgreichen Import aller FHIR-Ressourcen auflösbar sein müssen. 
+
+Bei einem Import eines Pakets müssen die Referenzen geprüft werden. Dabei können auch zyklische Referenzen zwischen FHIR-Ressourcen des Pakets vorhanden sein, welche nicht direkt, sondern erst bei Vorliegen aller FHIR-Ressourcen des Pakets validiert werden können.
+
+Verbleiben nach der Verarbeitung des vollständigen Exportpakets dennoch offene, nicht aufgelöste Referenzen auf FHIR-Ressourcen, so ist der Import der Daten in ein Aktenkonto nicht erfolgreich durchführbar und muss abgebrochen werden.
+
+Beispiel: Inhalt M_123456.json (Resource: MedicationRequest gemäß Profil EMPMedicationRequest mit allen Versionen in einem Bundle)
+
+[source,json]
+----
+{
+  "resourceType": "Bundle",
+  "id": "31a277f5-6ed9-4ee2-a864-4abc26b5de5b",
+  "type": "history",
+  "total": 3,
+  "entry": [
+    {
+      "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+      "request": {
+        "method": "DELETE",
+        "url": "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403"
+      },
+      "response": {
+        "status": "200 OK",
+        "lastModified": "2026-08-22T15:00:00.000Z"
+      }
+    },
+    {
+      "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "1959b8cd-58d2-4961-aa10-74d7e68896403",
+        "meta": {
+          "versionId": "2",
+          "lastUpdated": "2026-08-22T14:50:10.000Z",
+          "profile": [
+            "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request"
+          ]
+        },
+        "extension": [
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+            "valueCode": "EMP"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/reason-patient-instruction-extension",
+            "valueString": "akuten Behandlung von Migräneanfällen mit und ohne Aura"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/patient-note-extension",
+            "valueAnnotation": {
+              "text": "Bitte schützen Sie das Arzneimittel vor hohen Temperaturen und direkter Sonneneinstrahlung."
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.effectiveDosePeriod",
+            "valuePeriod": {
+              "start": "2026-08-22",
+              "end": "2026-08-25"
+            }
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-origin-medication-extension",
+            "valueReference": {
+              "reference": "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+            "valueMarkdown": "1-0-0-0 Stück"
+          },
+          {
+            "extension": [
+              {
+                "url": "algorithmVersion",
+                "valueString": "1.0.1"
+              },
+              {
+                "url": "language",
+                "valueCode": "de-DE"
+              }
+            ],
+            "url": "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+            "valueMarkdown": "1-0-2-0 Stück"
+          }
+        ],
+        "status": "active",
+        "intent": "plan",
+        "medicationReference": {
+          "reference": "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+        },
+        "subject": {
+          "identifier": {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "X110411319"
+          }
+        },
+        "authoredOn": "2026-08-22",
+        "note": [
+          {
+            "text": "Hinweis für den LE"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "MORN"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "Stück",
+                  "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+                  "code": "1"
+                }
+              }
+            ]
+          },
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "MORN"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "Stück",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "1"
+                }
+              }
+            ]
+          },
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "EVE"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 2,
+                  "unit": "Stück",
+                  "system": "http://unitsofmeasure.org",
+                  "code": "1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403"
+      },
+      "response": {
+        "status": "200 OK",
+        "location": "MedicationDispense/1959b8cd-58d2-4961-aa10-74d7e68896403/_history/2",
+        "lastModified": "2026-08-22T14:50:10.000Z"
+      }
+    },
+    {
+      "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "1959b8cd-58d2-4961-aa10-74d7e68896403",
+        "meta": {
+          "versionId": "1",
+          "lastUpdated": "2026-08-22T14:43:33.244Z",
+          "profile": [
+            "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request"
+          ]
+        },
+        "extension": [
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+            "valueCode": "EMP"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/reason-patient-instruction-extension",
+            "valueString": "akuten Behandlung von Migräneanfällen mit und ohne Aura"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/patient-note-extension",
+            "valueAnnotation": {
+              "text": "Bitte schützen Sie das Arzneimittel vor hohen Temperaturen und direkter Sonneneinstrahlung."
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.effectiveDosePeriod",
+            "valuePeriod": {
+              "start": "2026-08-22",
+              "end": "2026-08-25"
+            }
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-origin-medication-extension",
+            "valueReference": {
+              "reference": "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+            "valueMarkdown": "1-0-0-0 Stück"
+          },
+          {
+            "extension": [
+              {
+                "url": "algorithmVersion",
+                "valueString": "1.0.1"
+              },
+              {
+                "url": "language",
+                "valueCode": "de-DE"
+              }
+            ],
+            "url": "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+          }
+        ],
+        "status": "active",
+        "intent": "plan",
+        "medicationReference": {
+          "reference": "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+        },
+        "subject": {
+          "identifier": {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "X110411319"
+          }
+        },
+        "authoredOn": "2026-08-22",
+        "note": [
+          {
+            "text": "Hinweis für den LE"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 1,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "MORN"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "Stück",
+                  "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+                  "code": "1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "MedicationRequest"
+      },
+      "response": {
+        "status": "201 Created",
+        "location": "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403/_history/1",
+        "lastModified": "2026-08-22T14:43:33.244Z"
+      }
+    }
+  ]
+}
+----
+
+===== DocumentReferences und Dokumente des MHD-Service
+
+Die Ressourcen _DocumentReference_ werden als FHIR-Ressourcen des Medical Service in das Exportpaket als Inhalt von M_xxxxxx.json Dateien übernommen.
+
+Diese _DocumentReference_ verweisen durch das Element _content.attachement.url_ auf die eigentliche Datei mit den Inhaltsdaten. Der eindeutige und immer vorhandene Identifier für diese Datei ist _Identifier[uniqueId].value_.
+
+Die Dateien mit den Inhaltsdaten werden zusammen mit der uniqueId in jeweils einer Datei im Format JSON abgelegt. Der Dateiname ist F_nnnnnn.json mit 'nnnnnn' aus der Menge {000000, ..., 999999}, beginnend mit 'nnnnnn' = 000000 und fortlaufender Zählung.
+
+Durch die uniqueId ist im Zielsystem nach der Extraktion aus dem Exportpaket eine Zuordnung zu einer assoziierten _DocumentReference_ gegeben. In der _DocumentReference_ vorhandene _content.attachement.url_ können anschließend, soweit erforderlich, an die Bedingungen des Zielsystems angepasst werden.
+
+Vor einer Übernahme von Dateien mit Inhaltsdaten ist zu prüfen, ob diese Datei schon im Kontext der Aufbereitung der Daten des XDS Document Service im Exportpaket enthalten ist. Ist dieses der Fall, dann wird auf den Export im Kontext der MHD Daten zur Vermeidung von Duplikaten verzichtet.
+Als Kriterium für die Duplikatvermeidung kann der Wert _Identifier[uniqueId].value_ aus der _DocumentReference_ verwendet werden und auf Vorkommen unter den DocumentEntry.UniqueIds der zu exportierenden Dokumente des XDS Docuemnt Service prüfen.
+
+Schema für den Transport einer MHD-Datei:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/filecontent.json",
+  "title": "Filecontent",
+  "description": "A data file and identification in an export package",
+  "type": "object",
+  "properties": {
+    "uniqueId": {
+      "description": "The uniqueId value of the associated DocumentReference resource",
+      "type": "string"
+    },
+    "content": {
+      "description": "The binary content of the file"
+      "type": "string",
+      "format": "binary"
+    }
+  }
+}
+----
+
+Beispiel: Inhalt F_000123.json (beschriebene MHD-Datei: 'Neurologischer_Untersuchungsbefund.pdf')
+
+[source,json]
+----
+{
+    "uniqueId": "urn:oid:2.25.104666037230925920288492414767863731214",
+    "content": "<Inhalt der Datei Neurologischer_Untersuchungsbefund.pdf"
+}
+----
+
+
+---
+==== Patient
+Innerhalb dieses Verzeichnisses werden alle Daten des Patient Service abgelegt, also alle Ressourcen des Profils Patient (epa-patient).
+
+Die Patient-Ressourcen werden dabei im Format JSON als eine Datei abgelegt. Diese Datei beinhaltet alle versionierten Patient-Ressourcen vollständig in einem History-Bundle. Der Dateiname ist P_000000.json.
+
+Beispiel: Inhalt P_000000.json (Resource: 'Patient')
+
+[source,json]
+----
+{
+  "resourceType": "Bundle",
+  "id": "example-patient-history-bundle",
+  "link": [
+    {
+      "relation": "self",
+      "url": "/epa/patient/api/v1/fhir/Patient/_history"
+    }
+  ],
+  "entry": [
+    {
+      "request": {
+        "method": "PUT",
+        "url": "Patient/e6442a99-521b-482c-b62b-b0f809d4e951"
+      },
+      "response": {
+        "status": "200 OK",
+        "lastModified": "2025-10-10T15:00:00.000Z",
+        "location": "Patient/e6442a99-521b-482c-b62b-b0f809d4e951/_history/2"
+      },
+      "fullUrl": "http://epa4all/epa/patient/api/v1/fhir/Patient/e6442a99-521b-482c-b62b-b0f809d4e951",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "e6442a99-521b-482c-b62b-b0f809d4e951",
+        "meta": {
+          "profile": [
+            "https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"
+          ],
+          "versionId": "2",
+          "lastUpdated": "2026-01-19T14:37:12+01:00"
+        },
+        "identifier": [
+          {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "G995030566"
+          }
+        ],
+        "name": [
+          {
+            "given": [
+              "Erika"
+            ],
+            "use": "official",
+            "family": "Mustermann"
+          },
+          {
+            "use": "maiden",
+            "family": "Gabler",
+            "_family": {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/StructureDefinition/humanname-own-name",
+                  "valueString": "Gabler"
+                }
+              ]
+            }
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1964-08-12"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "Patient"
+      },
+      "response": {
+        "status": "201 Created",
+        "lastModified": "2025-08-22T14:43:33.244Z",
+        "location": "Patient/e6442a99-521b-482c-b62b-b0f809d4e951/_history/1"
+      },
+      "fullUrl": "http://epa4all/epa/patient/api/v1/fhir/Patient/e6442a99-521b-482c-b62b-b0f809d4e951",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "e6442a99-521b-482c-b62b-b0f809d4e951",
+        "meta": {
+          "profile": [
+            "https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"
+          ],
+          "versionId": "1",
+          "lastUpdated": "2025-12-06T10:00:14+01:00"
+        },
+        "identifier": [
+          {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "G995030566"
+          }
+        ],
+        "name": [
+          {
+            "given": [
+              "Erika"
+            ],
+            "use": "official",
+            "family": "Gabler"
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1964-08-12"
+      }
+    }
+  ],
+  "type": "history",
+  "total": 2
+}
+----
+
+---
+==== AuditEvents
+Innerhalb dieses Verzeichnisses werden alle Daten des Audit Services abgelegt.
+
+Berücksichtigt werden dabei nur Audit Event FHIR-Ressourcen und keinerlei gerenderte Auszüge (PDFs).
+
+Jede FHIR-Ressource des Typs "AuditEvent" (Profil: epa-auditevent) wird dabei im Format JSON als jeweils eine Datei abgelegt. Der Dateiname ist A_nnnnnn.json mit 'nnnnnn' aus der Menge {000000, ..., 999999}, beginnend mit 'nnnnnn' = 000000 und fortlaufender Zählung.
+
+Beispiel: Inhalt A_111111.json (Resource: 'AuditEvent' - cancel medication dispense)
+
+[source,json]
+----
+{
+    "resourceType": "AuditEvent",
+    "id": "epa-auditevent-example",
+    "meta": {
+        "profile":  [
+            "https://gematik.de/fhir/epa/StructureDefinition/epa-auditevent"
+        ]
+    },
+    "type": {
+        "system": "http://terminology.hl7.org/CodeSystem/audit-event-type",
+        "code": "rest",
+        "display": "RESTful Operation"
+    },
+    "action": "U",
+    "recorded": "2025-01-01T08:00:00Z",
+    "outcome": "0",
+    "agent":  [
+        {
+            "type": {
+                "coding":  [
+                    {
+                        "system": "http://dicom.nema.org/resources/ontology/DCM",
+                        "code": "110150",
+                        "display": "Application"
+                    }
+                ]
+            },
+            "who": {
+                "identifier": {
+                    "system": "https://gematik.de/fhir/sid/telematik-id",
+                    "value": "9-883110000012345"
+                }
+            },
+            "altId": "9-883110000012345",
+            "name": "E-Rezept-Fachdienst",
+            "requestor": "false"
+        }
+    ],
+    "source": {
+        "observer": {
+            "display": "Elektronische Patientenakte Fachdienst"
+        },
+        "type":  [
+            {
+                "system": "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs",
+                "code": "MEDICATIONSVC",
+                "display": "Medication Service"
+            }
+        ]
+    },
+    "entity":  [
+        {
+            "name": "Medical Service",
+            "description": "operation:cancel-dispensation"
+        }
+    ]
+}
+----
+
+---
+==== Consents
+Alle Entscheidungen zu widerspruchsfähigen Funktionen der ePA werden in einer JSON-Datei **Consents.json** zusammengefasst. 
+
+Der grundsätzliche Widerspruch gegen die Nutzung der ePA ist nicht Bestandteil dieser Datei.
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",  
+  "$id": "https://gematik.de/schema-consents.json",  
+  "title": "Consents",  
+  "description": "Consent decision entries",  
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "functionClass": {
+        "type": "string",
+        "enum": ["healthCareProcess", "secondaryDataUsage"]
+      },
+      "function": {
+        "type": "string",
+        "enum": ["medication", "erp-submission", "data-submission"]
+      },
+      "consent": {
+        "type": "string",
+        "enum": ["permit", "deny"]
+      },
+      "issued": {
+        "type": "object", 
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
+----
+
+Beispiel: Inhalt Consents.json
+[source,json]
+----
+[
+  {
+    "functionClass": "healthCareProcess",
+    "function": "medication",
+    "consent": "deny",
+    "issued": {
+      "at": "2026-12-07T14:00:00Z",
+      "actorId": "X110434370",
+      "displayName": "Simon von Düsterbehn-Hardenbergshausen"
+    }
+  },
+  {
+    "functionClass": "healthCareProcess",
+    "function": "erp-submission",
+    "consent": "permit",
+    "issued": {
+      "at": "2026-12-24T12:00:00Z",
+      "actorId": "8-863110000012345",
+      "displayName": "Name of ombuds office"
+    }
+  },
+  {
+    "functionClass": "secondaryDataUsage",
+    "function": "data-submission",
+    "consent": "permit",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }
+  }
+]
+----
+
+---
+==== User-specific Deny Policy 
+Alle Einträge zum Ausschluss von Leistungserbringerinstitutionen von der Nutzung des Medication Service (User-specific Deny Policy Medication Service) der ePA werden in einer JSON-Datei **UdpMedication.json** zusammengefasst. 
+
+Schema:
+[source,json]
+----
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://gematik.de/schema-udp-medication.json",
+    "title": "UdpMedication",
+    "description": "User-specific deny policy medication service assignments",
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "actorId": {
+          "type": "string",
+          "description": "Telematik-id of denied institution"
+        },
+        "oid": {
+          "type": "string",
+          "description": "oid of denied institution"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display name of denied institution"
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "timestamp of assignment creation"
+        }
+      }
+    }
+  }
+----
+
+Beispiel: Inhalt UdpMedication.json
+[source,json]
+----
+[
+	{
+		"actorId": "2-883110000092414",
+		"oid": "1.2.276.0.76.4.51",
+		"displayName": "Zahnarztpraxis Norbert Freiherr Schomaker",
+		"at": "2025-07-01T12:00:00Z"
+	},
+	{
+		"actorId": "1-883110000092404",
+		"oid": "1.2.276.0.76.4.50",
+		"displayName": "Praxis Dr. Annamaria Heckhausén",
+		"at": "2025-07-02T12:00:00Z"
+	},
+	{
+		"actorId": "2-88311000009242",
+		"oid": "1.2.276.0.76.4.51",
+		"displayName": "Zahnarztpraxis Dr. Alfons Adamiç",
+		"at": "2025-07-03T12:00:00Z"
+	}
+]
+----
+
+---
+==== DataUsagePurposes
+Alle Entscheidungen zu den Verwendungszwecken für übermittelte Daten für Forschungszwecke werden in einer JSON-Datei **ResearchDataPuposes.json** zusammengefasst. Diese Datei ist immer vorhanden, auch dann, wenn grundsätzlich gegen die Freigabe von Daten für Forschungszwecke entschieden wurde (siehe Consent "data-subission" == "deny")
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",  
+  "$id": "https://gematik.de/schema-researchDataPurposes.json",
+  "title": "Research Data Purposes",
+  "description": "Consents on research data purposes",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "purposeClass": {
+        "type": "string",
+        "enum": ["Purpose1", "Purpose2", "Purpose3", "Purpose4", "Purpose5", "Purpose6", "Purpose7", "Purpose8", "Purpose9", "Purpose10"]
+      },
+      "consent": {
+        "type": "string",
+        "enum": ["permit", "deny"]
+      },
+      "issued": {
+        "type": "object", 
+        "properties": {
+          "at": {
+            "type": "string",
+              "format": "date-time"
+            },
+          "actorId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          } 
+        }
+      }       
+    }
+  }
+}
+----
+
+Beispiel: Inhalt ResearchDataPurposes.json
+[source,json]
+----
+[
+  {
+    "purposeClass": "Purpose1",
+    "consent": "permit",  
+    "issued": {
+      "at": "2026-09-09T12:00:00Z",
+      "actorId": "Z123456789",
+      "displayName": "Name of insurant"
+    }
+  },
+  {
+    "purposeClass": "Purpose2",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose3",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose4",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose5",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose6",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose7",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose8",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose9",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  },
+  {
+    "purposeClass": "Purpose10",
+    "consent": "deny",
+    "issued": {
+      "at": "2025-01-15T00:00:00Z",
+      "displayName": "system"
+    }      
+  }
+]
+----
+
+
+==== Constraints
+Alle Einträge (Assignments) der General Deny Policy werden in einer JSON-Datei **Constraints.json** zusammengefasst.
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",  
+  "$id": "https://gematik.de/schema-constraints.json",  
+  "title": "Constraints",  
+  "description": "Entries of the general deny policy",  
+  "type": "array",
+  "items": {
+    "oneOf": [
+        {
+          "description": "XDS style",
+          "type": "object",
+          "properties":{
+            "policyType": {
+              "type": "string",
+              "enum": ["gdp"]
+            },
+            "denyType": {
+              "type": "string",
+              "enum": ["document"]
+            },
+            "rootDocumentId": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "MHD style",
+          "type": "object",
+          "properties":{
+            "policyType": {
+              "type": "string",
+              "enum": ["gdp"]
+            },
+            "denyType": {
+              "type": "string",
+              "enum": ["document"]
+            },
+            "masterIdentifier": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "XDS & MHD style",
+          "type": "object",
+          "properties":{
+            "policyType": {
+              "type": "string",
+              "enum": ["gdp"]
+            },
+            "denyType": {
+              "type": "string",
+              "enum": ["folder"]
+            },
+            "folderUUID": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties":{
+            "policyType": {
+              "type": "string",
+              "enum": ["gdp"]
+            },
+            "denyType": {
+              "type": "string",
+              "enum": ["category"]
+            },
+            "categoryId": {
+              "type": "string"
+            }
+          }
+        }
+    ]
+  }
+}
+----
+
+Beispiel: Inhalt Constraints.json mit 3 Einträgen
+[source,json]
+----
+  [
+    {
+      "policyType": "gdp",
+      "denyType": "document",
+      "rootDocumentId": "4fa70820-2384-4001-80a9-7bbd5e085efb^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId"
+    },
+    {
+      "policyType": "gdp",
+      "denyType": "category",
+      "categoryId": "pregnancy_childbirth"
+    },
+    {
+      "policyType": "gdp",
+      "denyType": "folder",
+      "folderUUID": "urn:uuid:4fa70820-2384-4001-80a9-7bbd5e085efb"
+    }
+  ]
+----
+
+---
+==== Entitlements
+Innerhalb dieses Verzeichnisses werden alle Daten des Entitlement Managements abgelegt.
+
+Jedes Entitlement wird dabei als jeweils eine Datei abgelegt. Der Dateiname ist E_nnnnnn.json mit 'nnnnnn' aus der Menge {000000, ..., 999999}, beginnend mit 'nnnnnn' = 000000 und fortlaufender Zählung.
+
+Entitlements werden nicht direkt aus dem Aktenkonto in die Zip-Datei des Exportpakets übernommen. Die sicherheitsrelevanten Attribute, KVNR des Aktenkontos, actorId des befugten Nutzers (KVNR oder Telematik-Id) sowie das Ende der Gültigkeit der Befugnis (validTo), werden in einem JWT zusammengefasst (gemäß gemSpec_Aktensystem_ePAfueralle, A_25719*) und mit der Identität des Aktensystems (ID.FD.SIG) signiert.
+Bei einem Import im empfangenden Aktensystem muss dieses JWT mittels HSM Regel 'rr5' prüfbar sein.
+
+Die Elemente oid, displayName, issued-at, issued-actorId und issued-displayName werden unverändert übernommen und sind nicht Bestandteil des JWT.
+
+Bei einem Import wird das JWT durch HSM Regel 'rr5' in eine CMAC gesicherte Befugnis konvertiert und mit den weiteren Daten (oid, displayName, ...) im neuen Aktenkonto abgelegt.
+
+  Inhalt des JWT:
+    - protected_header:
+      - "typ": "JWT"
+      - "alg": "ES256"
+      - "x5c": signature certificate C.FD.SIG
+    - payload:
+      - "iat": issued at timestamp
+      - "exp": expiry timestamp (always iat + 8 days)
+      - "insurantId": the health record identifier this entitlement is assoctiated to
+      - "actorId": Telematik-Id or KVNR
+      - "validTo": Expiry date-time of entitlement in format according to rfc3339
+    - signature:
+      - contains token signature
+
+===== Hinweis zu Entitlements für den EU Zugriff
+Befugnisse für einen Zugriff aus dem EU-Ausland, also Befugnisse, welche für einen Nutzer mit der Rolle oid_ncpeh ausgestellt wurden, sind kurzlebige Befugnisse mit einer Gültigkeitsdauer von einer Stunde. Diese werden bei einem Aktenumzug nicht berücksichtigt und nicht in das Exportpaket aufgenommen.
+
+Schema für eine Befugnis:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/entitlement.json",
+  "title": "Entitlement",
+  "description": "An entitlement in an export package",
+  "type": "object",
+  "properties": {
+    "entitlement":{
+      "description": "jwt containing the security relevant data",
+      "type": "string"
+    },
+    "oid": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "issued-at":{
+      "type": "string",
+      "format": "date-time"
+    },
+    "issued-actorId": {
+      "type": "string"
+    },
+    "issued-displayName": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
+----
+
+Beispiel: Inhalt E_000001.json
+
+[source,json]
+----
+{
+    "entitlement": "a jwt containing the security relevant data",
+    "oid": "1.2.276.0.76.4.51",
+    "displayName": "Zahnarztpraxis Hillary Gräfin Münchhausen",
+    "issued-at": "2025-10-01T14:00:00Z",
+    "issued-actorId": "X999999999",
+    "issued-displayName": "Name of health record owner"
+}
+----
+
+---
+==== BlockedUsers
+Alle Einträge (Assignments) der Blocked User Policy werden in einer JSON-Datei **BlockedUsers.json** zusammengefasst. Dabei wird auch
+der Zeitpunkt der Erstellung des Eintrags exportiert und unverändert in das importierende System übertragen. Das importierende System darf keine eigenen Zeitstempel (Zeitpunkt des Imports) für die Einträge verwenden.
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/blockedUsers.json",
+  "title": "Blocked users",
+  "description": "Entries of the blocked user policy in an export package",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "actorId":{
+        "type": "string"
+      },
+      "oid": {
+        "type": "string"
+      },
+      "displayName": {
+        "type": "string"
+      },
+      "at":{
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  }
+}
+----
+
+Beispiel: Inhalt BlockedUsers.json mit 4 Einträgen
+
+[source,json]
+----
+ [
+    {
+      "actorId": "2-883110000092414",
+      "oid": "1.2.276.0.76.4.51",
+      "displayName": "Zahnarztpraxis Norbert Freiherr Schomaker",
+      "at": "2025-07-01T12:00:00Z"
+    },
+    {
+      "actorId": "1-883110000092404",
+      "oid": "1.2.276.0.76.4.50",
+      "displayName": "Praxis Dr. Annamaria Heckhausén",
+      "at": "2025-07-02T12:00:00Z"
+    },
+    {
+      "actorId": "2-883110000092427",
+      "oid": "1.2.276.0.76.4.51",
+      "displayName": "Zahnarztpraxis Dr. Alfons Adamiç",
+      "at": "2025-07-03T12:00:00Z"
+    },
+    {
+      "actorId": "3-883110000092469",
+      "oid": "1.2.276.0.76.4.54",
+      "displayName": "Süd Apotheke",
+      "at": "2025-07-04T12:00:00Z"
+    }
+  ]
+----
+
+---
+==== Emails
+Die E-Mail Adresse des Versicherten (Owner des Aktenkontos) wird in einer Datei **EmailOwner.json** abgelegt.
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/emailowner.json",
+  "title": "EmailOwner",
+  "description": "Email address of insurant in an export package",
+  "type": "array",
+  "items": {
+    "type": "string"
+  }
+}
+----
+Beispiel: Inhalt EmailOwner.json
+
+[source,json]
+----
+[
+    "firstName.lastNameOfHealthRecordOwner@example.com"
+]
+----
+
+
+
+Die E-Mail Adressen der zum Zeitpunkt der Erstellung des Exportpakets befugten Vertreter des Versicherten werden in einer JSON-Datei **Emails.json** zusammengefasst. Es werden dabei jedoch ausschließlich die E-Mail Adressen derjenigen Vertreter berücksichtigt, deren Home-Aktensystem mit dem exportierenden Aktensystem identisch ist. E-Mail Adressen von Vertretern, deren Home-Aktensystem ein anderes Aktensystem ist, werden nicht berücksichtgt.
+
+Eine Vertrtetung liegt vor, wenn eine Befugnis existiert, deren actorid einer KVNR entspricht, aber nicht mit der KVNR des Aktenkontoinhabers übereinstimmt.
+
+Die E-Mail Adressen der Vertreter werden durch das importierende Aktensystem nicht persistiert. Die importierten E-Mails Adressen aus dem Exportpaket zusammen mit den E-Mail Adressen von Vertretern, deren Home-Aktensystem schon dem importierenden Aktensystem entspricht, dienen bei erfolgreichem Import eines Aktenkontos lediglich dem Zweck der Benachrichtigung der Vertreter über den Umzug des vertretenen Aktenkontos.
+
+Schema:
+[source,json]
+----
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gematik.de/emails.json",
+  "title": "Emails",
+  "description": "Email addresses of representatives in an export package",
+  "type": "array",
+  "items": {
+    "type": "string"
+  }
+}
+----
+
+Beispiel: Inhalt Emails.json mit 4 Einträgen
+
+[source,json]
+----
+[
+  "m.mustermann@gematik.de",
+  "max.mustermann@gematik.de",
+  "max.mustermann123@gematik.de",
+  "mustermann.max@ti.de"
+]
+----
+
+---
+[bibliography]
+=== Verweise
+
+* [[[zip]]] PKWARE APPNOTE.TXT - .ZIP File Format Specification.
+Version: 6.3.10
+Revised: Nov 01, 2022
+Copyright (c) 1989 - 2014, 2018, 2019, 2020, 2022 PKWARE Inc., All Rights Reserved.
+https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+
+* [[[ITI-TF2]]] IHE IT Infrastructure (ITI) Technical Framework, Volume 2.
+Revision 20.0
+August 4, 2023
+Copyright (c) 2000 — 2024 IHE International.
+https://profiles.ihe.net/ITI/TF/Volume2/index.html

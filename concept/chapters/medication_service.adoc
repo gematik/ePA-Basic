@@ -58,6 +58,7 @@ Aus dgMP-Sicht erfolgt die Dokumentation einer Arzneimitteltherapie ausgehend vo
 :sectnums!:
 [discrete]
 ===== Technische Umsetzung
+:sectnums:
 
 Der Medication Service erlaubt es, Medikationsdaten über die nachstehenden Schnittstellen der FHIR Query API und Operation API zu lesen und zu schreiben:
 

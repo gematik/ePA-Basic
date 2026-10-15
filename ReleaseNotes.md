@@ -1,6 +1,15 @@
 <img align="right" width="250" height="47" src="images/Gematik_Logo_Flag_With_Background.png"/> <br/>
 
 # Release Notes ePA Basic
+## Release ePA-27 3.2.0-0
+ePA 27 RC
+### changes
+- added timestamp and author to consent decisions and DataUsagePurposes in I_Consents_Decision_Management.yaml (C_12866)
+- reworked export package content definition for ePA-27 and moved file to this repository (./src/docs).
+- export package now considers MHD-Service related resources and data.
+- added MHD parameters for 'document' to constraint management in I_Constraint:Management.yaml.
+- renamed push notification channel identifier in I_Push_Notification_Management.yaml.
+- removed post-condition for Audit Event logs in OpenApis (now in IG ePA Basisfunktionalitäten only)
 ## Release 3.1.3-4
 ### changes
 - added error condition requestRejected for incident rejection in case of merge in I_Information_Service_Accounts.yaml (C_12751)

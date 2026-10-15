@@ -42,17 +42,17 @@ info:
     - log the X-Request-ID in all operational logs related to that request.
 
     **Log-Entries**
-    Whenever a _Postcondition_ mandates a log-entry, this entry shall contain
-    data as defined in A_24055*.
-    Log entry storage requires an entitled user for the related operation to 
-    ensure access to secure data storage. Therefore, log entry creation shall 
-    always be skipped and no log entry shall be stored if this precondition is 
-    not met.
+    Log entries for the audit Event Service shall be created according to
+    "Implementation Guide ePA BAsisfunktionalitäten - Audit Event Service - Belegung der Protokolldaten"
 
-  version: 1.7.1
+  version: 1.8.0
 
   # version history:
   # ----------------
+  # version 1.8.0
+  #   - added timestamp and actor information for ConsentDecisions and DataUsagePurposes 
+  #   - reworked logging requirement
+  #   - editorial changes
   # version 1.7.1
   #   - renamed all occurrences of state MAINTENANCE to INACCESSIBLE
   # version 1.7.0
@@ -107,10 +107,16 @@ tags:
     description: |
      Consent decision management operations allow to view current decisions made and to change those 
      decisions regarding consent related functions of the health record.
+
+     Consent decisions are always available and preset before the first activation of the health record. The 
+     associated actor of the preset decision is set to _system_ by default.
   - name: DataUsagePurposes
     description: |
      Consent decision management provides operations to manage the insurant's consent decisions regarding the 
-     detailed purposes of use of transmitted health record data in the research data center (FDZ).    
+     detailed purposes of use of transmitted health record data in the research data center (FDZ).
+
+     Consent decisions for DataUsagePurposes are always available and preset before the first activation of 
+     the health record. The associated actor of the preset decision is set to _system_ by default.        
   - name: UdpMedication
     description: |
       UdpMedication allows configuration of the user-specific deny policy for medication service only. 
@@ -152,14 +158,14 @@ paths:
   /epa/basic/api/v1/consents/{functionid}:
     parameters:
       - $ref: '#/components/parameters/insurantid'
-      - $ref: "#/components/parameters/functionid"
+      - $ref: '#/components/parameters/functionid'
       - $ref: '#/components/parameters/useragent'
       - $ref: '#/components/parameters/requestid'
     put:
       tags:
         - ConsentDecisions
       operationId: updateConsentDecision
-      summary: (updateConsentDecision) Update one consent decisions
+      summary: (updateConsentDecision) Update one consent decision
       description: |
         Update the user decision regarding a particular consent related function of a 
         personal health record.</br>
@@ -169,8 +175,8 @@ paths:
         no recommendations.
 
         **Provider**:</br>
-        A changed consent decision shall be persisted securely in SecureDataStorage and become 
-        immediately valid.
+        A changed consent decision shall be time-stamped and include the requestor information, then persisted 
+        in SecureDataStorage and become immediately valid.
 
         Changed consents of class "healthCareProcess" shall also be made available for the Information Service.
 
@@ -212,17 +218,20 @@ paths:
           If set to _permit_ new medical data will be pseudonymized and send to the FDZ, including the consent decisions 
           of data usage purpose of the insurant.</br> 
         
-        If decision provided equals decision stored (i.e. no change), this shall not cause an error response.
-
-        An unknown parameter _functionid_ shall lead to rejection of the request. This operation operates on existings
+        An unknown parameter _functionid_ shall lead to rejection of the request. This operation operates on existing
         resources only and does not create new ones.
 
-        An email shall be sent to the insurant using the registered mail address after a successful change of 
-        a decision for notification. The mail shall contain understandable information about the changed consent
-        decision(s) and timestamp of change (according to A_24844*)."
+        A notification email shall be sent to the insurant using the registered mail address after a successful change of 
+        a decision. The mail shall contain understandable information about the changed consent
+        decision and the timestamp of the change (according to A_24844*)."
+        
+        If the decision provided equals the decision stored (i.e. no logical change applies), this shall not cause an error 
+        response but, as no change is made, no notification email shall be sent to the insurant, no log-entry shall be created 
+        and the stored consent decision stays unchanged.
 
-        The response of a successful operation shall contain all changed consent decisions. 
-
+        The response of a successful operation shall contain all changed consent decisions according the requested _functionid_.
+        If no change of consent decisions is made, the response shall contain the current consent decision for the requested _functionid_.
+ 
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
@@ -250,7 +259,6 @@ paths:
         | Decision for _erp-submission_ is set to _permit_| conditional, see (h) |
         | The Information Service has updated consent decisions | conditional, if functions of class "healthCareProcess" are changed |
         | An email is sent to the insurant | success case with change of consent only |
-        | A log-entry for the operation exists | all operation results |
 
       requestBody:
         required: true
@@ -266,9 +274,9 @@ paths:
                 value:
                  decision: "deny"
             schema:
-              $ref: "#/components/schemas/ConsentDecisionType"
+              $ref: '#/components/schemas/ConsentDecisionType'
       responses:
-        "200":
+        '200':
           description: OK. Consent decision successfully updated
           headers:
             X-Request-ID:
@@ -277,44 +285,64 @@ paths:
             application/json:
               examples:
                 Permit_Medication:
-                  summary: Permit functionid == medication (permits erp-submission internally) response
+                  summary: Permission for functionid == medication (permits erp-submission internally) by insurant
                   value:
                     data:
                       - functionId: "medication"
                         decision: "permit"
+                        issued:
+                          at: "2026-12-06T12:00:00Z"
+                          actorId: Z123456789
+                          displayName: "Name of insurant"
                       - functionId: "erp-submission"
                         decision: "permit"
+                        issued:
+                          at: "2026-12-06T12:00:00Z"
+                          actorId: Z123456789
+                          displayName: "Name of insurant"
                 Deny_erp-submission:
-                  summary: Deny functionid == erp-submission (denies medication internally) response
+                  summary: Denied functionid == erp-submission (denies medication internally) by a representative
                   value:
                     data:
                       - functionId: "medication"
                         decision: "deny"
+                        issued:
+                          at: "2026-12-07T14:00:00Z"
+                          actorId: X110434370
+                          displayName: "Simon von Düsterbehn-Hardenbergshausen"
                       - functionId: "erp-submission"
                         decision: "deny"
+                        issued:
+                          at: "2026-12-07T14:00:00Z"
+                          actorId: X110434370
+                          displayName: "Simon von Düsterbehn-Hardenbergshausen"
                 Deny_erp-submission2:
-                  summary: Deny functionid == erp-submission (medication already denied) response
+                  summary: Denied functionid == erp-submission (medication already denied) by ombuds office
                   value:
                     data:
                       - functionId: "erp-submission"
                         decision: "deny"
+                        issued:
+                          at: "2026-12-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"              
               schema:
                 type: object
                 properties:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                      $ref: '#/components/schemas/ConsentDecisionsResponseType'
         '400':
-          $ref: "#/components/responses/Error400BadRequest"
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: "#/components/responses/Error403Forbidden"
+          $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: "#/components/responses/Error404NotFound"
+          $ref: '#/components/responses/Error404NotFound'
         '409':
-          $ref: "#/components/responses/Error409Conflict"
+          $ref: '#/components/responses/Error409Conflict'
         '500':
-          $ref: "#/components/responses/Error500InternalError"
+          $ref: '#/components/responses/Error500InternalError'
 
     get:
       tags:
@@ -358,18 +386,22 @@ paths:
               example:
                 functionId: "medication"
                 decision: "deny"
+                issued:
+                  at: "2026-12-07T14:00:00Z"
+                  actorId: X110434370
+                  displayName: "Simon von Düsterbehn-Hardenbergshausen"
               schema:
-                $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                $ref: '#/components/schemas/ConsentDecisionsResponseType'
         '400':
-          $ref: "#/components/responses/Error400BadRequest"
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: "#/components/responses/Error403Forbidden"
+          $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: "#/components/responses/Error404NotFound"
+          $ref: '#/components/responses/Error404NotFound'
         '409':
-          $ref: "#/components/responses/Error409Conflict"
+          $ref: '#/components/responses/Error409Conflict'
         '500':
-          $ref: "#/components/responses/Error500InternalError"
+          $ref: '#/components/responses/Error500InternalError'
 
   /epa/basic/api/v1/consents:
     parameters:
@@ -418,27 +450,38 @@ paths:
                 data:
                   - functionId: "medication"
                     decision: "deny"
+                    issued:
+                      at: "2026-12-07T14:00:00Z"
+                      actorId: Z123456789
+                      displayName: "Name of insurant"
                   - functionId: "erp-submission"
                     decision: "permit"
+                    issued:
+                      at: "2026-12-24T12:00:00Z"
+                      actorId: 8-863110000012345
+                      displayName: "Name of ombuds office" 
                   - functionId: "data-submission"
-                    decision: "permit"                    
+                    decision: "permit"     
+                    issued:
+                      at: "2025-01-15T00:00:00Z"
+                      displayName: "system"                                   
               schema:
                 type: object
                 properties:
                   data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/ConsentDecisionsResponseType"
+                      $ref: '#/components/schemas/ConsentDecisionsResponseType'
         '400':
-          $ref: "#/components/responses/Error400BadRequest"
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: "#/components/responses/Error403Forbidden"
+          $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: "#/components/responses/Error404NotFound"
+          $ref: '#/components/responses/Error404NotFound'
         '409':
-          $ref: "#/components/responses/Error409Conflict"
+          $ref: '#/components/responses/Error409Conflict'
         '500':
-          $ref: "#/components/responses/Error500InternalError"
+          $ref: '#/components/responses/Error500InternalError'
 
   /epa/basic/api/v1/DataUsagePurposes:
     parameters:
@@ -464,13 +507,13 @@ paths:
         The operation shall only succeed in case of general consent for data submission:</br> 
         _functionid_ == _data-submission_ == _permit_</br> 
 
-        An email shall be sent to the insurant using the registered mail address after a successful change of 
-        a decision for notification. The mail shall contain understandable information about the changed consent
-        decision reagrding data submission and timestamp of change (according to A_24844*)."
+        A notification email shall be sent to the insurant using the registered mail address after a successful change of 
+        at least one decision. The mail shall contain understandable information about the changed consent
+        decision(s) for Data Usage Purposes and the timestamp of the change (according to A_26292*)."        
 
-        The operation shall succeed in case of no reulting change of consents (i.e. 'old' and 'new' consent settings
-        are equal).
-
+        The operation shall succeed in case of no resulting change any consent decision for Data Usage Purposes (i.e. 'old' and 'new' consent settings
+        are equal). As no change is made, no log-entry shall be created and the stored consent decision(s) for Data Usage Purposes stay unchanged.
+      
         | Conditions | Status code | Error code | Remarks |
         |------------|-------------|------------|---------|
         | Successful operation | 200 |||
@@ -490,19 +533,63 @@ paths:
         | The updated list of DataUsagePurposes is persisted securely in SecureDataStorage | |
         | Updated list of DataUsagePurposes is provided to the Data Submission Service | |
         | An email is sent to the insurant | success case with changed of consent(s) only |
-        | A log-entry for the operation exists | all operation results |
 
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DataUsagePurposesType"
+              $ref: '#/components/schemas/DataUsagePurposesType'
             examples:
               Permit_Pupose1_only:
-                $ref: "#/components/examples/Permit_Pupose1_only"
+                summary: Permit purpose 1 and deny all other purposes
+                value:
+                    purpose1:
+                      decision: permit
+                    purpose2:
+                      decision: deny
+                    purpose3:
+                      decision: deny
+                    purpose4:
+                      decision: deny
+                    purpose5:
+                      decision: deny
+                    purpose6:
+                      decision: deny
+                    purpose7:
+                      decision: deny
+                    purpose8:
+                      decision: deny
+                    purpose9:
+                      decision: deny
+                    purpose10:
+                      decision: deny
+              Permit_several_purposes:
+                summary: Permit purpose 2, 3 and 10 and deny all other purposes
+                value:
+                    purpose1:
+                      decision: deny
+                    purpose2:
+                      decision: permit
+                    purpose3:
+                      decision: permit
+                    purpose4:
+                      decision: deny
+                    purpose5:
+                      decision: deny
+                    purpose6:
+                      decision: deny
+                    purpose7:
+                      decision: deny
+                    purpose8:
+                      decision: deny
+                    purpose9:
+                      decision: deny
+                    purpose10:
+                      decision: permit                      
+
       responses:
-        "200":
+        '200':
           description: OK. DataUsagePurposes successfully updated
           headers:
             X-Request-ID:
@@ -510,20 +597,131 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataUsagePurposesType"
+                $ref: '#/components/schemas/DataUsagePurposesResponseType'
               examples:
-                Permit_Pupose1_only:
-                  $ref: "#/components/examples/Permit_Pupose1_only"
+                One_permission:
+                  summary: Permitted purpose 1, all other purposes denied
+                  value:
+                      purpose1:
+                        decision: permit
+                        issued:
+                          at: "2026-09-09T12:00:00Z"
+                          actorId: Z123456789
+                          displayName: "Name of insurant"
+                      purpose2:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose3:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose4:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose5:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose6:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose7:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose8:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose9:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose10:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                Several_permissions:
+                  summary: Permitted purposes 2,3 and 10 all other purposes denied
+                  value:
+                      purpose1:
+                        decision: deny
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose2:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose3:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose4:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose5:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose6:
+                        decision: deny
+                        issued:
+                          at: "2026-12-07T14:00:00Z"
+                          actorId: X110434370
+                          displayName: "Simon von Düsterbehn-Hardenbergshausen"   
+                      purpose7:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose8:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose9:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose10:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+
         '400':
-          $ref: "#/components/responses/Error400BadRequest"
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: "#/components/responses/Error403Forbidden"
+          $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: "#/components/responses/Error404NotFound"
+          $ref: '#/components/responses/Error404NotFound'
         '409':
-          $ref: "#/components/responses/Error409Conflict"
+          $ref: '#/components/responses/Error409Conflict'
         '500':
-          $ref: "#/components/responses/Error500InternalError"
+          $ref: '#/components/responses/Error500InternalError'
     get:
       tags:
         - DataUsagePurposes
@@ -567,20 +765,131 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataUsagePurposesType"
+                $ref: '#/components/schemas/DataUsagePurposesResponseType'
               examples:
-                Permit_Pupose1_only:
-                  $ref: "#/components/examples/Permit_Pupose1_only"
+                One_permission:
+                  summary: Permitted purpose 1, all other purposes denied
+                  value:
+                      purpose1:
+                        decision: permit
+                        issued:
+                          at: "2026-09-09T12:00:00Z"
+                          actorId: Z123456789
+                          displayName: "Name of insurant"
+                      purpose2:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose3:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose4:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose5:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose6:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose7:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose8:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose9:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose10:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                Several_permissions:
+                  summary: Permitted purposes 2,3 and 10 all other purposes denied
+                  value:
+                      purpose1:
+                        decision: deny
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose2:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose3:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"                  
+                      purpose4:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose5:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose6:
+                        decision: deny
+                        issued:
+                          at: "2026-12-07T14:00:00Z"
+                          actorId: X110434370
+                          displayName: "Simon von Düsterbehn-Hardenbergshausen"   
+                      purpose7:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose8:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose9:
+                        decision: deny
+                        issued:
+                          at: "2025-01-15T00:00:00Z"
+                          displayName: "system"         
+                      purpose10:
+                        decision: permit
+                        issued:
+                          at: "2026-10-24T12:00:00Z"
+                          actorId: 8-863110000012345
+                          displayName: "Name of ombuds office"     
+
         '400':
-          $ref: "#/components/responses/Error400BadRequest"
+          $ref: '#/components/responses/Error400BadRequest'
         '403':
-          $ref: "#/components/responses/Error403Forbidden"
+          $ref: '#/components/responses/Error403Forbidden'
         '404':
-          $ref: "#/components/responses/Error404NotFound"
+          $ref: '#/components/responses/Error404NotFound'
         '409':
-          $ref: "#/components/responses/Error409Conflict"
+          $ref: '#/components/responses/Error409Conflict'
         '500':
-          $ref: "#/components/responses/Error500InternalError"
+          $ref: '#/components/responses/Error500InternalError'
 
   /epa/basic/api/v1/userspecific/medication:
     parameters:
@@ -633,8 +942,27 @@ paths:
                       allOf:
                       - $ref: '#/components/schemas/UdpMedicationResponseType'
               examples:
-                getAll:
-                  $ref: '#/components/examples/Get_AllUdpMedication'
+                Get_AllUdpMedication:
+                  summary: Get all assignments of the user-specific deny policy for the medication service.
+                  value:
+                    data:
+                      - actorId: 2-883110000092414
+                        oid: 1.2.276.0.76.4.51
+                        displayName: 'Zahnarztpraxis Norbert Freiherr Schomaker'
+                        at: 2025-07-01T12:00:00Z
+                      - actorId: 1-883110000092404
+                        oid: 1.2.276.0.76.4.50
+                        displayName: 'Praxis Dr. Annamaria Heckhausén'
+                        at: 2025-07-02T12:00:00Z
+                      - actorId: 2-883110000092427
+                        oid: 1.2.276.0.76.4.51
+                        displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
+                        at: 2025-07-03T12:00:00Z
+                      - actorId: 3-883110000092469
+                        oid: 1.2.276.0.76.4.54
+                        displayName: 'Süd Apotheke'
+                        at: 2025-07-04T12:00:00Z
+
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -689,7 +1017,6 @@ paths:
         |---------------------------------------|---------|
         | The UdpMedication assignment is extended with the timestamp and stored in SecureDataStorage ||
         | An eMail shall be sent to the insurant, including information about the UdpMedication change| if eMail address is available |
-        | A log-entry for the operation exists | all operation results |
 
       requestBody:
         required: true
@@ -698,8 +1025,13 @@ paths:
             schema:
               $ref: '#/components/schemas/UdPMedicationAssignmentType'
             examples:
-              onePolicy:
-                $ref: '#/components/examples/Set_SingleUdpAssignment'
+              Set_SingleUdpAssignment:
+                summary: Set assignment for actor 2-883110000092427
+                value:
+                  actorId: 2-883110000092427
+                  oid: 1.2.276.0.76.4.51
+                  displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
+
       responses:
         '201':
           description: Created
@@ -711,8 +1043,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/UdpMedicationResponseType'
               examples:
-                onePolicy:
-                  $ref: '#/components/examples/Get_SingleUdpAssignment'
+                Get_SingleUdpAssignment:
+                  summary: Get assignment details for actor 2-883110000092427.
+                  value:
+                    actorId: 2-883110000092427
+                    oid: 1.2.276.0.76.4.51
+                    displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
+                    at: 2025-07-03T12:00:00Z
 
         '400':
           $ref: '#/components/responses/Error400BadRequest'
@@ -774,8 +1111,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/UdpMedicationResponseType'
               examples:
-                onePolicy:
-                  $ref: '#/components/examples/Get_SingleUdpAssignment'
+                Get_SingleUdpAssignment:
+                  summary: Get assignment details for actor 2-883110000092427.
+                  value:
+                    actorId: 2-883110000092427
+                    oid: 1.2.276.0.76.4.51
+                    displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
+                    at: 2025-07-03T12:00:00Z
         '400':
           $ref: '#/components/responses/Error400BadRequest'
         '403':
@@ -824,7 +1166,6 @@ paths:
         |---------------------------------------|---------|
         | The addressed assignment is removed from the UdpMedication ||
         | An eMail is sent to the insurant, including information about the UdpMedication change| if eMail address is available |
-        | A log-entry for the operation exists | all operation results |
 
       responses:
         '204':
@@ -844,10 +1185,9 @@ paths:
           $ref: '#/components/responses/Error500InternalError'
 
 components:
-
   headers:
     requestid:
-      description: Request identifier as provided by the client.
+      description: Request identifier as provided by the client
       schema:
        $ref: '#/components/schemas/RequestIdType'
 
@@ -855,27 +1195,27 @@ components:
     insurantid:
       name: x-insurantid
       in: header
-      description: Health Record Identifier.
+      description: Health Record Identifier
       required: true
       schema:
         $ref: '#/components/schemas/InsurantIdType'
     useragent:
       name: x-useragent
       in: header
-      description: user agent information
+      description: User agent information
       required: true
       schema:
         $ref: '#/components/schemas/UserAgentType'
     requestid:
       name: X-Request-ID
       in: header
-      description: request identifier
+      description: Request identifier
       schema:
         $ref: '#/components/schemas/RequestIdType'
     functionid:
       name: functionid
       in: path
-      description: id of the consent related function
+      description: Id of the consent related function
       required: true
       schema:
         $ref: '#/components/schemas/FunctionIdType'
@@ -969,6 +1309,21 @@ components:
           type: string
           enum: ["permit", "deny"]
           description: "Decision"
+        issued:
+          type: object
+          properties:
+            at:
+              description: Timestamp of the last change of the consent decision
+              type: string
+              format: date-time
+            actorId:
+              description: "Telematik-ID or KVNR. In case of displayName equals _system_: actorId is not required but if provided, Telematik-ID of insurance company shall be used."
+              $ref: '#/components/schemas/ActorIdType'
+            displayName:
+              $ref: '#/components/schemas/DisplayNameType'          
+          required:
+            - at
+            - displayName
       required:
         - functionId
         - decision
@@ -981,25 +1336,45 @@ components:
       type: object
       properties:
         purpose1:
-          $ref: '#/components/schemas/Purpose1Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 1: Wahrnehmung von Steuerungsaufgaben durch die Kollektivvertragspartner"
         purpose2:
-          $ref: '#/components/schemas/Purpose2Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 2: Verbesserung der Qualität der Versorgung sowie Verbesserung der Sicherheitsstandards der Prävention, Versorgung und Pflege"
         purpose3:
-          $ref: '#/components/schemas/Purpose3Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 3: Planung von Leistungsressourcen, zum Beispiel Krankenhausplanung oder Pflegestrukturplanungsempfehlungen nach § 8a Absatz 4 des Elften Buches"
         purpose4:
-          $ref: '#/components/schemas/Purpose4Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 4: wissenschaftliche Forschung zu Fragestellungen aus den Bereichen Gesundheit und Pflege, Analysen des Versorgungsgeschehens, sowie Grundlagenforschung im Bereich der Lebenswissenschaften"
         purpose5:
-          $ref: '#/components/schemas/Purpose5Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 5: Unterstützung politischer Entscheidungsprozesse zur Weiterentwicklung der gesetzlichen Kranken- und Pflegeversicherung"
         purpose6:
-          $ref: '#/components/schemas/Purpose6Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 6: Analysen zur Wirksamkeit sektorenübergreifender Versorgungsformen sowie zur Wirksamkeit von Einzelverträgen der Kranken- und Pflegekassen"
         purpose7:
-          $ref: '#/components/schemas/Purpose7Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 7: Wahrnehmung von Aufgaben der Gesundheitsberichterstattung, anderer Berichtspflichten des Bundes nach diesem oder dem Elften Buch und der amtlichen Statistik sowie Berichtspflichten der Länder"
         purpose8:
-          $ref: '#/components/schemas/Purpose8Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 8: Wahrnehmung gesetzlicher Aufgaben in den Bereichen öffentliche Gesundheit und Epidemiologie"
         purpose9:
-          $ref: '#/components/schemas/Purpose9Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 9: Entwicklung, Weiterentwicklung und Überwachung der Sicherheit von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln, digitalen Gesundheits- und Pflegeanwendungen sowie Systemen der Künstlichen Intelligenz im Gesundheitswesen einschließlich des Trainings, der Validierung und des Testens dieser Systeme der Künstlichen Intelligenz"
         purpose10:
-          $ref: '#/components/schemas/Purpose10Type'
+          allOf:
+            - $ref: '#/components/schemas/PurposeType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 10: Nutzenbewertung von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln sowie digitalen Gesundheits- und Pflegeanwendungen, Verhandlung von Vergütungsbeträgen oder Festlegung von Höchstbeträgen und Schwellenwerten nach § 134 sowie Vereinbarung oder Festsetzung von Erstattungsbeträgen von Arzneimitteln nach § 130b"
       required:
         - purpose1
         - purpose2
@@ -1011,108 +1386,101 @@ components:
         - purpose8
         - purpose9
         - purpose10
-    UserAgentType:
-      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
-      type: string
-      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
-      example: CLIENTID1234567890AB/2.1.12-45
-    FunctionIdType:
-      type: string
-      description: function id of consent related functions of a health record.
-    InsurantIdType:
-      type: string
-      description: |-
-        The health record identifier. 
-        For today the record identifier equals the insurant id (kvnr).
-      pattern: '^[A-Z]{1}\d{9}$'
-      example: Z123456789
-    RequestIdType:
-      type: string
-      format: uuid
-      description: "Unique identifier of the request"
-      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"
-    Purpose1Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 1: Wahrnehmung von Steuerungsaufgaben durch die Kollektivvertragspartner"
+    DataUsagePurposesResponseType:
+      description: "List of Data Usage Purposes"
+      type: object
+      properties:
+        purpose1:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 1: Wahrnehmung von Steuerungsaufgaben durch die Kollektivvertragspartner"
+        purpose2:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 2: Verbesserung der Qualität der Versorgung sowie Verbesserung der Sicherheitsstandards der Prävention, Versorgung und Pflege"
+        purpose3:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 3: Planung von Leistungsressourcen, zum Beispiel Krankenhausplanung oder Pflegestrukturplanungsempfehlungen nach § 8a Absatz 4 des Elften Buches"
+        purpose4:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 4: wissenschaftliche Forschung zu Fragestellungen aus den Bereichen Gesundheit und Pflege, Analysen des Versorgungsgeschehens, sowie Grundlagenforschung im Bereich der Lebenswissenschaften"
+        purpose5:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 5: Unterstützung politischer Entscheidungsprozesse zur Weiterentwicklung der gesetzlichen Kranken- und Pflegeversicherung"
+        purpose6:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 6: Analysen zur Wirksamkeit sektorenübergreifender Versorgungsformen sowie zur Wirksamkeit von Einzelverträgen der Kranken- und Pflegekassen"
+        purpose7:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 7: Wahrnehmung von Aufgaben der Gesundheitsberichterstattung, anderer Berichtspflichten des Bundes nach diesem oder dem Elften Buch und der amtlichen Statistik sowie Berichtspflichten der Länder"
+        purpose8:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 8: Wahrnehmung gesetzlicher Aufgaben in den Bereichen öffentliche Gesundheit und Epidemiologie"
+        purpose9:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 9: Entwicklung, Weiterentwicklung und Überwachung der Sicherheit von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln, digitalen Gesundheits- und Pflegeanwendungen sowie Systemen der Künstlichen Intelligenz im Gesundheitswesen einschließlich des Trainings, der Validierung und des Testens dieser Systeme der Künstlichen Intelligenz"
+        purpose10:
+          allOf:
+            - $ref: '#/components/schemas/PurposeResponseType'
+          description: "State of consent for purpose referring §303e SGB V clause 2 number 10: Nutzenbewertung von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln sowie digitalen Gesundheits- und Pflegeanwendungen, Verhandlung von Vergütungsbeträgen oder Festlegung von Höchstbeträgen und Schwellenwerten nach § 134 sowie Vereinbarung oder Festsetzung von Erstattungsbeträgen von Arzneimitteln nach § 130b"
+      required:
+        - purpose1
+        - purpose2
+        - purpose3
+        - purpose4
+        - purpose5
+        - purpose6
+        - purpose7
+        - purpose8
+        - purpose9
+        - purpose10
+    PurposeType:
       type: object
       properties:
         decision:
           type: string
           enum: ["permit", "deny"]
-    Purpose2Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 2: Verbesserung der Qualität der Versorgung sowie Verbesserung der Sicherheitsstandards der Prävention, Versorgung und Pflege"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose3Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 3: Planung von Leistungsressourcen, zum Beispiel Krankenhausplanung oder Pflegestrukturplanungsempfehlungen nach § 8a Absatz 4 des Elften Buches"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose4Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 4: wissenschaftliche Forschung zu Fragestellungen aus den Bereichen Gesundheit und Pflege, Analysen des Versorgungsgeschehens, sowie Grundlagenforschung im Bereich der Lebenswissenschaften"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose5Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 5: Unterstützung politischer Entscheidungsprozesse zur Weiterentwicklung der gesetzlichen Kranken- und Pflegeversicherung"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose6Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 6: Analysen zur Wirksamkeit sektorenübergreifender Versorgungsformen sowie zur Wirksamkeit von Einzelverträgen der Kranken- und Pflegekassen"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose7Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 7: Wahrnehmung von Aufgaben der Gesundheitsberichterstattung, anderer Berichtspflichten des Bundes nach diesem oder dem Elften Buch und der amtlichen Statistik sowie Berichtspflichten der Länder"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose8Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 8: Wahrnehmung gesetzlicher Aufgaben in den Bereichen öffentliche Gesundheit und Epidemiologie"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose9Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 9: Entwicklung, Weiterentwicklung und Überwachung der Sicherheit von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln, digitalen Gesundheits- und Pflegeanwendungen sowie Systemen der Künstlichen Intelligenz im Gesundheitswesen einschließlich des Trainings, der Validierung und des Testens dieser Systeme der Künstlichen Intelligenz"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
-    Purpose10Type:
-      description: "State of consent for purpose referring §303e SGB V clause 2 number 10: Nutzenbewertung von Arzneimitteln, Medizinprodukten, Untersuchungs- und Behandlungsmethoden, Hilfs- und Heilmitteln sowie digitalen Gesundheits- und Pflegeanwendungen, Verhandlung von Vergütungsbeträgen oder Festlegung von Höchstbeträgen und Schwellenwerten nach § 134 sowie Vereinbarung oder Festsetzung von Erstattungsbeträgen von Arzneimitteln nach § 130b"
-      type: object
-      properties:
-        decision:
-          type: string
-          enum: ["permit", "deny"]
+      required:
+        - decision
+    PurposeResponseType:
+      allOf:
+        - $ref: '#/components/schemas/PurposeType'
+        - type: object
+          properties:
+            issued:
+              type: object
+              properties:
+                at:
+                  description: Timestamp of the last change of the consent decision
+                  type: string
+                  format: date-time
+                actorId:
+                  description: "Telematik-ID or KVNR. In case of displayName equals _system_: actorId is not required but if provided, Telematik-ID of insurance company shall be used."
+                  $ref: '#/components/schemas/ActorIdType'
+                displayName:
+                  $ref: '#/components/schemas/DisplayNameType'          
+              required:
+                - at
+                - displayName
+
     UdpMedicationResponseType:
       allOf:
         - $ref: '#/components/schemas/UdPMedicationAssignmentType'
         - type: object
-          required:
-            - at
           properties:
             at:
               description: Creation timestamp
               type: string
               format: date-time
-              example: 2025-01-01T18:00:00Z
+          required:
+            - at
     UdPMedicationAssignmentType:
       description: Properties of one specific user
       type: object
@@ -1127,6 +1495,36 @@ components:
           $ref: '#/components/schemas/OidType'
         displayName:
           $ref: '#/components/schemas/DisplayNameType'
+
+    UserAgentType:
+      description: "Information about client software with: ClientId(20 characters) + / + VersionNumber (1 to 15 characters)."
+      type: string
+      pattern: '^[a-zA-Z0-9\-]{1,20}\/[a-zA-Z0-9\-\.]{1,15}$'
+      example: CLIENTID1234567890AB/2.1.12-45
+    FunctionIdType:
+      type: string
+      description: Function id of consent related functions of a health record.
+    InsurantIdType:
+      type: string
+      description: |-
+        The health record identifier. 
+        For today the record identifier equals the insurant id (kvnr).
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
+    RequestIdType:
+      type: string
+      format: uuid
+      description: "Unique identifier of the request"
+      example: "f4411e89-2eca-405c-88a1-7ee20b9b6e3c"    
+    ActorIdType:
+      description: Identifier of an actor (kvnr or telematik-id)
+      oneOf:
+        - $ref: '#/components/schemas/KvnrType'
+        - $ref: '#/components/schemas/TelematikIdType'
+    KvnrType:
+      type: string
+      pattern: '^[A-Z]{1}\d{9}$'
+      example: Z123456789
     TelematikIdType:
       type: string
       pattern: '^[1-9][0-9]?-[\x21-\x7E]+$'
@@ -1154,62 +1552,3 @@ components:
           type: string
       required:
         - errorCode
-
-  examples:
-    Permit_Pupose1_only:
-      summary: Permit purpose 1 only (purpose according §303e SGB V clause 2 number 1)
-      value:
-          purpose1:
-            decision: permit
-          purpose2:
-            decision: deny
-          purpose3:
-            decision: deny
-          purpose4:
-            decision: deny
-          purpose5:
-            decision: deny
-          purpose6:
-            decision: deny
-          purpose7:
-            decision: deny
-          purpose8:
-            decision: deny
-          purpose9:
-            decision: deny
-          purpose10:
-            decision: deny
-   
-    Get_AllUdpMedication:
-      summary: Get all assignments of the user specific policy for the medication service.
-      value:
-        data:
-          - actorId: 2-883110000092414
-            oid: 1.2.276.0.76.4.51
-            displayName: 'Zahnarztpraxis Norbert Freiherr Schomaker'
-            at: 2025-07-01T12:00:00Z
-          - actorId: 1-883110000092404
-            oid: 1.2.276.0.76.4.50
-            displayName: 'Praxis Dr. Annamaria Heckhausén'
-            at: 2025-07-02T12:00:00Z
-          - actorId: 2-883110000092427
-            oid: 1.2.276.0.76.4.51
-            displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
-            at: 2025-07-03T12:00:00Z
-          - actorId: 3-883110000092469
-            oid: 1.2.276.0.76.4.54
-            displayName: 'Süd Apotheke'
-            at: 2025-07-04T12:00:00Z
-    Set_SingleUdpAssignment:
-      summary: Set User for 2-883110000092427 to UdpMedication.
-      value:
-        actorId: 2-883110000092427
-        oid: 1.2.276.0.76.4.51
-        displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
-    Get_SingleUdpAssignment:
-      summary: Get UdpMedication Assignment Details for 2-883110000092427.
-      value:
-        actorId: 2-883110000092427
-        oid: 1.2.276.0.76.4.51
-        displayName: 'Zahnarztpraxis Dr. Alfons Adamiç'
-        at: 2025-07-03T12:00:00Z

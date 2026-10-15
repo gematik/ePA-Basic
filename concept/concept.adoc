@@ -34,8 +34,8 @@ endif::[]
 :numbered:
 :sectnums:
 
-// :revdate: 15.12.2025
-:revnumber: 3.1.3-1
+// :revdate: 15.10.2026
+:revnumber: ePA27
 :document-title: Grobkonzept der "ePA für alle"
 :document-subtitle: gemKPT_ePAfuerAlle
 :organization: gematik GmbH
@@ -48,7 +48,7 @@ endif::[]
 
 ifdef::backend-pdf[]
 [.metadata]
-//Version: 3.1.3-1 Release, 15.12.2025
+//Version: ePA27 Release, 15.10.2026
 endif::[]
 
 
@@ -167,7 +167,15 @@ endif::[]
 |
 |Kapitel Push Notification Management: Aktualisierung des Links auf das Konzept des Push Features (main)
 |gematik
+
+|ePA 27 RC
+|15.10.2026
+|
+|Neue Aktenkontoverwaltung. MHD Service als führender Document Service, Einführung der Known Document Processor und der FHIR Common Query API für den FHIR Datenraum.
+|gematik
+
 |===
+
 toc::[]
 
 
@@ -278,6 +286,14 @@ Der *Basis-Consumer* stellt das Gegenstück zum Konnektor in den Rechenzentren d
 :sectnums:
 
 Der *E-Rezept-Fachdienst* (eRP-FD) speichert bei fehlendem Widerspruch alle Verordnungsdaten und die zugehörigen Dispensierinformationen in der Akte des Versicherten ab, damit diese Informationen im *digital gestützten Medikationsprozess* (dgMP) über die *elektronische Medikationsliste* (eML) verwendet werden können. Dem dgMP kann separat widersprochen werden (siehe <<#_widerspruch, Consent Management>>).
+
+[#_ti-flow]
+:sectnums!:
+[discrete]
+==== TI-Flow-Fachdienst
+:sectnums:
+
+Der *TI-Flow-Fachdienst* agiert ggü. der ePA für alle wie der <<#_erp, E-Rezept-Fachdienst>> und ersetzt diesen zukünftig. Er wird nur in einem Aspekt separat betrachtet und der ist, dass der *TI-Flow-Fachdienst* nicht über das zentrale Netz der TI auf die ePA für alle zugreift, sondern über das Internet und das *Access Gateway* des *ePA-Aktensystems*.
 
 [#_rki]
 :sectnums!:
@@ -469,27 +485,25 @@ Der Zustand "Inaccessible" ist ein Zustand, der vom Aktensystem gesetzt wird, we
 In diesem Kapitel werden technische Konzepte zu verschiedenen Basisfunktionalitäten der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
 
 ifndef::env-github[]
-include::chapters/account_creation.adoc[]
 include::chapters/VAU.adoc[]
+include::chapters/account_management.adoc[]
 include::chapters/entitlement_management.adoc[]
 include::chapters/consent_management.adoc[]
 include::chapters/device_management.adoc[]
 include::chapters/email_management.adoc[]
 include::chapters/audit_event_service.adoc[]
-include::chapters/relocation_service.adoc[]
 include::chapters/data_submission.adoc[]
 include::chapters/eu_access.adoc[]
 include::chapters/push_notification.adoc[]
 endif::[]
 
 ifdef::env-github[]
-link:./chapters/account_creation.adoc[Anlage einer Akte]
 link:./chapters/VAU.adoc[Vertrauenswürdige Ausführungsumgebung (VAU)]
+link:./chapters/record_management.adoc[Anlage einer Akte]
 link:./chapters/entitlement_management.adoc[Befugnismanagement (Entitlement Management)]
 link:./chapters/consent_management.adoc[Widerspruchsmanagement (Consent Management)]
 link:./chapters/device_management.adoc[Device Management]
 link:./chapters/audit_event_service.adoc[Audit Event Service]
-link:./chapters/relocation_service.adoc[Anbieterwechsel (Health Record Relocation Service)]
 link:./chapters/data_submission.adoc[Datenübermittlung an das FDZ (Data Submission Service)]
 link:./chapters/eu_access.adoc[EU-Zugriff]
 link:./chapters/push_notification.adoc[Push Notification Management]
@@ -501,17 +515,17 @@ endif::[]
 
 In diesem Kapitel werden technische Konzepte zu verschiedenen Medical Services der ePA dargestellt, die der Spezifikation der einzelnen Produkttypen zugrunde liegen.
 
-
 In den folgenden Links oder Kapiteln werden technische Konzepte zu verschiedenen Medical Services der ePA vorgestellt, die als Basis für die Spezifikation dienen.
 
 [#_documentservices]
 === Dokumentenspezifische Services
 
-Die ePA für alle unterstützt eine dokumentenzentrierte Arbeit über drei Dienste.
+Die *Document Services* der ePA für alle unterstützt eine dokumentenzentrierte Arbeit über verschiedene Dienste.
 
 * XDS Document Service
 * Constraint Mangement
 * MHD Service
+* Known Document Processor (KDP)
 
 ifndef::env-github[]
 include::chapters/xds_doc_service.adoc[]
@@ -528,6 +542,25 @@ ifdef::env-github[]
 link:./chapters/mhd_service.adoc[MHD Service]
 endif::[]
 
+[#_kdp]
+==== Known Document Processor (KDP)
+
+Werden über den *MHD Service* FHIR Dokumente in die ePA für alle eingestellt, dann werden deren Inhaltsdaten durch den *Known Document Processor (KDP)* extrahiert (Dekomposition), sofern für dieses spezifische FHIR Dokument eine *Processing Rule* existiert. Diese FHIR Daten werden in den *FHIR Datenraum* integriert. Neue *Processing Rules* können jederzeit definiert und in das ePA Aktensystem eingebracht werden. Der *KDP* wird auch genutzt, um aus Inhaltsdaten eines Dokuments die Metadaten des Dokuments zu bestimmen.
+
+Bei der Dekomposition des FHIR Dokuments wird sichergestellt, dass für jedes FHIR Datum vermerkt ist, aus welchem FHIR Dokument es entnommen wurde und alle Referenzen der FHIR Daten untereinander erhalten bleiben. Die extrahierten FHIR Daten können nur über eine Aktualisierung des Quelldokument verändert werden. Eine direkte Änderung an diesen FHIR Daten ist nicht möglich. 
+
+Wird das Quelldokument gelöscht, werden auch alle daraus gewonnenen FHIR Daten im *FHIR Datenraum* gelöscht.
+
+Die FHIR Daten des *FHIR Datenraums* können entweder in versorgungsspezifischen Services der ePA für alle verwendet oder über die *FHIR Common Query API* durch Clients der ePA für alle gelesen werden.
+
+[#_ddc]
+==== Dynamic Document Creator (DDC)
+Der *MHD Service* bietet die Möglichkeit dynamische Dokumente abzurufen, die aus FHIR Daten der *FHIR Datenraums* erzeugt werden. Die Regeln für die Erzeugung eines spezifischen dynamischen Dokuments liegen in einem *Dynamic Document Creator*, der beim Abruf des Dukuments über einen allgemein bekannten Identifikator die entsprechenden Daten aus dem *FHIR Datenraum* liest und als Dokument aufbereitet.
+
+Der *MHD Service* soll erzeugte dynamische Dokumente zwischenspeichern, solange sich an den zugrundeliegenden FHIR Daten nichts geändert hat.
+
+Dynamisch über einen *DDC* erzeugte Dokumente werden nicht für die Volltextsuche indiziert, da schon die Quelldokumente der verwendeten Daten indiziert wurden.
+
 
 [#_versorgungsprozesse]
 === Versorgungsspezifische Services
@@ -542,6 +575,31 @@ ifdef::env-github[]
 link:./chapters/medication_service.adoc[digital gestützter Medikationsprozess]
 endif::[]
 
+[#_fhir_data_repository]
+=== FHIR Datenraum
+
+Der *FHIR Datenraum* der ePA für alle speist sich aus den Daten der verschiedenen versorgungsspezifischen Services und den Daten, die über die KDP aus FHIR Dokumenten extrahiert wurden. Die Daten des *FHIR Datenraums* werden entweder in versorgungsspezifischen Services verwendet (um deren Daten anzureichern), als dynamische Documente über einen *DDC* aufbereitet oder zur Unterstützung weiterer Versorgungsprozesse über die *FHIR Common Query API* den CLients zur Verfügung gestellt. Die Daten des *FHIR Datenraums* werden mit dem *Secure Data Storage Key* geschützt.
+
+Für den *FHIR Datenraum* gelten folgende festlegungen:
+
+* Der Inhalt des *FHIR Datenraums* kann nur über einen versorgungsspezifischen Service (FHIR Data Services) oder den *Known Document Processor* über eine *Processing Rule* verändert werden. Eine direkte Manipulation des *FHIR Datenraums* ist nicht möglich.
+* Jedes Datum des *FHIR Datenraums* muss genau einer Quelle zugeordnet sein (FHIR Dokument oder versorgungsspezifischer Service), die das Datum dem Datenraum hinzugefügt hat. 
+* Die Zugriffsrechte für die Daten im Datenraum entsprechen den Zugriffsrechten für die Quelle des Datums. 
+* Nutzer dürfen über die *FHIR Common Query API* keinen Zugriff auf Daten erhalten, für die sie nicht autorisiert sind (z.B. Legal Policy, verborgen).
+* Nutzer dürfen in dynamischen Dokumenten (über ein DDC erstellt) nicht auf Daten zugreifen können, für die sie nicht autorisiert sind (z.B. Legal Policy, verborgen).
+* Versicherte müssen über das ePA-FdV die Möglichkeit erhalten, alle Daten des *FHIR Datenraums* einzusehen.
+* Wird die Quelle eines FHIR Datums gelöscht bzw. dem versorgungsspezifischen Service widersprochen, müssen alle aus der Quelle stammenden Daten des *FHIR Datenraums* ebenfalls gelöscht werden (Hard-Delete).
+* Zugriffe über die *FHIR Common Query API* müssen zum Zwecke der Datenschutzkontrolle für den Versicherten protokolliert werden. Die Protokolleintrag muss für den Versicherten verständlich und geeignet sein, seine Datenschutzkontrolle auszuführen. In den Protokollen dürfen keine medizinischen Daten enthalten sein, da auch die Ombudsstelle auf die Protokolldaten zugreifen darf, die jedoch nach Gesetz keinen Zugriff auf medizinische Daten hat.
+
+[#_fhir_query_api]
+=== FHIR Common Query API
+
+Für die Unterstützung von externen Versorgungsprozessen, die nicht über einen versorgungsspezifischen Service der ePA für alle abgedeckt wird, stellt die ePA für alle seinen FHIR Datenraum über eine *FHIR Common Query API* bereit.
+
+Sie ermöglicht die Suche und den Zugriff auf Daten des *FHIR Datenraums*. 
+
+Die Einschränkungen des Constraint Services gelten auch beim Zugriff üder die *FHIR Common Query API*.
+
 <<<
 
 [#_glossar]
@@ -554,6 +612,8 @@ endif::[]
 //*C*
 
 *D*
+
+* DDC – Dynamic Document Creator
 
 * dgMP – digital gestützter Medikationsprozess – Gesamtheit aller möglichen Teilprozesse des Medikationsprozesses, die ganz oder in Teilen mit strukturierten Daten elektronisch unterstützt werden
 
@@ -588,6 +648,8 @@ endif::[]
 //*J*
 
 *K*
+
+* KDP – Known Document Processor
 
 * KIM – Kommunikation im Medizinwesen
 

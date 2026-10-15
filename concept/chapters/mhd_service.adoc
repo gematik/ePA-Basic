@@ -27,19 +27,17 @@ endif::[]
 [#_mhd_service]
 ==== MHD Service
 
-Der MHD Service bietet Zugriff auf Dokumente, die in der elektronischen Patientenakte (ePA) gespeichert sind. Zurzeit werden dabei nur die Dokumente berücksichtigt, die im XDS Document Service abgelegt wurden. Im Vergleich zur XDS Document Service-eigenen Suche erlaubt der MHD Service jedoch nicht nur die Suche auf Dokumentenmetadaten, sondern bietet auch die Möglichkeit, den Volltext von textbasierten Dokumententypen (zurzeit PDF/A, XML, JSON und reine Textdokumente) nach Begriffen zu durchsuchen.
+Der MHD Service löst den XDS Document Service ab und unterstützt die dokumentenzentrierte Nutzung der elektronischen Patientenakte (ePA). Dafür stellt er Funktionen zum lesen, schreiben, aktualisieren, löschen und suchen von Dokumenten in der ePA bereit. Im Vergleich zur XDS Document Service-eigenen Suche erlaubt der MHD Service jedoch nicht nur die Suche auf Dokumentenmetadaten, sondern bietet auch die Möglichkeit, den Volltext von textbasierten Dokumententypen (zurzeit PDF/A, XML, JSON und reine Textdokumente) nach Begriffen zu durchsuchen.
 
 Die Trefferliste einer Suchanfrage enthält u.a. die Metadaten der Dokumente, die den Suchkriterien entsprechen, "Snippets", die den Kontext der Suchbegriffe im Dokument zeigen sowie einen "Score", der ein ungefähres Maß für die Güte des Suchergebnisses angibt.
 
 ===== Funktionalitäten
 
-image::Feature-MHD-Service.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="MHD Service - Beteiligte Komponenten",width=100%, pdfwidth=100%,float="center",align="center",title-align="center", id="mhd-service-components"]
-
-Im Folgenden ist die Funktionalität der Volltextsuche beschrieben:
+Da der Leistungsumfang der Funktionen eines Dokumentenmanagements allgemein bekannt ist, wird im Folgenden hauptsächlich die Funktionalität der Volltextsuche näher beschrieben:
 
 *Indizierung der Dokumente auf dem Server*
 
-Die Indizierung bzw. Indizieren bezeichnet hier die "Verfügbarmachung" des in den Dokumenten enthaltenen Textes für die Suche. Dabei ist die technische Umsetzung der Indizierung (d.h. wie festgehalten wird, welche Begriffe in welchen Dokumenten zu finden sind) nicht vorgegeben. Die Dokumente werden beim Einstellen in den XDS Document Service indiziert, d.h. sie stehen für die Metadaten- und Volltextsuche nach kurzer Zeit zur Verfügung.
+Die Indizierung bzw. Indizieren bezeichnet hier die "Verfügbarmachung" des in den Dokumenten enthaltenen Textes für die Suche. Dabei ist die technische Umsetzung der Indizierung (d.h. wie festgehalten wird, welche Begriffe in welchen Dokumenten zu finden sind) nicht vorgegeben. Die Dokumente werden beim Einstellen in die ePA für alle indiziert, d.h. sie stehen für die Metadaten- und Volltextsuche nach kurzer Zeit zur Verfügung.
 
 Bei der Indizierung von PDF/A-Dokumenten ist auch die Erkennung von Text in Bildern mit eingeschlossen (Optical Character Recognition "OCR"), aber nur bei Bildern, die ganze Seiten oder mindestens ein Viertel einer Seite einnehmen. Das schließt auch die Suche in Dokumenten und solchen Seiten ein, in denen alle oder einzelne Seiten um 90 oder 180 Grad gedreht sind.
 Wenn möglich werden auch PDF/A-Dokumente indiziert, die in einem anderen Dokument eingebettet sind (elektronischer Arztbrief).
@@ -54,7 +52,7 @@ Die Clients unterstützen den Nutzer durch eine Prüfung von Rechtschreib- und T
 
 *Struktur der Suchanfrage*
 
-Die Suchkriterien umfassen die XDS-Metadaten und inhaltliche Suchbegriffe. Dabei werden die wesentlichen XDS-Metadaten unterstützt, um die Menge der potentiellen Trefferdokumente einzugrenzen.
+Die Suchkriterien umfassen die Metadaten und inhaltliche Suchbegriffe. Dabei werden die wesentlichen Metadaten unterstützt, um die Menge der potentiellen Trefferdokumente einzugrenzen.
 Bei der Volltextsuche sind diese Funktionen vorgesehen:
 
 * Suche nach einem oder mehreren Begriffen
@@ -81,17 +79,15 @@ Der MHD Service garantiert eine Antwortzeit von wenigen Sekunden.
 
 *Ergänzende Funktionen des MHD Services*
 
-Der *MHD Service* wird folgende über die Suche hinausgehende Funktionalitäten bereitstellen:
+Der *MHD Service* wird folgende über die Suche oder das Dokumentenmanagement hinausgehende Funktionalitäten bereitstellen:
 
-* Abruf von Dokumenten, die durch die Suche gefunden wurden
-* Details finden sich in der Beschreibung der <<_mhd_service_schnittstellen, Schnittstellen>>.
+* Abruf von vordefinierten "dynamischen" Dokumenten, die aus FHIR Daten des *FHIR Datenraums* erzeugt und bereitgestellt werden. Die Erzeugung erfolgt durch einen *Dynamic Document Creator (DDC)*, der die Regeln der Erzeugung einen spezifischen dynamischen Dokuments kennt.
 
 Der *MHD Service* wird die folgenden Funktionalitäten **nicht** bereitstellen:
 
-* Einstellen der Dokumente (Einstellen erfolgt über den *XDS Document Service*)
 * Suche nach Synonymen und semantischen ähnlichen Begriffen
 * Suche in Dokumenten aus anderen Formaten
-* Suche in Dokumenten, die nicht im XDS Document Service gespeichert sind
+* Suche in Dokumenten, die nicht Teil der Document Services der ePA sind
 
 ===== Technische Umsetzung
 
@@ -99,21 +95,19 @@ Dieser Abschnitt beschreibt anhand verschiedener Aspekte, wie die oben aufgefüh
 
 *Einordnung in das Gesamtsystem*
 
-Die geforderte Suchfunktionalität wird über einen neuen FHIR-Dienst, den *MHD Service* eingeführt. Dieser verarbeitet die Dokumente und Metadaten des *XDS Document Service*. <<mhd-service-components, MHD Service - Beteiligte Komponenten>> zeigt die Einordnung des MHD Service in das Gesamtsystem.
+Die geforderte Dokumentenmanagement- und Suchfunktionalität wird über einen FHIR-Dienst, den *MHD Service* eingeführt. Dieser bietet Funktionen des Dokumentenmanagements und der Suche und verarbeitet dabei auch die Dokumente und Metadaten des *XDS Document Service*. 
 
 [#_mhd_service_schnittstellen]
 *Schnittstellen*
 
 Die Suche nach XDS-Dokumenten über ihre Metadaten via FHIR ist auch außerhalb der ePA für Alle bereits als sinnvolles Feature erkannt worden. Die IHE-Initiative stellt deshalb bereits ein Profil (MHD für https://profiles.ihe.net/ITI/MHD/[Mobile access to Health Documents]) bereit, dass u.a. genau diese Funktionalität vorsieht.
 
-IHE teilt die von MHD spezifizierten Schnittstellen verschiedenen "Akteuren" zu. In Kontext des MHD Service sind (vorerst) die Akteure "Document Consumer" und "Document Responder" relevant. Der Consumer kann im IHE-Profil Suchanfragen an den Responder senden (Find Document Lists [ITI-66], Find Document References [ITI-67]) und die gefundenen Dokumente abrufen (Retrieve Document [ITI-68]). Die Akteure und Schnittstellen (in IHE "Transaktionen") sind in der <<mhd-acteurs-and-transactions, Abbildung unten>> dargestellt.
+IHE teilt die von MHD spezifizierten Schnittstellen verschiedenen "Akteuren" zu. In Kontext des MHD Service sind die Akteure "Document Consumer", "Document Responder", "Document Source" und "Document Recipient" relevant. Der Consumer kann im IHE-Profil Suchanfragen an den Responder senden (Find Document Lists [ITI-66], Find Document References [ITI-67]) und die gefundenen Dokumente abrufen (Retrieve Document [ITI-68]). Die Document Source kann neue Dokumente einstellen ([ITI-65], [ITI-105] und [ITI-106]) Die Akteure und Schnittstellen (in IHE "Transaktionen") sind in der <<mhd-acteurs-and-transactions, Abbildung unten>> dargestellt.
 
 image::IHE-MHD-Actors-Transactions.png[caption="Abbildung {counter:figure}: ", reftext="Abbildung {figure}", title="IHE MHD - Akteure und Transaktionen",width=80%, pdfwidth=80%,float="center",align="center",title-align="center", id="mhd-acteurs-and-transactions"]
 
 
-Auf die ePA für Alle übertragen bedeutet das, dass der *MHD Service* als Teil des Aktensystems als "Document Responder" fungiert und die "Document Consumer" von ePA Clients umgesetzt werden. Damit Aktensysteme und ePA Clients im IHE-Sinne konforme "Document Consumer" und "Document Responder" wären, müssten sie alle drei aufgeführten Schnittstellen vollständig umsetzen.
-
-Eine vollständige IHE-Unterstützung ist häufig sinnvoll, aber für die Umsetzung einer Volltextsuche nicht notwendig. Deshalb wird in einer ersten Version des *MHD Service* nur die Schnittstelle "Find Document References" umgesetzt. Da die Transaktion "Retrieve Document" zum Herunterladen eines Dokuments dann nur noch ein weiterer einfacher Aufruf ist, wird sie zusätzlich unterstützt. Die Schnittstelle "Find Document Lists" kann ggf. in einer späteren Ausbaustufe folgen.
+Auf die ePA für Alle übertragen bedeutet das, dass der *MHD Service* als Teil des Aktensystems als "Document Responder" und "Document Recipient" fungiert und die "Document Consumer" und "Document Source" von ePA Clients umgesetzt werden. Damit Aktensysteme und ePA Clients im IHE-Sinne konforme "Document Consumer", "Document Responder", "Document Source" und "Document Recipient" wären, müssten sie alle aufgeführten Schnittstellen vollständig umsetzen.
 
 Die durch "Find Document References" festgelegte Suchnachricht selbst erlaubt zwar die Metadatensuche à la XDS, muss aber noch ePA-spezifisch um die Parameter für die Volltextsuche erweitert werden. Dies geschieht MHD-konform, so dass der MHD Service auch mit ("nur") MHD-konformen Clients (MHD Document Consumers) über die unterstützten Transaktionen kommunizieren kann. Dasselbe gilt für die "Retrieve Document"-Schnittstelle, die auf Wunsch den Abruf des eigentlichen Dokuments ermöglicht.
 
@@ -140,7 +134,7 @@ Die Fehlerbehandlung erfolgt nach den Vorgaben von FHIR. Das bedeutet, dass der 
 
 *Zugriffsschutz*
 
-Für den Zugriff auf die XDS-Metadaten und -Dokumenten über den *MHD Service* gelten für Clients dieselben Zugriffsrechte, wie beim Zugriff via *XDS Document Service*. Das heißt, die Legal Policy (Recht "R") wird auch beim Zugriff auf den Dokumentenindex und die Dokumente über den MHD Service angewendet. Das heißt, Suchergebnisse stammen nur aus für den Zugreifenden "sichtbaren" Dokumenten; für das Herunterladen von Dokumenten gilt dasselbe. Die Legal Policy wird durch den MHD Service nicht verändert oder erweitert. Gleiches gilt für verborgene Dokumente des *Constraint Management*. Auch sie müssen aus den Suchergebnissen entfernt werden.
+Für den Zugriff auf die Metadaten und -Dokumenten über den *MHD Service* gelten für Clients die Zugriffsrechteder Legal Policy. Das heißt, die Legal Policy (Recht "R") wird auch beim Zugriff auf den Dokumentenindex und die Dokumente über den MHD Service angewendet. Das heißt, Suchergebnisse stammen nur aus für den Zugreifenden "sichtbaren" Dokumenten; für das Herunterladen von Dokumenten gilt dasselbe. Die Legal Policy wird durch den MHD Service nicht verändert oder erweitert. Gleiches gilt für verborgene Dokumente des *Constraint Management*. Auch sie müssen aus den Suchergebnissen entfernt werden.
 
 *Sicherheit*
 
